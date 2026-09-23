@@ -151,3 +151,10 @@ crotch skin; no change anywhere else on the body.
 - Still open from A-17: which object the purple knotted toy was (look it up in
   `Documents/My Games/Fallout4/F4SE/anatomy_ocbpc.log`), a DR dildo or bat scene, and one anal
   scene.
+
+### Build 17f97e158c01 (A-19: our own weights, gain 1.40), restaged in place at 21:15
+- JaneBod's painting is gone. The vulva has our own pad, and the entrance's gain is 1.40. The
+  simulation matches the deployed build's clipping within 1%, with less flap when walking.
+- Look for: in a vaginal scene, the entrance's FRONT edge (toward the clitoris) should clear the
+  shaft as it did in Photos 155-156. Walking nude, the vulva should not flap more than before.
+- No Deploy needed for this one. The MCM files above still need theirs.
