@@ -242,3 +242,15 @@ later. WER: c000000d in ntdll, then c0000409 in ucrtbase.dll. It was not in cbp.
 its runtime statically. Its log rotation truncated the running game's log (16,789 NUL bytes, and the
 previous run's log lost). Fixed in fork 884ca81: delete sharing, and a per-process log when the
 running one cannot be moved. Checked outside the game.
+
+### Build cb5d101c41f0 (A-25, the longer opening), restaged in place 2026-09-24 00:22: no Deploy needed
+
+- Only the body changed (FemaleBody.nif/.tri) and the BodySlide set. `Tools/BodySlide/SliderCategories/Anatomy.xml`
+  is new and appears in Data at the next Deploy. It only groups the slider in BodySlide.
+- Look from the front, and from below/front with her legs apart. The opening should reach about
+  half a unit further toward the mons than before (0.7 cm), its back near the anus unchanged, and
+  the lips' shape the same.
+- No seam or speck at the front of the opening. The shapes are proven to move together there.
+- In a scene the entrance should clip a little less than before (fit_check: 31% -> 26% as drawn).
+- More or less opening: the slider's default is one number, `opening.DEFAULT` (percent), followed
+  by a restage. Players can move "Opening, front" in BodySlide themselves.

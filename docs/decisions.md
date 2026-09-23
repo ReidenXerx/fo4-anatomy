@@ -768,3 +768,41 @@ does we have such metric)".
   - The builder ships Python's and Pillow's licence files. OpenSSL is left out of its bundle
     (nothing uses the network).
 - Publishing the fork's repository stays the owner's act.
+
+## A-25 — The vaginal opening a little longer toward the mons (the owner's look, 2026-09-24)
+
+**The owner's words**, after the first look at the zero-touch build ("genitals works fine really";
+no regressions): "a little bit not sufficient big hole in vagina in axis along the lips ... if hole
+would be slightly bigger for cover more space close to [the mons] bc rn hole in vagina is alongside
+anus ... just make it slightly bigger for being slightly noticeable from front".
+
+**What was measured.** Offline depth-buffered renders from below, with a grid in skin-space y.
+- The visible opening runs y 0.4 to 1.9, the back half of the slit; the lips are closed from 1.9
+  to 3.2, then the hood.
+- None of Nahka's sliders does only what was asked:
+  - VaginaPenetrate opens the entrance all round (gaping at 0.5);
+  - VaginaSpread parts the outer lips and makes the hole look shorter;
+  - VaginaSize shrinks the vulva.
+- Stretching the tissue ahead of the hole lengthened the closed lips, not the hole (rendered and
+  rejected).
+
+**Decision.**
+- A slider of our own, **AnatomyOpening** (`tools/opening.py`, run at the end of split_genitals),
+  on both shapes. It is Nahka's own VaginaPenetrate shape, weighted by a smooth step over y from
+  1.0 (0) to 2.0 (1), with 100% = 0.6x.
+- The front of the opening opens forward, about 0.5 units at the default, and its back stays.
+- **Default 50%.** BodySlide gives a slider its set's default whenever a preset does not name it.
+  That covers the owner's zero build (measured: the lab build moved exactly the slider's vertices, to
+  half-float precision) and every player's preset.
+- It is adjustable in BodySlide under the category "Anatomy", as "Opening, front".
+
+**Proven.**
+- The seam: the two shapes move together, 2513 of 2513 coincident vertices.
+- Folds: Nahka's own opening turns lip-edge slivers over at every strength. Ours adds only slivers
+  under 0.002 square units that hers does not (2 at 50%, 4 at 100%). A tighter limit fails.
+- fit_check, deployed body vs the build with the opening: every vagina path clips less (as drawn
+  31% -> 26%) and stretches far less (worst 9.59 -> 6.36). The anus and walking are unchanged.
+- The slit's front rim is partly CBBE's own vertices, so 26 shared vertices move by design (up to
+  0.186 units, deep in the slit, where no outfit is fitted). compare_builds now expects exactly
+  CBBE + 50% of the slider there and CBBE everywhere else. A gate expecting 100% fails.
+- Restaged: build cb5d101c41f0.
