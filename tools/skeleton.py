@@ -73,6 +73,13 @@ def build():
         nodes.append(dict(name=name, t=tuple(local), r=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)))
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_bytes(base.with_nodes(parent, nodes))
+    # each opening bone's stretch child (A-17), sitting on it: the fo4-ocbpc fork moves it out only
+    # when something bigger than a penis is in the opening
+    identity = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+    for bone, child in pd.STRETCH_BONES.items():
+        cur = nif.Nif(OUT)
+        at = next(i for i, n in cur.nodes.items() if n['name'] == bone)
+        OUT.write_bytes(cur.with_nodes(at, [dict(name=child, t=(0.0, 0.0, 0.0), r=identity)]))
 
     # ---- proofs
     problems = []
@@ -85,6 +92,10 @@ def build():
     old_kids, new_kids = base.nodes[parent]['kids'], out.nodes[parent]['kids']
     if new_kids[:len(old_kids)] != old_kids or len(new_kids) != len(old_kids) + len(nodes):
         problems.append(f'{pd.PARENT} children not the old list plus ours')
+    by_name = {n['name']: i for i, n in out.nodes.items()}
+    for bone, child in pd.STRETCH_BONES.items():
+        if by_name.get(child) not in out.nodes.get(by_name.get(bone), {}).get('kids', []):
+            problems.append(f'{child} is not a child of {bone}')
     if out.strings[:len(base.strings)] != base.strings:
         problems.append('the string table changed before our names')
     new_world = zb.skeleton_world(OUT)
@@ -103,10 +114,16 @@ def build():
             problems.append(f'{name} does not turn with {pd.PARENT} ({rot})')
     if worst > 1e-4:
         problems.append(f'a new bone is {worst} from its design position')
+    for bone, child in pd.STRETCH_BONES.items():
+        gap = max(math.dist(new_world[bone][1], new_world[child][1]),
+                  max(abs(a - b) for a, b in zip(zb.flat(new_world[bone][0]), zb.flat(new_world[child][0]))))
+        if gap > 1e-6:
+            problems.append(f'{child} does not sit on {bone} ({gap})')
     keyed = {}
     for h in HKX:
         raw = h.read_bytes() if h.exists() else b''
-        hits = [n for n in pd.REST if re.search(re.escape(n.encode()) + b'\x00', raw)]
+        hits = [n for n in list(pd.REST) + list(pd.STRETCH_BONES.values())
+                if re.search(re.escape(n.encode()) + b'\x00', raw)]
         if hits:
             keyed[h.name] = hits
     if keyed:

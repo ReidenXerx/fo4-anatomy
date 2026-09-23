@@ -76,14 +76,17 @@ def main():
     # 3. bones
     bones, xf = after_nif.skin(a)
     origin = {n: nif.bone_origin(xf[i]) for i, n in enumerate(bones)}
-    want = list(pd.REST) + ['LBreast_skin', 'RBreast_skin']
+    # the openings' bones are carried through their stretch children (A-17), which sit on them
+    at = {n: p for n, p in pd.REST.items() if n not in pd.STRETCH_BONES}
+    at.update({child: pd.REST[bone] for bone, child in pd.STRETCH_BONES.items()})
+    want = list(at) + ['LBreast_skin', 'RBreast_skin']
     missing = [n for n in want if n not in bones]
     zex_left = [n for n in ZEX_GENITAL if n in bones]
     print(f'3. bones {len(bones)}; ours present {len(want) - len(missing)}/{len(want)}; missing {missing or "none"}; '
           f'ZeX genital bones left {zex_left or "none"}')
-    for n in pd.REST:
+    for n in at:
         if n in origin:
-            d = math.dist(origin[n], pd.REST[n])
+            d = math.dist(origin[n], at[n])
             print(f'   {n:15} bound at ({origin[n][0]:6.2f},{origin[n][1]:6.2f},{origin[n][2]:7.2f}), {d:.4f} from the design')
             if d > 0.01:
                 problems.append(f'{n} is not bound where the design puts it')

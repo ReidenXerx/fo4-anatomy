@@ -74,13 +74,36 @@ AFFECTED = {'AnatLip_L': [(0.0, 0.0, 0.0, 1.2)], 'AnatLip_R': [(0.0, 0.0, 0.0, 1
 COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_03': [(0.0, 0.0, 0.0, 2.0)], 'Penis_04': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_05': [(0.0, 0.0, 0.0, 1.8)],
-             # the knuckles (fisting, the owner's poll 2026-09-23). Jiggle Physics' own hand colliders
-             # are the wrist (2.5) and the fingertips (1.5-1.8), so a fist's front had nothing. A hand
-             # measures 5.42 across the four knuckles (MaleHands/FemaleHands), so 1.6 spheres on the
-             # four proximal bones close the fist's front; every actor's hands, as with theirs.
-             **{f'{side}Arm_Finger{f}1': [(0.0, 0.0, 0.0, 1.6)] for side in 'LR' for f in (2, 3, 4, 5)}}
+             # the fist (fisting, the owner's poll 2026-09-23). Jiggle Physics' own hand colliders are
+             # the wrist (2.5) and the fingertips (1.5-1.8), so a fist's front had nothing. A hand is 5.42
+             # across the four knuckles (MaleHands/FemaleHands): a fist ~6.5 wide. ONE ball on the
+             # middle knuckle, not four small ones: a row of spheres wider than the opening puts the
+             # outer ones beyond the lips, where they push the lips back IN (A-17, simulated).
+             'LArm_Finger31': [(0.0, 0.0, 0.0, 3.0)], 'RArm_Finger31': [(0.0, 0.0, 0.0, 3.0)]}
+SHAFT = ('Penis_01', 'Penis_02', 'Penis_03', 'Penis_04', 'Penis_05')
 SHAFT_RADIUS = 1.55          # what the partner's visible shaft needs cleared
 PENIS_SPACING = 3.0
+
+# Stretch (A-17, the fo4-ocbpc fork's stretch groups): each opening's bones form a group. When ALL of
+# them are pushed across the opening's axis further than the knee, which is something bigger than a
+# penis in it, each moves its child "<bone>_Stretch" out by gain x (the group's smallest push - knee),
+# up to max. The body is weighted to those children instead of the bones. A child follows its bone,
+# so a penis (below the knee: the child stays put) moves the body exactly as before, and only a
+# fist-sized object adds the stretch. Simulated (smallest push across the axis): every penis path at
+# the partner's bone spacing stays under the knee (vagina <= 2.21, anus <= 1.13), two fingers too
+# (2.11 / 1.34); a fist or a wrist filling the entrance is far past it (vagina 3.9-4.5, anus 3.2-4.0).
+# max starts at 1.5, not 2.5: at 2.5 a fist opens the entrance to a median 3.0 but stretches its worst
+# edges x27; the owner's look tunes it (the keys are in ocbp.ini, no rebuild).
+STRETCH = {'Labia': dict(group=1, knee=2.4, gain=3.0, max=1.5, axis=VAGINA_AXIS),
+           'Anus': dict(group=2, knee=1.8, gain=2.0, max=1.5, axis=ANUS_AXIS)}
+STRETCH_BONES = {b: b + '_Stretch' for b in ('AnatLip_L', 'AnatLip_R', 'AnatAnus_F', 'AnatAnus_B',
+                                              'AnatAnus_L', 'AnatAnus_R')}
+
+# Props (A-17, the fork's [Props]): whatever an animation hangs on a hand's AnimObject nodes (DR pack's
+# dildos and bat) collides along its rendered length. The hands' WEAPON nodes are left out on purpose:
+# a rifle held against her chest would squash her breasts.
+PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObjectL2,AnimObjectL3',
+             radius=1.6, spacing=1.5, maxLength=40.0, minBound=1.0)
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
@@ -112,5 +135,6 @@ def expected_push(bone, opening, centre=None, axis=None):
     along = sum(d[i] * a[i] for i in range(3))
     radial = [d[i] - along * a[i] for i in range(3)]
     h = math.sqrt(sum(x * x for x in radial))
-    reach = max(r for spheres in COLLIDERS.values() for *_, r in spheres) + AFFECTED[bone][0][3]
+    # the SHAFT's spheres: the weights are fitted to a penis, never to the fist's bigger ball (A-17)
+    reach = max(r for name in SHAFT for *_, r in COLLIDERS[name]) + AFFECTED[bone][0][3]
     return tuple(x / h for x in radial), max(0.0, reach - h)

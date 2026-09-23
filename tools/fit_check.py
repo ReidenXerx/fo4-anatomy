@@ -78,8 +78,12 @@ class Build:
         self.pos = s.positions()
         self.tris = s.triangles()
         self.weights = {}
+        # a body weighted to the openings' stretch children (A-17) moves with their bones below the
+        # stretch knee, which every path here stays under
+        fold = {child: bone for bone, child in pd.STRETCH_BONES.items()}
         for j in range(s.count):
-            w = {bones[sl]: x for sl, x in s.skin_weights(j) if bones[sl] in pd.REST}
+            w = {fold.get(bones[sl], bones[sl]): x for sl, x in s.skin_weights(j)
+                 if fold.get(bones[sl], bones[sl]) in pd.REST}
             if w:
                 self.weights[j] = w
         ini = parse_ini(ini_path.read_text(encoding='utf-8', errors='replace'))

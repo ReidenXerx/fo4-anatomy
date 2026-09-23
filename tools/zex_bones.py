@@ -433,7 +433,9 @@ def main():
         if total < 1e-4:
             continue
         mine = {bones[sl]: w * (1.0 - total) for sl, w in shape.skin_weights(j)}
-        new_weights[j] = pick_four(mine, genital)
+        # the openings' weights live on the bones' stretch children (A-17): a child follows its bone,
+        # plus the fork's stretch when something bigger than a penis is in the opening
+        new_weights[j] = [(pd.STRETCH_BONES.get(b, b), w) for b, w in pick_four(mine, genital)]
     touched_protected = [j for j in new_weights if mask.get(j, 0.0) >= 1.0]
     print(f'3. JaneBod genital-weighted reference vertices {len(rgen)}; our vertices given genital weight '
           f'{len(new_weights)} (protected among them: {len(touched_protected)})')
@@ -452,10 +454,11 @@ def main():
     print(f'   breast weights moved off the Havok cloth bones: {dict(moved)}')
 
     # ---- 4. the bones, with bone-space bounding spheres of what they now carry
-    new_names = list(pd.REST) + list(BREAST_MOVE.values())
+    new_names = ([b for b in pd.REST if b not in pd.STRETCH_BONES] + list(pd.STRETCH_BONES.values())
+                 + list(BREAST_MOVE.values()))
     defs = []
     for name in new_names:
-        wr, wt, ws = ours[name] if name in pd.REST else world[name]
+        wr, wt, ws = ours[name] if name in ours and name not in BREAST_MOVE.values() else world[name]
         sr, st = skin_to_bone(wr, wt)
         carried = [apply(sr, pos[j]) for j, ws_ in list(new_weights.items()) + list(breast.items())
                    for b, w in ws_ if b == name and w > 0]

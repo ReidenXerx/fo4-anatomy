@@ -5,6 +5,8 @@
                                                                     bones (tools/skeleton.py, A-14); must
                                                                     win over Skeletal Adjustments for CBBE
     F4SE/Plugins/ocbp.ini, OCBPCollisionConfig.txt                  tools/physics_config.py output
+    F4SE/Plugins/cbp.dll                                            the fo4-ocbpc fork (A-17): must win over
+                                                                    Jiggle Physics and OCBPC-0.3-CBBE
     Anatomy.esp, Scripts/Anatomy/Arousal.pex                        arousal and nipples (A-16): tools/make_esp.py
                                                                     and scripts/build-papyrus.ps1; the plugin
                                                                     must be enabled
@@ -38,6 +40,9 @@ PROJECT = ROOT / 'build/project'
 SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
 PLUGIN = ROOT / 'build/plugin/Anatomy.esp'
 PAPYRUS = ROOT / 'build/papyrus'
+# the fo4-ocbpc fork (GPL-3.0, sibling repo; A-17): OCBPC 0.3 plus stretch groups and prop colliders.
+# Must win cbp.dll over Jiggle Physics and OCBPC-0.3-CBBE.
+OCBPC_DLL = ROOT.parent / 'fo4-ocbpc/x64/Release/cbp.dll'
 OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\package')
 
 
@@ -53,6 +58,7 @@ def main():
         'Anatomy.esp': PLUGIN,
         'Scripts/Anatomy/Arousal.pex': PAPYRUS / 'Anatomy/Arousal.pex',
         'F4SE/Plugins/ocbp.ini': CONFIG / 'ocbp.ini',
+        'F4SE/Plugins/cbp.dll': OCBPC_DLL,
         'F4SE/Plugins/OCBPCollisionConfig.txt': CONFIG / 'OCBPCollisionConfig.txt',
         'Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp': PROJECT / 'SliderSets/AnatomyBodyZeX.osp',
         'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif': PROJECT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif',
