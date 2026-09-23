@@ -87,3 +87,10 @@ Positions that animate here are the "[UAP] BP70 - ..." ones: "Pit Doggy 02" (vag
 "Prone Bone Anal 04" (anal, open ground, hidden from the menu).
 
 To undo: restage the previous build, or disable Anatomy-dev and Deploy.
+
+### Genital texture (A-10), staged 15:36, waiting for the owner's Deploy
+Six new files in Anatomy-dev (`Textures/Actors/Character/BaseHumanFemale/FemaleBody*`,
+`femalebodydirty*`). With the game closed: in Vortex, let Anatomy-dev win its conflict with
+"CBBE HeadRear Absolute Fix" (load after), then Deploy. To look for: the inside of the lips and
+the canal in Nahka's colouring and tone-matched to the skin; no line where the genitals meet the
+crotch skin; no change anywhere else on the body.

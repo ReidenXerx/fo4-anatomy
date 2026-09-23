@@ -4,6 +4,10 @@
     F4SE/Plugins/ocbp.ini, OCBPCollisionConfig.txt                  tools/physics_config.py output
     Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp                   the project, to rebuild with any preset
     Tools/BodySlide/ShapeData/AnatomyBodyZeX/...
+    Textures/Actors/Character/BaseHumanFemale/FemaleBody*, femalebodydirty*
+                                                                    the owner's skin with Nahka's genital
+                                                                    texture patched in (genital_texture.py);
+                                                                    must win over the skin mod
 
 Installed as a mod that wins its conflicts (bodyslides_f4_sd for the body, MadKita's Actual
 Jiggle for ocbp.ini, Jiggle Physics for OCBPCollisionConfig.txt), it replaces them; disabling it
@@ -20,6 +24,9 @@ import time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUILT = pathlib.Path(r'D:\F4Output\AnatomyLab\out\zero\Meshes\Actors\Character\CharacterAssets')
+TEXTURES = pathlib.Path(r'D:\F4Output\AnatomyLab\textures')
+TEXTURE_FILES = ['FemaleBody_d.dds', 'FemaleBody_n.DDS', 'FemaleBody_s.DDS',
+                 'femalebodydirty_d.dds', 'FemaleBodydirty_n.DDS', 'FemaleBodydirty_s.DDS']
 CONFIG = ROOT / 'build/config'
 PROJECT = ROOT / 'build/project'
 OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\package')
@@ -39,6 +46,7 @@ def main():
         'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif': PROJECT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif',
         'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.osd': PROJECT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.osd',
         'Tools/BodySlide/SliderPresets/AnatomyZero.xml': PROJECT / 'SliderPresets/AnatomyZero.xml',
+        **{f'Textures/Actors/Character/BaseHumanFemale/{t}': TEXTURES / t for t in TEXTURE_FILES},
     }
     for rel, src in files.items():
         if not src.exists():

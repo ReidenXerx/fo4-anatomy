@@ -156,3 +156,29 @@ them forward, and canal-mouth vertices were pulled out of the shaft (edges stret
 **Known limit:** a woman's own penis bones are colliders for OTHER actors, and no key filters
 colliders by sex. In a female/female scene, the partner's invisible Penis_01-05 (7-20 units in
 front of her pubis) can push these spheres.
+
+## A-10 — The genitals' texture: Nahka's patch in the owner's skin, nothing else touched (agent, 2026-09-23)
+
+The owner said "do rest stuff meanwhile I will be able eyeball". Nahka's genital triangles sample
+a corner of the body atlas that CBBE does not use. The owner's skin maps (CBBE HeadRear Absolute
+Fix) are flat filler there, so the lips and canals rendered as plain skin; with A-9 opening the lips
+about six times wider, that inside shows more.
+
+- **Why the same files:** the body's shader names a material (`basehumanFemaleskin.bgsm`), and the
+  material decides the textures. New texture paths in the mesh would change nothing. So
+  Anatomy-dev carries patched copies of the owner's six body maps (clean and dirty: `_d`, `_n`,
+  `_s`) at their own paths, and must win over the skin mod (the owner's conflict rule and Deploy).
+- **What changes:** only the texels the genital triangles sample, padded 8 for filtering, and never
+  a texel any other triangle samples (measured: none do). Colour is matched in linear light by
+  per-channel gains from the crotch-skin ring in both textures (1.42 / 1.99 / 1.49), so her mucosa
+  keeps its shift relative to her skin. Specular is matched by OFFSET: the owner's skin has almost
+  none (red about 0.3 of 255 against her 48), and a gain would make the mucosa matte. Normals are
+  copied. Where the island meets the crotch skin (a UV seam, 116 points), colour and specular are
+  pulled onto the skin side and faded inward over 32 texels: the seam step is 2.3 / 1.1 / 1.9 of
+  255 (it was 9.0 / 4.0 / 8.1 unfeathered, and 1.2 / 0 / 1.2 before any patch). Normals fade to
+  flat at the edge, because the two sides use different tangent frames.
+- **Proof:** DXT1/BC5 are re-encoded only in the blocks the padded patch reaches, on every mip
+  level. `tools/genital_texture.py` verifies that every other block of every level is the owner's,
+  byte for byte, and a decode shows no black specks (DXT1's transparent mode).
+- **If the owner changes skin mods:** rerun `genital_texture.py` then `restage.py`. The patch is
+  derived from whatever skin is deployed.
