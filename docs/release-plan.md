@@ -59,3 +59,24 @@
   - the genitals get their own texture.
 - The builder writes only new files, straight into Data (or MO2's overwrite).
 - See builder-design.md.
+
+## Status, 2026-09-23 late evening
+
+- **Built and proven on the owner's install:**
+  - zero-touch runtime bones and physics (A-21);
+  - the genitals' own shape and material (A-22);
+  - Nahka's work as a patch against the player's CBBE (A-23);
+  - the builder: its outputs are byte-identical to the dev pipeline's;
+  - the packaged `AnatomyBuilder.exe`: identical outputs again;
+  - `tools/release.py`: `build/release/Anatomy-0.1.0.7z` (13.7 MB, 79 files, one-page FOMOD, README
+    with install steps, credits and licences).
+- **Before publishing:**
+  - the owner's in-game look at the zero-touch build: runtime bones, genital texture, mouth, MCM;
+  - a public repo for the fo4-ocbpc fork (GPL source link; the README names
+    github.com/ReidenXerx/fo4-ocbpc). Publishing it is the owner's act;
+  - the Nexus page (nexus-tools) and the final name;
+  - the courtesy messages to Nahka and to Skeletal Adjustments' author. That author's skeleton is no
+    longer touched at all, so this one is courtesy only.
+- **Open risk:** A-17's prop colliders take every item on the hand AnimObject nodes, including
+  everyday idle props (mugs, clipboards; seen in the first zero-touch log). An actor's own colliders
+  push its own bones, so a woman drinking could push her own breasts. To check in game.
