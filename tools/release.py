@@ -4,7 +4,8 @@
 
 What ships (nothing of anyone else's but Nahka's own work, with her page's permission, A-23):
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
-    F4SE/Plugins/cbp.dll                                               the fo4-ocbpc fork (GPL-3.0)
+    F4SE/Plugins/cbp.dll                                               the fo4-ocbpc fork (MIT base)
+    F4SE/Plugins/Anatomy/cbp.dll - LICENSE.txt                         the fork's MIT notice, as its repo has it
     F4SE/Plugins/Anatomy/ocbp.ini, OCBPCollisionConfig.txt             our physics lines and [Bones]
     Tools/AnatomyBuilder/AnatomyBuilder.exe (+ _internal)              the builder
     Tools/AnatomyBuilder/data/nahka_patch.json.gz, data/tex/*          her genitals, as a patch and her
@@ -15,8 +16,8 @@ Every file is checked present, and the archive must list every one of them back.
 
 Both binaries are built from source on every run, so an archive never carries one older than its
 code: the builder exe (PyInstaller, one folder) and cbp.dll (MSBuild). The fork must have no
-uncommitted change. The DLL is GPL, and the source we point players to is that commit, which the
-README names.
+uncommitted change: F4SE requires a plugin's source to be public, and the source we point players
+to is that commit, which the README names.
 """
 import argparse
 import pathlib
@@ -30,7 +31,7 @@ BUILD = ROOT / 'build'
 FORK = ROOT.parent / 'fo4-ocbpc'
 NAME = 'Anatomy'
 AUTHOR = 'ReidenXerx'
-FORK_URL = 'https://github.com/ReidenXerx/fo4-ocbpc'      # the public GPL source (to be published)
+FORK_URL = 'https://github.com/ReidenXerx/fo4-ocbpc'      # its public source, F4SE's rule (to be published)
 
 NEXT_STEPS = """After this installs:
 1. Run Data\\Tools\\AnatomyBuilder\\AnatomyBuilder.exe once (MO2: add it to MO2's executables and run it
@@ -73,7 +74,8 @@ CREDITS
   maximusmaxy - Screen Archer Menu's source, which documented the face data the mouth uses.
 
 LICENCES
-  cbp.dll is a fork of OpenCBP_FO4 (GPL-3.0); its source: {FORK_URL} (commit @FORK_COMMIT@)
+  cbp.dll is a fork of OpenCBP_FO4 / OCBPC, whose code is under the MIT licence (full text in
+  F4SE\\Plugins\\Anatomy\\cbp.dll - LICENSE.txt). Its source: {FORK_URL} (commit @FORK_COMMIT@).
 """
 
 
@@ -81,7 +83,7 @@ MSBUILD = r'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBui
 
 
 def build_dll():
-    """cbp.dll from the fork's committed source; returns that commit (the GPL source players get)."""
+    """cbp.dll from the fork's committed source; returns that commit (the source players are pointed to)."""
     dirty = subprocess.run(['git', 'status', '--porcelain'], cwd=FORK, capture_output=True, text=True).stdout
     if dirty.strip():
         raise SystemExit('the fork has uncommitted changes, so no published commit would be the source of '
@@ -115,6 +117,7 @@ def files(version):
         'MCM/Config/Anatomy/config.json': BUILD / 'mcm/MCM/Config/Anatomy/config.json',
         'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm/MCM/Config/Anatomy/settings.ini',
         'F4SE/Plugins/cbp.dll': FORK / 'x64/Release/cbp.dll',
+        'F4SE/Plugins/Anatomy/cbp.dll - LICENSE.txt': FORK / 'LICENSE',     # MIT: its notice goes with it
         'F4SE/Plugins/Anatomy/ocbp.ini': BUILD / 'config/Anatomy/ocbp.ini',
         'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt': BUILD / 'config/Anatomy/OCBPCollisionConfig.txt',
         'Tools/AnatomyBuilder/data/nahka_patch.json.gz': BUILD / 'patch/nahka_patch.json.gz',

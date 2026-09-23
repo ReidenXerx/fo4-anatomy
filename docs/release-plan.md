@@ -24,7 +24,7 @@
 | ocbp.ini (MadKita's Actual Jiggle, Nexus 90677) | modification and asset use free, no credit needed | the builder merges our lines into the player's own ini |
 | OCBPCollisionConfig.txt (Jiggle Physics, Nexus 82699) | asset use needs permission | the builder appends our lines to the player's own file |
 | Skin textures | the player's own skin mod; CBBE's texture resources allow variants with credit and links | the builder patches the player's own maps |
-| OCBPC fork (fo4-ocbpc) | GPL-3.0 (ericncream/OpenCBP_FO4); OCBPC FPS Fix (95003) is permissive too | ship `cbp.dll` with a public source link |
+| OCBPC fork (fo4-ocbpc) | MIT at our base abc0192 (upstream's `cbpc` is GPL-3.0 only since 2021-07-21); F4SE requires a plugin's source to be public | ship `cbp.dll` with the MIT notice and a public source link |
 | Anatomy.esp, scripts, MCM, tools | ours | ship |
 
 ## Why not the FOMOD itself
@@ -47,8 +47,8 @@
    - builds the BodySlide project, patches the skeleton(s) actually in use, merges the physics
      lines, patches the skin;
    - writes "Anatomy - Generated".
-5. FOMOD for our static files, the Nexus page (through nexus-tools), credits, GPL source link, a
-   public fo4-ocbpc repo, and the final name.
+5. FOMOD for our static files, the Nexus page (through nexus-tools), credits, the fork's MIT
+   notice and source link (F4SE's rule), a public fo4-ocbpc repo, and the final name.
 6. Courtesy messages: Nahka, and Skeletal Adjustments' author. Sending them is the owner's act.
 
 ## Zero-touch (A-21, owner polls 2026-09-23)
@@ -72,11 +72,14 @@
     with install steps, credits and licences).
 - **Before publishing:**
   - the owner's in-game look at the zero-touch build: runtime bones, genital texture, mouth, MCM;
-  - a public repo for the fo4-ocbpc fork (GPL source link; the README names
-    github.com/ReidenXerx/fo4-ocbpc). Publishing it is the owner's act;
+  - a public repo for the fo4-ocbpc fork (F4SE requires a plugin's source to be public; the README
+    names github.com/ReidenXerx/fo4-ocbpc and the exact commit). Publishing it is the owner's act;
   - the Nexus page (nexus-tools) and the final name;
   - the courtesy messages to Nahka and to Skeletal Adjustments' author. That author's skeleton is no
     longer touched at all, so this one is courtesy only.
-- **Open risk:** A-17's prop colliders take every item on the hand AnimObject nodes, including
-  everyday idle props (mugs, clipboards; seen in the first zero-touch log). An actor's own colliders
-  push its own bones, so a woman drinking could push her own breasts. To check in game.
+- **Closed risk:** A-17's prop colliders took every item on the hand AnimObject nodes, idle mugs
+  included, and could push the carrier's own breasts. Since fork 1f6aa55 a prop pushes only the
+  `[Props] targets` (our genital and anus bones).
+- **The crash of 2026-09-23 (fixed, fork 870adc4):** the first mouth hook crashed every save load
+  (DetourXS copied 14 of the merge's 17 prologue bytes). The mouth now hooks the merge's call site.
+  Test plan and field notes (the face engine) have the detail.

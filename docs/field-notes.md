@@ -148,8 +148,10 @@ an older note disagree, this file is newer.
 
 ## 4. OCBPC (CBP physics with collisions), reverse-engineered
 
-Source: github.com/ericncream/OpenCBP_FO4, branch `cbpc`, GPL-3.0. The owner runs **abc0192**. The
-simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItColliding`, and is GPL too.
+Source: github.com/ericncream/OpenCBP_FO4, branch `cbpc`: MIT until 2021-07-21 (c69c98a), GPL-3.0
+since. The owner runs **abc0192** (2020, MIT), and the fork branches there. The simulator
+`tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItColliding` from 46cfb20, so it is
+GPL-3.0; it never ships.
 
 - **Update (`Thing.cpp`):**
   - The first time OCBPC sees a bone, it stores the local position and rotation.
@@ -215,7 +217,9 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
   config. OCBPC's own logging stays compiled out (`LOG_ON` undefined in log.cpp).
 - **Safe fallback:** OCBPC 0.3 ignores every new key, so a body weighted to `_Stretch` children
   behaves exactly as before under the old DLL.
-- **GPL-3.0:** distributing the DLL means offering this source.
+- **Licence:** the fork's base (abc0192) is MIT, so the DLL ships with that notice (the release
+  puts the fork's LICENSE beside it). The source must be public anyway, by F4SE's rule for
+  plugins: "plugins must have their source code publicly available" (f4se_readme.txt).
 
 ---
 
@@ -713,7 +717,7 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 - The mouth (§10).
 - Release:
   - ~~the skeleton derivative~~: gone. The fork adds our bones at run time (A-21, §21);
-  - GPL source for the fork: a public repo, which is the owner's act;
+  - the fork's source in a public repo (F4SE's rule for plugins; the base is MIT): the owner's act;
   - ~~Nahka's and CBBE's permissions~~: only Nahka's own work ships, as a patch applied to the
     player's CBBE (A-23).
 - Props: since the fork's `[Props] targets=`, a prop pushes only the genital and anus bones. Idle

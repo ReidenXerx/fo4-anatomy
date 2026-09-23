@@ -103,7 +103,7 @@ Supersedes A-6 for the lower-lip twins (`Vagina_CBP_L_02` / `_R_02`) and the anu
 and sphere values. The owner's words: "feel free enhance physics config"; A-1 (full physics) is the
 goal this serves.
 
-**Why.** OCBPC is open source (github.com/ericncream/OpenCBP_FO4, branch `cbpc`, GPL-3.0), and
+**Why.** OCBPC is open source (github.com/ericncream/OpenCBP_FO4, branch `cbpc`), and
 `tools/ocbpc_sim.py` ports its per-bone update faithfully. Measured with it and `tools/fit_check.py`
 on the deployed build (86f6fc78): JaneBod's weights, made for animations that swing a bone several
 units, put at most 0.17 on a lip twin and 0.07 on the anus. A collision moves a bone only as far as
@@ -425,7 +425,9 @@ does we have such metric)".
 - **The poll:**
   - Order: fisting, then toys and the bat, then the mouth.
   - Toys: upgrade the physics plugin, not per-toy meshes.
-- **The plugin:** fo4-ocbpc, a sibling repo and GPL-3.0 like its origin (ericncream/OpenCBP_FO4).
+- **The plugin:** fo4-ocbpc, a sibling repo. Its base, abc0192, is MIT. Upstream's `cbpc` branch
+  moved to GPL-3.0 only on 2021-07-21 (c69c98a), after our base. The source must be public all
+  the same: F4SE's readme requires it of every plugin.
   - It branches at abc0192, the commit behind the deployed OCBPC 0.3 `cbp.dll` (2020-04-16), found
     by its config keys: it knows `detectArmor`, `Override:` and `Attach.`, and none of 2021-2022's.
     Everything else keeps behaving as the owner's does.

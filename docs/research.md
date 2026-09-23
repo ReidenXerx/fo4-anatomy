@@ -141,7 +141,7 @@ the physics says. ZeX's answer is twin bones: animations move `Vagina_L_01`, phy
 `Vagina_CBP_L_01`. A vertex weighted to BOTH gets both motions.
 
 OCBPC, the Fallout 4 port with collisions, is open source (github.com/ericncream/OpenCBP_FO4,
-branch `cbpc`, GPL-3.0), and its source settles what the in-game test was going to decide
+branch `cbpc`; MIT at the version the owner runs, GPL-3.0 since 2021-07-21), and its source settles what the in-game test was going to decide
 (decision A-9 lists the file and line of each point):
 - It SETS a simulated bone's local transform to the value it first saw plus the physics offset.
   A bone under physics ignores animations, so the anus bones (no twins) move by physics alone.

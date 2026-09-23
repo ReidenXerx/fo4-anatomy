@@ -42,7 +42,7 @@ SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
 PLUGIN = ROOT / 'build/plugin/Anatomy.esp'
 PAPYRUS = ROOT / 'build/papyrus'
 MCM = ROOT / 'build/mcm/MCM/Config/Anatomy'
-# the fo4-ocbpc fork (GPL-3.0, sibling repo; A-17): OCBPC 0.3 plus stretch groups and prop colliders.
+# the fo4-ocbpc fork (MIT base abc0192, sibling repo; A-17): OCBPC 0.3 plus stretch groups and prop colliders.
 # Must win cbp.dll over Jiggle Physics and OCBPC-0.3-CBBE.
 OCBPC_DLL = ROOT.parent / 'fo4-ocbpc/x64/Release/cbp.dll'
 OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\package')
@@ -87,11 +87,12 @@ def main():
         if not src.exists():
             raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config, make_esp, '
                              f'build-papyrus.ps1, build_mcm and the zero build first')
-    import make_esp
-    print(make_esp.verify(PLUGIN))          # a keyword-less Anatomy.esp would move our layer into bodies
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
+    import make_esp
+    print(make_esp.verify(stage / 'Anatomy.esp'))   # the copy that ships: without its keyword it would
+                                                     # move our layer into bodies for good
     archive = OUT / f'Anatomy-test-{stamp}.7z'
     subprocess.run(['7z', 'a', '-t7z', '-mx=7', str(archive), '.\\*'], cwd=stage, check=True,
                    stdout=subprocess.DEVNULL)
