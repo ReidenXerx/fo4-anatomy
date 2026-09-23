@@ -95,6 +95,25 @@ def check(project, data_root, problems):
     if cb and not same:
         problems.append('cloth physics data is not today\'s CBBE')
 
+    # 7. shader + texture set: today's CBBE (skin tint type, skin wet template, its texture paths)
+    import struct as st
+    sh_c, sh_o = cbbe.types.index('BSLightingShaderProperty'), out.types.index('BSLightingShaderProperty')
+    tx_c, tx_o = cbbe.types.index('BSShaderTextureSet'), out.types.index('BSShaderTextureSet')
+    cb_ = bytes(cbbe.b[cbbe.offsets[sh_c][0]:cbbe.offsets[sh_c][0] + cbbe.offsets[sh_c][1]])
+    ob_ = bytes(out.b[out.offsets[sh_o][0]:out.offsets[sh_o][0] + out.offsets[sh_o][1]])
+    fields = (ab.SH_NAME, ab.SH_TEXSET, ab.SH_WET)
+    same_rest = len(cb_) == len(ob_) and all(cb_[k] == ob_[k] for k in range(len(cb_))
+                                             if not any(f <= k < f + 4 for f in fields))
+    same_ptr = (cbbe.string(st.unpack_from('<i', cb_, ab.SH_NAME)[0]) == out.string(st.unpack_from('<i', ob_, ab.SH_NAME)[0])
+                and cbbe.string(st.unpack_from('<i', cb_, ab.SH_WET)[0]) == out.string(st.unpack_from('<i', ob_, ab.SH_WET)[0])
+                and st.unpack_from('<i', ob_, ab.SH_TEXSET)[0] == tx_o)
+    same_tex = (bytes(cbbe.b[cbbe.offsets[tx_c][0]:cbbe.offsets[tx_c][0] + cbbe.offsets[tx_c][1]])
+                == bytes(out.b[out.offsets[tx_o][0]:out.offsets[tx_o][0] + out.offsets[tx_o][1]]))
+    print(f'7. shader = today\'s CBBE: bytes {same_rest}, material/wet/texture set {same_ptr}; texture set {same_tex} '
+          f'(type {st.unpack_from("<I", ob_, 0)[0]})')
+    if not (same_rest and same_ptr and same_tex):
+        problems.append('shader or texture set is not today\'s CBBE')
+
     # 5. genital sliders stay in the crotch
     pos = os_.positions()
     stray = {}

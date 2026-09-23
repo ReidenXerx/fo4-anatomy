@@ -349,7 +349,7 @@ def main():
         print(f'cloth    BSClothExtraData replaced with today\'s CBBE ({cb[1]} bytes)')
     elif cb:
         raise SystemExit('today\'s CBBE has cloth data and Nahka\'s body has none: nowhere to put it in place')
-    out.save(shape_dir / f'{DATA_FOLDER}.nif')
+    (shape_dir / f'{DATA_FOLDER}.nif').write_bytes(shader_from_cbbe(out, cbbe_nif))
     osd.write(shape_dir / f'{DATA_FOLDER}.osd', data)
     write_osp(args.out / 'SliderSets' / f'{DATA_FOLDER}.osp', cset, csliders, genital)
     import json
@@ -357,6 +357,47 @@ def main():
                                                        'cbbe_slider_data': {n: d for n, _, d, _ in csliders},
                                                        'genital_sliders': [n for n, *_ in genital]}))
     print(f'wrote    {shape_dir / (DATA_FOLDER + ".nif")}, .osd, and SliderSets/{DATA_FOLDER}.osp')
+
+
+# BSLightingShaderProperty fields that point elsewhere (Fallout 4, stream 130; nif.xml, and found
+# at the same offsets in both files): name = the .bgsm material (string), extra data count (must be
+# 0), controller (must be -1), the texture set (block), the wet material (string).
+SH_NAME, SH_EXTRA, SH_CTRL, SH_TEXSET, SH_WET = 4, 8, 12, 40, 60
+
+
+def shader_from_cbbe(ours, cbbe):
+    """File bytes of `ours` with today's CBBE shader and texture set (A-4).
+
+    Nahka's body has shader type 0 (Default) where CBBE's has 5 (Skin Tint). That is the type that
+    takes each NPC's skin tone, so her body would not match its head. It also names the OUTFIT wet
+    template and carries no texture paths (measured: 140 vs 156 bytes; the 16 are the tint fields).
+    CBBE's block is copied byte for byte; its three pointers are re-aimed at this file's own
+    material string, texture set and a SkinTemplate_Wet string (added if missing)."""
+    import struct as st
+    cs = cbbe.types.index('BSLightingShaderProperty')
+    ct = cbbe.types.index('BSShaderTextureSet')
+    os_ = ours.types.index('BSLightingShaderProperty')
+    ot = ours.types.index('BSShaderTextureSet')
+    co, csz = cbbe.offsets[cs]
+    blk = bytearray(cbbe.b[co:co + csz])
+    (extra,), (ctrl,), (tex,) = (st.unpack_from('<I', blk, SH_EXTRA), st.unpack_from('<i', blk, SH_CTRL),
+                                 st.unpack_from('<i', blk, SH_TEXSET))
+    if extra != 0 or ctrl != -1 or tex != ct:
+        raise SystemExit(f'CBBE shader layout not as measured (extra {extra}, controller {ctrl}, texture set {tex} vs {ct})')
+    added = []
+
+    def ours_index(s):
+        if s in ours.strings:
+            return ours.strings.index(s)
+        added.append(s)
+        return len(ours.strings) + len(added) - 1
+    st.pack_into('<i', blk, SH_NAME, ours_index(cbbe.string(st.unpack_from('<i', blk, SH_NAME)[0])))
+    st.pack_into('<i', blk, SH_WET, ours_index(cbbe.string(st.unpack_from('<i', blk, SH_WET)[0])))
+    st.pack_into('<i', blk, SH_TEXSET, ot)
+    to, tsz = cbbe.offsets[ct]
+    print(f'shader   today\'s CBBE (type {st.unpack_from("<I", blk, 0)[0]}, {csz} bytes) and its texture set; '
+          f'strings added {added or "none"}')
+    return ours.with_blocks({os_: bytes(blk), ot: bytes(cbbe.b[to:to + tsz])}, added)
 
 
 def write_osp(path, cset, csliders, genital):

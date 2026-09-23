@@ -352,6 +352,24 @@ class Nif:
                   + bytes(self.b[self.strings_end:self.data_at]))
         return header + b''.join(blocks) + footer
 
+    def with_blocks(self, replace, add_strings=()):
+        """New file bytes with whole blocks replaced ({index: bytes}) and strings appended.
+
+        The replacement bytes must already reference the RIGHT indices (blocks and strings of
+        THIS file, with appended strings numbered after the existing ones); only sizes, the
+        string table and the order of bytes are handled here. Block count and types stay."""
+        strings = list(self.strings) + list(add_strings)
+        blocks = [replace.get(i, bytes(self.b[o:o + s])) for i, (o, s) in enumerate(self.offsets)]
+        last_end = self.offsets[-1][0] + self.offsets[-1][1]
+        raw = [s.encode('latin1') for s in strings]
+        header = (bytes(self.b[:self.type_index_at])
+                  + b''.join(struct.pack('<H', t) for t in self.type_index)
+                  + b''.join(struct.pack('<I', len(b)) for b in blocks)
+                  + struct.pack('<II', len(raw), max(len(r) for r in raw))
+                  + b''.join(struct.pack('<I', len(r)) + r for r in raw)
+                  + bytes(self.b[self.strings_end:self.data_at]))
+        return header + b''.join(blocks) + bytes(self.b[last_end:])
+
     def extra_block(self, kind):
         """(offset, size) of the first block of that type, or None."""
         for i, k in enumerate(self.types):
