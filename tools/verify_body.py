@@ -88,6 +88,13 @@ def check(project, data_root, problems):
     if unexpected:
         problems.append(f'{len(unexpected)} openings where the body should be closed')
 
+    # 6. cloth physics: today's CBBE blob, not Nahka's 2017 one
+    cb, ob = cbbe.extra_block('BSClothExtraData'), out.extra_block('BSClothExtraData')
+    same = bool(cb and ob and cbbe.b[cb[0] + 4:cb[0] + cb[1]] == out.b[ob[0] + 4:ob[0] + ob[1]])
+    print(f'6. cloth physics (BSClothExtraData) identical to today\'s CBBE: {same}')
+    if cb and not same:
+        problems.append('cloth physics data is not today\'s CBBE')
+
     # 5. genital sliders stay in the crotch
     pos = os_.positions()
     stray = {}

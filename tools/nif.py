@@ -125,7 +125,9 @@ class Nif:
         self.path = pathlib.Path(path)
         self.b = bytearray(self.path.read_bytes())
         c = Cursor(self.b, self.b.index(b'\n') + 1)
-        version, _, _, nblocks = c.take('I'), c.take('B'), c.take('I'), c.take('I')
+        version, _, _ = c.take('I'), c.take('B'), c.take('I')
+        self.nblocks_at = c.o                    # uint32 block count
+        nblocks = c.take('I')
         if version != 0x14020007:
             raise ValueError(f'{path}: NIF version {version:#x}, expected 20.2.0.7')
         if c.take('I') != 130:
@@ -133,13 +135,19 @@ class Nif:
         for _ in range(4):
             c.string8()
         types = [c.string32() for _ in range(c.take('H'))]
-        self.types = [types[c.take('H') & 0x7FFF] for _ in range(nblocks)]
+        self.type_names = types
+        self.type_index_at = c.o                 # uint16 per block (high bit a flag), then uint32 sizes
+        self.type_index = [c.take('H') for _ in range(nblocks)]
+        self.types = [types[t & 0x7FFF] for t in self.type_index]
         sizes = [c.take('I') for _ in range(nblocks)]
+        self.strings_at = c.o                    # uint32 count, uint32 max length, the strings
         n = c.take('I')
         c.take('I')
         self.strings = [c.string32() for _ in range(n)]
+        self.strings_end = c.o                   # the group list follows
         for _ in range(c.take('I')):
             c.take('I')
+        self.data_at = c.o                       # first block
         self.offsets = []
         o = c.o
         for s in sizes:
@@ -218,8 +226,148 @@ class Nif:
             xf.append((c.take('9f'), c.take('3f'), c.take('f')))
         return names, xf
 
+    def translate_skin_space(self, shape, d):
+        """Move a skinned shape's whole skin space by d, changing nothing about how it deforms.
+
+        Every vertex moves by d. Each bone's skin-to-bone transform v_bone = R v + t must keep
+        mapping the moved vertex where it mapped the old one: R (v + d) + t' = R v + t, so
+        t' = t - R d. The shape's bounding-sphere centre (shape space) moves by d. A bone's own
+        bounding sphere is in bone space and stays. Fixed-size fields only: in place."""
+        for i in range(shape.count):
+            p = shape.position(i)
+            shape.set_position(i, (p[0] + d[0], p[1] + d[1], p[2] + d[2]))
+        o, _ = self.offsets[shape.index]
+        c = Cursor(self.b, o)
+        self._av(c)
+        cx, cy, cz, r = struct.unpack_from('<4f', self.b, c.o)
+        struct.pack_into('<4f', self.b, c.o, cx + d[0], cy + d[1], cz + d[2], r)
+        o, _ = self.offsets[shape.skin]
+        c = Cursor(self.b, o)
+        c.take('i')
+        data = c.take('i')
+        o, _ = self.offsets[data]
+        c = Cursor(self.b, o)
+        for _ in range(c.take('I')):
+            c.take('4f')
+            rot = c.take('9f')
+            at = c.o
+            t = struct.unpack_from('<3f', self.b, at)
+            rd = [sum(rot[3 * k + j] * d[j] for j in range(3)) for k in range(3)]   # row-major R d
+            struct.pack_into('<3f', self.b, at, t[0] - rd[0], t[1] - rd[1], t[2] - rd[2])
+            c.o = at + 12
+            c.take('f')
+
+    def with_bones(self, shape, bones):
+        """New file bytes with `bones` added to `shape`'s skin (weights all zero; set them after).
+
+        bones: [dict(name, node_rot, node_t, sphere, skin_rot, skin_t, scale)], where node_* is the
+        bone node's transform as the file stores it (skeleton space for a flat BodySlide file),
+        skin_* the skin-to-bone transform and sphere the bone-space bounding sphere (cx, cy, cz, r).
+
+        Fallout 4, stream 130. Each bone is a new NiNode APPENDED after the last block, so no
+        existing reference moves. The root NiNode (block 0) gains the child references, the
+        BSSkin::Instance the bone references, the BSSkin::BoneData the entries, and the header the
+        block count, type indices, sizes and names. The footer (root list) stays last. Every other
+        byte is copied unchanged."""
+        nb = len(self.offsets)
+        root, inst = 0, shape.skin
+        if self.types[root] not in ('NiNode', 'BSFadeNode'):
+            raise ValueError('block 0 is not a node')
+        o, size = self.offsets[inst]
+        c = Cursor(self.b, o)
+        c.take('i')
+        data = c.take('i')
+        n_old = c.take('I')
+        refs_end = c.o + 4 * n_old
+        c.o = refs_end
+        if c.take('I') != 0:
+            raise ValueError('BSSkin::Instance carries a per-bone vector list; not handled')
+        # a bone node to copy the layout from: childless, no extra data, 76 bytes
+        tmpl = next(i for i in self.nodes if i != root and not self.nodes[i]['kids']
+                    and self.offsets[i][1] == 76)
+        node_type = self.type_index[tmpl]
+        new_strings = list(self.strings)
+        new_blocks = []
+        for k, bdef in enumerate(bones):
+            if bdef['name'] in new_strings:
+                raise ValueError(f'{bdef["name"]} is already a string in the file')
+            new_strings.append(bdef['name'])
+            to, _ = self.offsets[tmpl]
+            blk = bytearray(self.b[to:to + 76])
+            struct.pack_into('<i', blk, 0, len(new_strings) - 1)              # name
+            struct.pack_into('<3f', blk, 16, *bdef['node_t'])                 # after name, extras 0, ctrl, flags
+            struct.pack_into('<9f', blk, 28, *bdef['node_rot'])
+            struct.pack_into('<f', blk, 64, 1.0)
+            struct.pack_into('<I', blk, 72, 0)                                # children
+            new_blocks.append(bytes(blk))
+        new_refs = list(range(nb, nb + len(bones)))
+
+        # root node: children count + refs grow
+        ro, rs = self.offsets[root]
+        rc = Cursor(self.b, ro)
+        self._av(rc)
+        kids_at = rc.o
+        kids = rc.take('I')
+        tail = ro + rs
+        root_blk = (bytes(self.b[ro:kids_at]) + struct.pack('<I', kids + len(bones))
+                    + bytes(self.b[kids_at + 4:kids_at + 4 + 4 * kids])
+                    + b''.join(struct.pack('<i', r) for r in new_refs)
+                    + bytes(self.b[kids_at + 4 + 4 * kids:tail]))
+        # skin instance: bone count + refs grow
+        inst_blk = (bytes(self.b[o:o + 8]) + struct.pack('<I', n_old + len(bones))
+                    + bytes(self.b[o + 12:refs_end]) + b''.join(struct.pack('<i', r) for r in new_refs)
+                    + bytes(self.b[refs_end:o + size]))
+        # bone data: count + entries grow
+        do, ds = self.offsets[data]
+        (count,) = struct.unpack_from('<I', self.b, do)
+        entries = b''.join(struct.pack('<4f9f3ff', *b['sphere'], *b['skin_rot'], *b['skin_t'], b['scale'])
+                           for b in bones)
+        data_blk = struct.pack('<I', count + len(bones)) + bytes(self.b[do + 4:do + ds]) + entries
+
+        blocks = []
+        for i, (bo, bs) in enumerate(self.offsets):
+            blocks.append(root_blk if i == root else inst_blk if i == inst else data_blk if i == data
+                          else bytes(self.b[bo:bo + bs]))
+        blocks += new_blocks
+        last_end = self.offsets[-1][0] + self.offsets[-1][1]
+        footer = bytes(self.b[last_end:])
+
+        raw = [s.encode('latin1') for s in new_strings]
+        header = (bytes(self.b[:self.nblocks_at]) + struct.pack('<I', nb + len(bones))
+                  + bytes(self.b[self.nblocks_at + 4:self.type_index_at])
+                  + b''.join(struct.pack('<H', t) for t in self.type_index + [node_type] * len(bones))
+                  + b''.join(struct.pack('<I', len(b)) for b in blocks)
+                  + struct.pack('<II', len(raw), max(len(r) for r in raw))
+                  + b''.join(struct.pack('<I', len(r)) + r for r in raw)
+                  + bytes(self.b[self.strings_end:self.data_at]))
+        return header + b''.join(blocks) + footer
+
+    def extra_block(self, kind):
+        """(offset, size) of the first block of that type, or None."""
+        for i, k in enumerate(self.types):
+            if k == kind:
+                return self.offsets[i]
+        return None
+
     def save(self, path):
         pathlib.Path(path).write_bytes(bytes(self.b))
+
+    def save_renamed(self, path, renames):
+        """Write a copy whose header string table has names replaced ({old: new}).
+
+        Every block names things by INDEX into that table (NiObjectNET's name, extra data names,
+        controller targets), so renaming a string renames everything that uses it and no block
+        byte changes. A new name must not already be in the table: two entries with one name
+        would split the nodes that use them."""
+        missing = [o for o in renames if o not in self.strings]
+        clash = [n for n in renames.values() if n in self.strings]
+        if missing or clash:
+            raise ValueError(f'rename: not in the table {missing}; already in the table {clash}')
+        strings = [renames.get(s, s) for s in self.strings]
+        raw = [s.encode('latin1') for s in strings]
+        table = struct.pack('<II', len(raw), max(len(r) for r in raw))
+        table += b''.join(struct.pack('<I', len(r)) + r for r in raw)
+        pathlib.Path(path).write_bytes(bytes(self.b[:self.strings_at]) + table + bytes(self.b[self.strings_end:]))
 
 
 def bone_origin(xf):

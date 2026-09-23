@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Decision A-6: JaneBod Extended's genital weight pattern onto the aligned body, twice.
+     Pass 1 puts it on ZeX's ANIMATED genital bones (animations move them). Pass 2, from a copy whose
+     vagina bones were renamed to their _CBP_ twins (tools/references.py), puts the same pattern on
+     the bones OCBP physics and OCBPC collisions move. The mask (tools/mask.py) leaves every vertex
+     outside Nahka's genital geometry and a thin ring around it untouched, so CBBE's skin keeps
+     CBBE's weights. The radius is small because the two genital meshes coincide within 0.77 units.
+     Outfit Studio 5.8.2 drops unweighted bones on save, so bones only arrive WITH weights. -->
+<AutomationScript version="1">
+    <Step type="LoadReference" active="true">
+        <SourceFile>ShapeData/References/AnatomyRefJBE.nif</SourceFile>
+        <Shape>JaneBodyHDShapeDataVag</Shape>
+    </Step>
+    <Step type="AddProject" active="true">
+        <SourceFile>SliderSets/AnatomyBody.osp</SourceFile>
+        <Set>Anatomy Body Physics</Set>
+        <!-- without it the project's sliders stay behind and the save has no slider data (measured) -->
+        <AppendNewSliders>true</AppendNewSliders>
+    </Step>
+    <Step type="LoadMask" active="true">
+        <MaskFile>Masks/AnatomyGenitalRegion.xml</MaskFile>
+        <MaskName>AnatomyGenitalRegion</MaskName>
+    </Step>
+    <Step type="CopyBoneWeights" active="true">
+        <ProximityRadius>1.5</ProximityRadius>
+        <MaxResults>5</MaxResults>
+        <BoneList>Vagina_00, Vagina_L_01, Vagina_L_02, Vagina_R_01, Vagina_R_02, Anus_01, Anus_02, Anus_03, Anus_04</BoneList>
+    </Step>
+    <Step type="ClearReference" active="true"/>
+    <Step type="LoadReference" active="true">
+        <SourceFile>ShapeData/References/AnatomyRefJBE_CBP.nif</SourceFile>
+        <Shape>JaneBodyHDShapeDataVag</Shape>
+    </Step>
+    <Step type="LoadMask" active="true">
+        <MaskFile>Masks/AnatomyGenitalRegion.xml</MaskFile>
+        <MaskName>AnatomyGenitalRegion</MaskName>
+    </Step>
+    <Step type="CopyBoneWeights" active="true">
+        <ProximityRadius>1.5</ProximityRadius>
+        <MaxResults>5</MaxResults>
+        <BoneList>Vagina_CBP_00, Vagina_CBP_L_01, Vagina_CBP_L_02, Vagina_CBP_R_01, Vagina_CBP_R_02</BoneList>
+    </Step>
+    <Step type="SaveProject" active="true">
+        <DisplayName>Anatomy Body ZeX</DisplayName>
+        <OutputFileName>FemaleBody</OutputFileName>
+        <OutputDataPath>meshes\actors\character\characterassets</OutputDataPath>
+        <SliderSetFile>SliderSets\AnatomyBodyZeX.osp</SliderSetFile>
+        <ShapeDataFolder>AnatomyBodyZeX</ShapeDataFolder>
+        <ShapeDataFile>AnatomyBodyZeX.nif</ShapeDataFile>
+        <GenWeights>false</GenWeights>
+        <AutoCopyRef>false</AutoCopyRef>
+    </Step>
+</AutomationScript>

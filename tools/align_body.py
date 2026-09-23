@@ -336,6 +336,19 @@ def main():
     shape_dir = args.out / 'ShapeData' / DATA_FOLDER
     shape_dir.mkdir(parents=True, exist_ok=True)
     (args.out / 'SliderSets').mkdir(parents=True, exist_ok=True)
+    # CBBE Physics' Havok cloth (the CLOTH_Bone_Googles breast physics) lives in one
+    # BSClothExtraData block. Nahka's is the 2017 copy, a different blob of the same 49,140 bytes
+    # than today's CBBE and the owner's built body carry (sha1 3c96aee3 vs 926b7103), so today's
+    # goes in (A-4). The first 4 bytes are the block's name index into ITS OWN string table and
+    # stay; the rest is the byte count and the blob.
+    ob, cb = out.extra_block('BSClothExtraData'), cbbe_nif.extra_block('BSClothExtraData')
+    if ob and cb:
+        if ob[1] != cb[1]:
+            raise SystemExit(f'cloth data sizes differ ({ob[1]} vs {cb[1]}): cannot swap in place')
+        out.b[ob[0] + 4:ob[0] + ob[1]] = cbbe_nif.b[cb[0] + 4:cb[0] + cb[1]]
+        print(f'cloth    BSClothExtraData replaced with today\'s CBBE ({cb[1]} bytes)')
+    elif cb:
+        raise SystemExit('today\'s CBBE has cloth data and Nahka\'s body has none: nowhere to put it in place')
     out.save(shape_dir / f'{DATA_FOLDER}.nif')
     osd.write(shape_dir / f'{DATA_FOLDER}.osd', data)
     write_osp(args.out / 'SliderSets' / f'{DATA_FOLDER}.osp', cset, csliders, genital)

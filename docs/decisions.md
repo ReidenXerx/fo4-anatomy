@@ -28,7 +28,7 @@ reference, never an input copied into the output.
 ## A-4 — Geometry: Nahka's CBBEVaginaMorphs, aligned to today's CBBE (agent, 2026-09-23)
 
 Nahka's physics variant is CBBE plus 2,591 vertices: a real slit, a vaginal canal about 6 units
-deep and an anal canal about 16. It has twelve genital sliders (VaginaPenetrate, AnusPenetrate, ...)
+deep and a shallow anal pocket about 2 units deep. It has twelve genital sliders (VaginaPenetrate, AnusPenetrate, ...)
 and no genital bones. CBBE itself is ONE closed skin at the crotch, so no amount of weighting could
 open it. This is measured, see `research.md`.
 
@@ -45,3 +45,22 @@ units on AppleCheeks, so taking Nahka's data wholesale is out too.
 
 The project folder is `fo4-anatomy` until the owner names it. Renaming is cheap. Poll it before
 anything user-visible exists.
+
+## A-6 — Weight both the animated genital bones and their `_CBP_` twins (agent, 2026-09-23)
+
+JaneBod Extended weights only ZeX's ANIMATED genital bones, lightly (0.37 at most), and gives them
+no physics. The CBP lineage SETS the transform of any bone it simulates each frame (CBPSSE
+`Thing::update`), which is why ZeX keeps `_CBP_` twins. So:
+
+- Vagina: JaneBod's weight pattern goes on the animated bones (Vagina_00, L/R_01, L/R_02) AND the
+  same pattern on their twins (Vagina_CBP_00, CBP_L/R_01, CBP_L/R_02). ZeX-rigged animations move
+  the first set, and OCBP physics plus OCBPC collisions move only the second. A vertex moves by
+  both.
+- Anus: ZeX has no twins, so it gets the animated bones only (Anus_01-04). Whether physics can sit
+  on them without fighting animations is for the in-game test.
+- How the bones get in: Outfit Studio 5.8.2 drops unweighted bones on save (`CleanupBones`), so each
+  set arrives WITH its weights. Two `CopyBoneWeights` passes, one from JaneBod's mesh and one from a
+  copy whose bone names were renamed to the twins. The rename touches only the header string table;
+  blocks refer to strings by index.
+- The final per-vertex balance between Pelvis_skin, the animated bone and the twin is set after
+  measuring what Outfit Studio's spreading copy produced.

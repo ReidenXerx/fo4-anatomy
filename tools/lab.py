@@ -53,6 +53,9 @@ def setup():
         shutil.copytree(PROJECT / 'SliderSets', LAB / 'SliderSets', dirs_exist_ok=True)
         if (PROJECT / 'Masks').exists():
             shutil.copytree(PROJECT / 'Masks', LAB / 'Masks', dirs_exist_ok=True)
+    refs = ROOT / 'build/references'
+    if refs.exists():
+        shutil.copytree(refs, LAB / 'ShapeData/References', dirs_exist_ok=True)
     (LAB / 'SliderGroups').mkdir(exist_ok=True)
     (LAB / 'SliderGroups/AnatomyLab.xml').write_text(
         '<SliderGroups>\n'
@@ -91,16 +94,123 @@ def guard(free):
                          'Ask the holder for "free", then pass --game-is-free.')
 
 
+CLOTH_KEEP = 'AnatomyBody'      # the cloth-data origin to keep: our body's own (today's CBBE blob)
+
+
+def answer_cloth_dialog(pid, stop, report):
+    """Headless mode does not suppress SaveProject's "Choose cloth data" dialog (a
+    wxMultiChoiceDialog from OutfitProject::ChooseClothData, nothing ticked, measured hanging a run
+    13 minutes). Watch for it, tick the origins naming CLOTH_KEEP, keep a screenshot, press OK.
+
+    Win32 only, no focus taken: LB_GETCOUNT/LB_GETTEXT read the items (wxCheckListBox keeps its
+    strings), LB_SETCURSEL + a posted Space ticks one (wx toggles the selected item), BM_CLICK OK."""
+    import ctypes
+    import time
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32
+    WNDENUMPROC = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def windows(parent=None):
+        found = []
+        cb = WNDENUMPROC(lambda h, l: found.append(h) or True)
+        if parent is None:
+            user32.EnumWindows(cb, 0)
+        else:
+            user32.EnumChildWindows(parent, cb, 0)
+        return found
+
+    def text(h):
+        buf = ctypes.create_unicode_buffer(512)
+        user32.GetWindowTextW(h, buf, 512)
+        return buf.value
+
+    def cls(h):
+        buf = ctypes.create_unicode_buffer(128)
+        user32.GetClassNameW(h, buf, 128)
+        return buf.value
+
+    while not stop.is_set():
+        for h in windows():
+            p = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(h, ctypes.byref(p))
+            if p.value != pid or text(h) != 'Choose cloth data' or not user32.IsWindowVisible(h):
+                continue
+            kids = windows(h)
+            lb = next((k for k in kids if cls(k) == 'ListBox'), None)
+            ok = next((k for k in kids if cls(k) == 'Button' and text(k) == 'OK'), None)
+            if not lb or not ok:
+                continue
+            n = user32.SendMessageW(lb, 0x018B, 0, 0)                    # LB_GETCOUNT
+            items = []
+            for i in range(n):
+                size = user32.SendMessageW(lb, 0x018A, i, 0)             # LB_GETTEXTLEN
+                buf = ctypes.create_unicode_buffer(size + 1)
+                user32.SendMessageW(lb, 0x0189, i, buf)                 # LB_GETTEXT
+                items.append(buf.value)
+            for i, item in enumerate(items):
+                if CLOTH_KEEP.lower() in item.lower():
+                    user32.SendMessageW(lb, 0x0186, i, 0)                # LB_SETCURSEL
+                    user32.PostMessageW(lb, 0x0100, 0x20, 0x00390001)    # WM_KEYDOWN Space
+                    user32.PostMessageW(lb, 0x0101, 0x20, 0xC0390001)    # WM_KEYUP Space
+                    time.sleep(0.4)
+            snap(h, LAB / 'logs' / f'cloth-dialog-{int(time.time())}.png')
+            report.append(f'cloth dialog: {len(items)} origin(s) {items}; ticked those naming {CLOTH_KEEP!r}')
+            user32.PostMessageW(ok, 0x00F5, 0, 0)                            # BM_CLICK
+            time.sleep(2)
+        stop.wait(0.5)
+
+
+def snap(hwnd, path):
+    """PrintWindow the window itself, whatever is in front of it."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        user32, gdi32 = ctypes.windll.user32, ctypes.windll.gdi32
+        r = wintypes.RECT()
+        user32.GetWindowRect(hwnd, ctypes.byref(r))
+        w, h = r.right - r.left, r.bottom - r.top
+        path.parent.mkdir(parents=True, exist_ok=True)
+        hdc = user32.GetWindowDC(hwnd)
+        mem = gdi32.CreateCompatibleDC(hdc)
+        bmp = gdi32.CreateCompatibleBitmap(hdc, w, h)
+        gdi32.SelectObject(mem, bmp)
+        user32.PrintWindow(hwnd, mem, 2)
+        import struct as st
+        header = st.pack('<IiiHHIIiiII', 40, w, -h, 1, 32, 0, 0, 0, 0, 0, 0)
+        info = ctypes.create_string_buffer(header, len(header) + 16)   # GetDIBits may write into it
+        buf = ctypes.create_string_buffer(w * h * 4)
+        gdi32.GetDIBits(mem, bmp, 0, h, buf, info, 0)
+        # a BMP needs no image library: file header + the DIB header + the pixels
+        body = header + buf.raw
+        path.with_suffix('.bmp').write_bytes(b'BM' + st.pack('<IHHI', 14 + len(body), 0, 0, 54) + body)
+        gdi32.DeleteObject(bmp)
+        gdi32.DeleteDC(mem)
+        user32.ReleaseDC(hwnd, hdc)
+    except Exception as e:                                                      # evidence only
+        print(f'(screenshot failed: {e})')
+
+
 def automate(script, timeout):
-    """Run one automation script headless; returns Outfit Studio's exit code (0 = clean, 10 = step errors)."""
+    """Run one automation script headless; returns 0 when the log shows a clean headless run."""
     if not (LAB / 'Automations' / f'{script}.xml').exists():
         raise SystemExit(f'no {script}.xml in {LAB / "Automations"} (run setup after adding it to automation/)')
     # 5.8.2 exits 0 even when a step fails (master propagates the code, 5.8.2 does not), so the
     # verdict comes from the log, where level [1] is an error. The log is APPENDED to across runs
     # (measured: a 06:58 failure was still there at 07:11), so only this run's part counts.
+    import threading
     log = LAB / 'Log_OS.txt'
     before = log.stat().st_size if log.exists() else 0
-    r = subprocess.run([str(LAB / 'OutfitStudio.exe'), '-a', script], cwd=LAB, timeout=timeout)
+    proc = subprocess.Popen([str(LAB / 'OutfitStudio.exe'), '-a', script], cwd=LAB)
+    stop, report = threading.Event(), []
+    watcher = threading.Thread(target=answer_cloth_dialog, args=(proc.pid, stop, report), daemon=True)
+    watcher.start()
+    try:
+        proc.wait(timeout=timeout)
+    finally:
+        stop.set()
+    for line in report:
+        print(line)
+    r = proc
     size = log.stat().st_size if log.exists() else 0
     if size == before:
         print('Outfit Studio wrote nothing to its log: it did not run the script')
