@@ -826,3 +826,38 @@ anus ... just make it slightly bigger for being slightly noticeable from front".
   Build 9117dc1cb72f.
 - compare_builds expects the bake on the 26 rim vertices, from CBBE's own positions. A gate
   expecting 0.6 fails (checked).
+
+## A-26 — The face comes alive while the mouth is busy (the owner, 2026-09-24)
+
+**The owner, after a clean smoke test of everything:** "during mouth busy actions which u already
+handled for open mouth ... lets make expressions on the face instead of stony but mouth ... cheeks,
+brows, nose".
+
+**Why the face was still.** Rapport's oral set (`Rapport_Oral`, AAF mfg data) shapes the mouth
+(funnels, pucker, lip rolls) and half-closes the eyes. It sets no brow, cheek or nose morph, so
+during oral the upper face rested.
+
+**Decision.**
+- The mouth hook, which already writes after the engine's merge, also shapes the upper face while
+  something is in the mouth.
+- Each `[Mouth] face=id:contact:depth:stroke` term raises one morph toward
+  `contact + depth x (tip past the lips / faceDepth) + stroke x (in-and-out speed / faceStroke)`,
+  eased at faceRate and faded with the mouth's own contact blend.
+- It only ever RAISES: max with the merged weight. Rapport's sets and the animation's face are never
+  erased, and a stronger brow from a Pleasure set wins.
+- Refused at load and logged: ids outside 0-49, the mouth's own morphs, the blink (18/41), and more
+  than 16 terms.
+- First values (`physics_design.FACE_WHILE_BUSY`), for the owner's eye:
+
+| Term | At contact | + with depth | + with stroke speed |
+| --- | --- | --- | --- |
+| inner brows up | 0.3 | +0.3 | |
+| outer brows | 0.1 | +0.1 | |
+| brow squeeze | | +0.15 | +0.2 |
+| cheeks up | 0.3 | +0.15 | |
+| nose up | | +0.1 | +0.15 |
+
+- Tuning means changing the ini, regenerating and writing it in place, with no rebuild.
+- physics_config refuses a line longer than the fork's INI reader takes (200 bytes); it would cut
+  it silently.
+- Rapport was told. Live: cbp.dll bd3362aefdb5 (fork 3edf048), Anatomy/ocbp.ini 8df243d02004.

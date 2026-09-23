@@ -828,3 +828,12 @@ opening at 50%, plus value x the slider's diff, on both shapes. It then runs thr
   each stay at or under it.
 - Recommended to Silhouette for its poll: keep S-17 and narrow those two ranges. Scaling our spheres
   per woman would lift the limit altogether; it is not built.
+
+- **The face while the mouth is busy (A-26):**
+  - `[Mouth] face=id:contact:depth:stroke` terms raise brows, cheeks and nose during oral contact,
+    as max(merged, ours x contact).
+  - Depth is how far the tip is past the lip plane (F points out of the mouth, so it is -dT). Stroke
+    is the smoothed |d depth / dt|.
+  - The ids are the engine's 50-morph table as fo4-rapport/tools/make_mfg.py quotes it. 26 is
+    labelled "Right Outer Brow Up" but sorts as "Right Brow Outer Up", the mirror of 3.
+  - inih cuts lines at 200 bytes: physics_config guards it.

@@ -262,3 +262,15 @@ running one cannot be moved. Checked outside the game.
   (default 0).
 - The .tri's AnatomyOpening morph is now that extra, so at run time it must stay 0 (Silhouette
   never writes it).
+
+### The face while the mouth is busy (A-26): cbp.dll bd3362aefdb5 and Anatomy/ocbp.ini, in place
+
+- `anatomy_ocbpc.log` should say `[mouth] face while busy: 9 term(s)`, with no "refused" note.
+- In an oral scene, from the first contact:
+  - her inner brows lift and her cheeks rise;
+  - deeper, the brows lift more;
+  - on quick strokes, the brows draw together a little and the nose wrinkles.
+- When contact ends, it all fades with the mouth, within about 0.35 s plus the blend.
+- Nothing else should change: other scenes, dialogue, kissing, or her blink.
+- Too much or too little: say which feature (brows, cheeks, nose). Each is one number in
+  physics_design.FACE_WHILE_BUSY.
