@@ -2,6 +2,10 @@
 
 Everything here was measured on the owner's install on 2026-09-23. It was not read off a mod page.
 
+> This is the first survey, kept as written. The current reference is **`field-notes.md`**, which
+> is newer where they differ. For example, women load the DFS female skeleton, not ZeX's, and the
+> physics ini's source is MadKita's Actual Jiggle.
+
 ## Nothing ready-made exists for CBBE
 
 A Nexus v2 GraphQL sweep (about 55 name and description queries) found no CBBE body weighted to
