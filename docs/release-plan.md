@@ -24,7 +24,7 @@
 | ocbp.ini (MadKita's Actual Jiggle, Nexus 90677) | modification and asset use free, no credit needed | the builder merges our lines into the player's own ini |
 | OCBPCollisionConfig.txt (Jiggle Physics, Nexus 82699) | asset use needs permission | the builder appends our lines to the player's own file |
 | Skin textures | the player's own skin mod; CBBE's texture resources allow variants with credit and links | the builder patches the player's own maps |
-| OCBPC fork (fo4-ocbpc) | MIT at our base abc0192 (upstream's `cbpc` is GPL-3.0 only since 2021-07-21); F4SE requires a plugin's source to be public | ship `cbp.dll` with the MIT notice and a public source link |
+| OCBPC fork (fo4-ocbpc) | our changes GPL-3.0 (A-24); base abc0192 MIT (upstream's `cbpc` is GPL-3.0 only since 2021-07-21); F4SE requires a plugin's source to be public | ship `cbp.dll` with both licence texts and a public source link |
 | Anatomy.esp, scripts, MCM, tools | ours | ship |
 
 ## Why not the FOMOD itself
@@ -74,7 +74,8 @@
   - the owner's in-game look at the zero-touch build: runtime bones, genital texture, mouth, MCM;
   - a public repo for the fo4-ocbpc fork (F4SE requires a plugin's source to be public; the README
     names github.com/ReidenXerx/fo4-ocbpc and the exact commit). Publishing it is the owner's act;
-  - the Nexus page (nexus-tools) and the final name;
+  - the Nexus page (nexus-tools). The title is settled (A-24): "Anatomy - CBBE Genitals, Physics
+    and Arousal";
   - the courtesy messages to Nahka and to Skeletal Adjustments' author. That author's skeleton is no
     longer touched at all, so this one is courtesy only.
 - **Closed risk:** A-17's prop colliders took every item on the hand AnimObject nodes, idle mugs

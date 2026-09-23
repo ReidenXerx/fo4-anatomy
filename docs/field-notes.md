@@ -217,9 +217,11 @@ GPL-3.0; it never ships.
   config. OCBPC's own logging stays compiled out (`LOG_ON` undefined in log.cpp).
 - **Safe fallback:** OCBPC 0.3 ignores every new key, so a body weighted to `_Stretch` children
   behaves exactly as before under the old DLL.
-- **Licence:** the fork's base (abc0192) is MIT, so the DLL ships with that notice (the release
-  puts the fork's LICENSE beside it). The source must be public anyway, by F4SE's rule for
-  plugins: "plugins must have their source code publicly available" (f4se_readme.txt).
+- **Licence (A-24):**
+  - Our changes are GPL-3.0 (`COPYING`), and the base abc0192 stays MIT (`LICENSE`). So the DLL
+    ships under the GPL-3.0, with both texts beside it.
+  - The source must be public anyway, by F4SE's rule for plugins: "plugins must have their
+    source code publicly available" (f4se_readme.txt).
 
 ---
 
@@ -717,7 +719,8 @@ GPL-3.0; it never ships.
 - The mouth (§10).
 - Release:
   - ~~the skeleton derivative~~: gone. The fork adds our bones at run time (A-21, §21);
-  - the fork's source in a public repo (F4SE's rule for plugins; the base is MIT): the owner's act;
+  - the fork's source in a public repo (GPL-3.0 for our changes, A-24; F4SE's rule for plugins):
+    the owner's act;
   - ~~Nahka's and CBBE's permissions~~: only Nahka's own work ships, as a patch applied to the
     player's CBBE (A-23).
 - Props: since the fork's `[Props] targets=`, a prop pushes only the genital and anus bones. Idle

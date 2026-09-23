@@ -736,3 +736,35 @@ does we have such metric)".
 - **Also in this build:** the arousal nipple layer comes off while Silhouette's refit marker says
   heavy clothes (its S-49/S-50 contract). Silhouette_Refit under Silhouette.esp|0x803 is then an
   even whole number of at least 2. It is read directly, with no call into Silhouette's scripts.
+
+## A-24 — The fork's licence and the page title (owner's polls, 2026-09-23)
+
+**Decision.**
+- fo4-anatomy's changes to the fork (fo4-ocbpc) are under the **GNU GPL version 3**, like upstream's
+  `cbpc` branch today.
+- The code the fork starts from (abc0192, 2020) keeps its **MIT** licence. So `cbp.dll` is
+  distributed under the GPL-3.0, with the MIT notice kept.
+- The Nexus page title is **"Anatomy - CBBE Genitals, Physics and Arousal"**. The files keep the
+  name Anatomy (Anatomy.esp, AnatomyBuilder, the archive).
+
+**The facts that led to the question (read from git, 2026-09-23).**
+- Every doc said the fork was GPL-3.0.
+- Our base abc0192 carries upstream's MIT LICENSE. Upstream moved `cbpc` to the GPL-3.0 on
+  2021-07-21 (c69c98a), a commit our base predates. GitHub shows GPL-3.0 for the repo because of
+  it.
+- The source must be public in any case: F4SE's readme says "plugins must have their source code
+  publicly available".
+- `tools/ocbpc_sim.py` ports 46cfb20, after the relicence, so it is GPL-3.0. It never ships.
+
+**What was done (fork ed2253a, release 7039538).**
+- Fork:
+  - `COPYING` holds the GPL-3.0 text, taken byte for byte from upstream's own LICENSE.
+  - A section 5a notice heads every source file we added or changed.
+  - `README.md` states the licences, a section 7 additional permission to link with F4SE (our
+    parts only), the build, and the third-party code in the tree.
+- Release:
+  - `cbp.dll` ships beside `cbp.dll - GPL-3.0.txt` and `cbp.dll - MIT (OCBPC).txt`.
+  - The README names the exact fork commit players get as source.
+  - The builder ships Python's and Pillow's licence files. OpenSSL is left out of its bundle
+    (nothing uses the network).
+- Publishing the fork's repository stays the owner's act.
