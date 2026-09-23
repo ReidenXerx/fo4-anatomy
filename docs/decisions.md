@@ -64,3 +64,35 @@ no physics. The CBP lineage SETS the transform of any bone it simulates each fra
   blocks refer to strings by index.
 - The final per-vertex balance between Pelvis_skin, the animated bone and the twin is set after
   measuring what Outfit Studio's spreading copy produced.
+
+## A-7 — Physics config: built from the owner's, dead lines out, ours in (agent, 2026-09-23; owner: "feel free enhance physics config")
+
+Deployed today: `ocbp.ini` from MadKita's Actual Jiggle, and `OCBPCollisionConfig.txt` plus the
+plugin (`cbp.dll`, OCBPC 0.3) from Jiggle Physics. `tools/physics_config.py` rebuilds both from the
+deployed copies, so nothing the owner tuned is lost:
+
+- **Dead lines are commented out with the reason.** 12 of the 17 attached bones are 3BBB names the
+  ZeX skeleton does not have (18 lines, counting `[Attach.A]`).
+- **Breasts** (owner's request) are fixed in the BODY, not the config. CBBE's breast weights moved
+  from the Havok-cloth `CLOTH_Bone_Googles_00/01` to `LBreast_skin`/`RBreast_skin`, bit-identical
+  (`zex_bones.py`). The existing `[Breast]` section and the hand collisions reach them now.
+- **Vagina:** the five `_CBP_` twins get springs (`[Labia]`, `[Clitoris]`). They are stiff and
+  damped, so walking does not wobble them, with linear 0.9 so a collision's push is not scaled away.
+- **Anus:** the four `Anus_0x` bones get springs (`[Anus]`); ZeX has no anus twins.
+- **Collisions:** the lower-labia twins and the four anus bones are affected; `Penis_01`-`05` are
+  colliders. Every sphere of ours sits ON its bone (offset 0,0,0). Whether OCBPC 0.3 rotates an
+  offset by the bone is unproven: CBPC does (`worldPos = pos + rot * offset`), yet the deployed
+  breast spheres only make sense as world offsets. A zero offset means the same either way. The
+  opening then comes from the bones' own placement, L_02 0.64 left of the midline and R_02 0.53
+  right. `Penis_00` is left out because every skeleton has it, and a female's own `Penis_00` rests
+  2 units from her vulva.
+
+## A-8 — The in-game test ships as a Vortex mod, not as edits to deployed files (2026-09-23)
+
+The first plan wrote the test build into the four deployed files in place (with backups and a
+restore). The session's permission policy refused it as modifying shared resources, and it was
+right: a mod the owner installs is visible, conflict-managed by Vortex, and undone by disabling it.
+`tools/package.py` builds `D:\F4Output\AnatomyLab\package\Anatomy-test-<stamp>.7z`. It holds the
+zeroed body, the two configs, and the BodySlide project with its zero preset. It must win its three
+conflicts: `bodyslides_f4_sd`, MadKita's Actual Jiggle, and Jiggle Physics.
+`tools/install_test.py` stays for an owner who explicitly wants the in-place route.

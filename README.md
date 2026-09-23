@@ -3,10 +3,15 @@
 A working vagina and anus for the CBBE female body in Fallout 4: real geometry, ZeX genital
 bones, and OCBP/OCBPC physics, so that a collision opens the body rather than a script.
 
-Status: the body is **aligned to today's CBBE and verified**, including a real BodySlide build.
-Built with "CBBE Curvy", it equals today's CBBE build on all 22,488 shared vertices, and its
-`.tri` carries CBBE's 84 morphs unchanged plus the 12 genital ones. ZeX bones and weights
-(through JaneBod Extended), physics configs and the in-game test are next.
+Status (2026-09-23): **built and verified offline; the in-game test is next.**
+- The body: Nahka's genital geometry, aligned to today's CBBE.
+- 14 ZeX genital bones, with JaneBod Extended's weight pattern on the animated bones and their
+  physics twins.
+- Breast weights moved onto the bones OCBP drives.
+- Physics and collision configs built from the owner's own.
+- A BodySlide build accepts it, and the zeroed build equals the owner's current body on every
+  shared vertex, mesh and morphs alike.
+- The test ships as a Vortex mod archive (A-8).
 
 ## How it is built
 

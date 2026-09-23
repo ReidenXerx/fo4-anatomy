@@ -51,6 +51,8 @@ def setup():
     if PROJECT.exists():
         shutil.copytree(PROJECT / 'ShapeData', LAB / 'ShapeData', dirs_exist_ok=True)
         shutil.copytree(PROJECT / 'SliderSets', LAB / 'SliderSets', dirs_exist_ok=True)
+        if (PROJECT / 'SliderPresets').exists():
+            shutil.copytree(PROJECT / 'SliderPresets', LAB / 'SliderPresets', dirs_exist_ok=True)
         if (PROJECT / 'Masks').exists():
             shutil.copytree(PROJECT / 'Masks', LAB / 'Masks', dirs_exist_ok=True)
     refs = ROOT / 'build/references'
