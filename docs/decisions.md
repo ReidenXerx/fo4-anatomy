@@ -228,3 +228,23 @@ _CBP_ twins keep their weights.
   verify_zex PASS, compare_builds PASS.
 - **If the rod survives this build,** the next suspect is OCBPC on the twins (turn their
   physics off to prove it).
+
+## A-13 — The outer lips jiggle and react (owner poll, 2026-09-23)
+
+The owner asked to "handle the lips" and chose all three answers: jiggle and react, change their
+look, vary per woman. This entry is the first; the look and the variety come through BodySlide
+(the owner picks) and Silhouette's BodyGen ranges (`Morph@low:high`).
+- **Weights:** a soft layer on the upper-lip twins (Vagina_CBP_L_01 / R_01), left side to L and
+  right to R, 0.45 on the crests. It fades to nothing at the inner lips' edge (|x| 0.4-1.0), at the
+  groin crease (|x| 1.8-2.8), at the perineum and mons, and up into the body. The inner zone stays
+  the lower-lip twins' alone. The twins are the lower lips' parents, so the whole lip complex
+  wobbles together.
+- **Springs (`LabiaOuter`):** stiffness 60, damping 3, linear 0.5, cap 1.2 real units. Measured with
+  ocbpc_sim: the bone moves 0.57 at a walk, 0.42 per thrust, and hits the cap running. That is
+  0.26 / 0.19 / 0.54 units at the crest.
+- **Collision:** a 0.8 sphere on each crest (x ±1.4 from the midline bones), so hands and the shaft
+  squish the outer lips outward.
+- **Measured (fit_check):** the entrance clears better (as drawn 64% → 55%, the same as Nahka's own
+  slider; steeper 55% → 46%). Contact stretch is unchanged, and there are no seam cracks. With both
+  bones pinned at the cap in any direction, the 99th percentile of edge growth is 1.3-2.0 and the
+  worst edge is 4.7 (apart), below Nahka's slider (13). Only an unlikely diagonal extreme reaches 7.

@@ -33,7 +33,7 @@ PLUGINS = zb.ab.DEFAULT_DATA / 'F4SE/Plugins'
 OUT = ROOT / 'build/config'
 
 ATTACH = [('Vagina_CBP_00', 'Clitoris'),
-          ('Vagina_CBP_L_01', 'Labia'), ('Vagina_CBP_R_01', 'Labia'),
+          ('Vagina_CBP_L_01', 'LabiaOuter'), ('Vagina_CBP_R_01', 'LabiaOuter'),
           ('Vagina_CBP_L_02', 'Labia'), ('Vagina_CBP_R_02', 'Labia')]
 # No anus bones (decision A-11): OCBPC would SET them and discard their animation, and collisions on
 # them, 1.0-1.4 units behind Nahka's ring, dragged the pocket into a spike in the owner's look.
@@ -54,7 +54,12 @@ SPRING = dict(stiffness=150.0, stiffness2=0.0, damping=6.0, timetick=4.0, timeSt
 # maxoffset 12.5 x linear 0.2 = 2.5 real units per axis: above the ~1.9 a shaft needs (fit_check), below
 # the 3 that pinned bones reached in the owner's look (A-11).
 QUIET = dict(linearX=0.2, linearY=0.2, linearZ=0.2, maxoffsetX=12.5, maxoffsetY=12.5, maxoffsetZ=12.5)
+# The outer lips wobble (A-13): softer, freer, capped lower. Measured (tools/ocbpc_sim.py): bone 0.57 at
+# a walk, 0.42 per thrust, the 1.2 cap when running; x the 0.45 layer = 0.26 / 0.19 / 0.54 at the crest.
+SOFT = dict(SPRING, stiffness=60.0, damping=3.0, linearX=0.5, linearY=0.5, linearZ=0.5,
+            maxoffsetX=2.4, maxoffsetY=2.4, maxoffsetZ=2.4)
 SECTIONS = {
+    'LabiaOuter': SOFT,
     'Labia': dict(SPRING, **QUIET),
     'Clitoris': dict(SPRING, **QUIET),
 }

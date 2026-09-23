@@ -31,12 +31,16 @@ residual rather than hiding it.
 import math
 
 REST = {'Vagina_CBP_L_02': (-0.64, 1.09, -55.71), 'Vagina_CBP_R_02': (0.53, 1.07, -55.71),
+        'Vagina_CBP_L_01': (0.0, 2.45, -55.71), 'Vagina_CBP_R_01': (0.0, 2.45, -55.71),
         'Anus_01': (0.0, -2.98, -54.26), 'Anus_02': (0.0, -2.53, -54.49),
         'Anus_03': (0.10, -2.76, -54.44), 'Anus_04': (-0.10, -2.76, -54.44)}
 
 # "x,y,z,r" per sphere; offsets are in the ACTOR's frame (heading only; CollisionHub.cpp:124 and
 # Thing.cpp:326), so only x (left/right) offsets are used: they survive the pelvis pitching.
 AFFECTED = {'Vagina_CBP_L_02': [(-0.6, 0.0, 0.0, 1.2)], 'Vagina_CBP_R_02': [(0.6, 0.0, 0.0, 1.2)],
+            # the outer lips (A-13): a small sphere on each lip crest, so a hand or the shaft squishes
+            # them outward; their bones sit on the midline, so the x offset puts the sphere on the crest
+            'Vagina_CBP_L_01': [(-1.4, 0.0, 0.0, 0.8)], 'Vagina_CBP_R_01': [(1.4, 0.0, 0.0, 0.8)],
             }
 # The anus carries NO physics (decision A-11): in the owner's own look (2026-09-23, Photo118-120) its
 # bones, pushed off to OCBPC's cap by a shaft passing beside them, dragged the anal pocket out into a

@@ -83,6 +83,30 @@ K, RADIUS = 4, 1.0          # the two genital meshes coincide within 0.77 units 
 LIP_TWINS = ('Vagina_CBP_L_02', 'Vagina_CBP_R_02')
 ANUS = ('Anus_01', 'Anus_02', 'Anus_03', 'Anus_04')
 LAYER_CAP = 0.9                             # the layer never takes more than this of a vertex
+# The outer lips (labia majora) jiggle and react (A-13, owner poll 2026-09-23): a soft layer on the
+# upper-lip twins, left of the midline to L, right to R, from the inner lips' edge out to the groin
+# crease and from the perineum to the mons, full on the crests, fading to nothing at each border.
+# The inner zone (|x| < 0.4) stays the lower-lip twins' alone: the fitted layer opens it.
+OUTER_TWINS = ('Vagina_CBP_L_01', 'Vagina_CBP_R_01')
+OUTER_W = 0.45
+
+
+def _ramp(v, a, b):
+    """0 at a, 1 at b (either direction), linear between."""
+    t = (v - a) / (b - a)
+    return 0.0 if t <= 0 else 1.0 if t >= 1 else t
+
+
+def outer_lip_weights(p):
+    x, y, z = p
+    ax = abs(x)
+    fx = min(_ramp(ax, 0.4, 1.0), _ramp(ax, 2.8, 1.8))
+    fy = min(_ramp(y, -1.3, -0.5), _ramp(y, 5.5, 4.0))
+    fz = _ramp(z, -53.5, -55.0)
+    w = OUTER_W * fx * fy * fz
+    if w <= 0.0:
+        return {}
+    return {OUTER_TWINS[0] if x < 0 else OUTER_TWINS[1]: w}
 MAX_GENITAL = 0.95                          # the vertex keeps at least this much of its own
 MOVE_MIN = 0.02                             # morph moves below this carry no layer
 SMOOTH_ROUNDS = 3
@@ -403,7 +427,9 @@ def main():
                 genital[TWIN[b]] = s * x * TWIN_SHARE
             elif ANIM_WEIGHTS:
                 genital[b] = s * x                        # the anus's animated bones (A-11: JaneBod's light pattern)
-        layer = smoothed.get(j, {})
+        layer = dict(smoothed.get(j, {}))
+        for b, x in outer_lip_weights(pos[j]).items():
+            layer[b] = layer.get(b, 0.0) + x
         room = MAX_GENITAL - sum(genital.values())
         want = s * sum(layer.values())
         scale = s * (min(1.0, room / want) if want > room else 1.0) if want > 0 else 0.0
