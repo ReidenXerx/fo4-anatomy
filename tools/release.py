@@ -4,8 +4,8 @@
 
 What ships (nothing of anyone else's but Nahka's own work, with her page's permission, A-23):
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
-    F4SE/Plugins/cbp.dll                                               the fo4-ocbpc fork (MIT base)
-    F4SE/Plugins/Anatomy/cbp.dll - LICENSE.txt                         the fork's MIT notice, as its repo has it
+    F4SE/Plugins/cbp.dll                                               the fo4-ocbpc fork (GPL-3.0; MIT base)
+    F4SE/Plugins/Anatomy/cbp.dll - GPL-3.0.txt, - MIT (OCBPC).txt      its two licences, as the fork has them
     F4SE/Plugins/Anatomy/ocbp.ini, OCBPCollisionConfig.txt             our physics lines and [Bones]
     Tools/AnatomyBuilder/AnatomyBuilder.exe (+ _internal)              the builder
     Tools/AnatomyBuilder/data/nahka_patch.json.gz, data/tex/*          her genitals, as a patch and her
@@ -29,7 +29,8 @@ from xml.sax.saxutils import escape
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUILD = ROOT / 'build'
 FORK = ROOT.parent / 'fo4-ocbpc'
-NAME = 'Anatomy'
+NAME = 'Anatomy'                                            # file names: Anatomy.esp, the archive
+TITLE = 'Anatomy - CBBE Genitals, Physics and Arousal'     # the Nexus page's title (owner's poll)
 AUTHOR = 'ReidenXerx'
 FORK_URL = 'https://github.com/ReidenXerx/fo4-ocbpc'      # its public source, F4SE's rule (to be published)
 
@@ -39,7 +40,8 @@ NEXT_STEPS = """After this installs:
 2. Open BodySlide, choose "Anatomy Body", your preset, and Build.
 Re-run the builder whenever you change your CBBE or your skin mod."""
 
-README = f"""{NAME} - working genitals for Fallout 4 CBBE women: physics, arousal, contact
+README = f"""{TITLE}
+Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
 
 WHAT YOU NEED
   F4SE, LooksMenu, CBBE (with its BodySlide files) and BodySlide. For scenes: AAF.
@@ -74,8 +76,13 @@ CREDITS
   maximusmaxy - Screen Archer Menu's source, which documented the face data the mouth uses.
 
 LICENCES
-  cbp.dll is a fork of OpenCBP_FO4 / OCBPC, whose code is under the MIT licence (full text in
-  F4SE\\Plugins\\Anatomy\\cbp.dll - LICENSE.txt). Its source: {FORK_URL} (commit @FORK_COMMIT@).
+  cbp.dll is distributed under the GNU General Public License, version 3 (full text in
+  F4SE\\Plugins\\Anatomy\\cbp.dll - GPL-3.0.txt), with an additional permission to link with F4SE.
+  It is a fork of OpenCBP_FO4 / OCBPC, whose code it carries under the MIT licence
+  (F4SE\\Plugins\\Anatomy\\cbp.dll - MIT (OCBPC).txt). Its complete source: {FORK_URL}
+  (commit @FORK_COMMIT@).
+  The builder is our own code, run by Python and Pillow, which are packed inside it under their own
+  licences (Tools\\AnatomyBuilder\\licences). The plugin, scripts, MCM and configs are our own work.
 """
 
 
@@ -103,10 +110,23 @@ def build_exe():
     """PyInstaller one-folder build of tools/builder.py into build/dist/AnatomyBuilder (wiped first).
     The builder imports its stages by name at run time, so each is named here as a hidden import."""
     hidden = [arg for m in BUILDER_MODULES for arg in ('--hidden-import', m)]
+    # no network, so no OpenSSL in the bundle: urllib and http.client take ssl as optional, and hashlib
+    # falls back to Python's built-in SHA-1. (socket stays: xml.sax.saxutils -> urllib -> email.utils
+    # imports it at load, and without it the builder fails at once; tried 2026-09-23.)
+    excluded = [arg for m in ('ssl', '_ssl', '_hashlib') for arg in ('--exclude-module', m)]
     subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', '--console',
-                    '--name', 'AnatomyBuilder', '--paths', 'tools', *hidden,
+                    '--name', 'AnatomyBuilder', '--paths', 'tools', *hidden, *excluded,
                     '--distpath', 'build/dist', '--workpath', 'build/pyi', '--specpath', 'build/pyi',
                     'tools/builder.py'], cwd=ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def pillow_licence():
+    import importlib.metadata
+    dist = importlib.metadata.distribution('pillow')
+    found = [dist.locate_file(f) for f in dist.files if f.name.upper() == 'LICENSE']
+    if not found:
+        raise SystemExit('Pillow is installed without its LICENSE file; it must ship with the builder')
+    return pathlib.Path(found[0])
 
 
 def files(version):
@@ -117,7 +137,11 @@ def files(version):
         'MCM/Config/Anatomy/config.json': BUILD / 'mcm/MCM/Config/Anatomy/config.json',
         'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm/MCM/Config/Anatomy/settings.ini',
         'F4SE/Plugins/cbp.dll': FORK / 'x64/Release/cbp.dll',
-        'F4SE/Plugins/Anatomy/cbp.dll - LICENSE.txt': FORK / 'LICENSE',     # MIT: its notice goes with it
+        'F4SE/Plugins/Anatomy/cbp.dll - GPL-3.0.txt': FORK / 'COPYING',            # the DLL's licence
+        'F4SE/Plugins/Anatomy/cbp.dll - MIT (OCBPC).txt': FORK / 'LICENSE',        # the notice of the code it carries
+        # the builder runs on Python and Pillow, packed inside it: their notices go with them
+        'Tools/AnatomyBuilder/licences/Python LICENSE.txt': pathlib.Path(sys.base_prefix) / 'LICENSE.txt',
+        'Tools/AnatomyBuilder/licences/Pillow LICENSE.txt': pillow_licence(),
         'F4SE/Plugins/Anatomy/ocbp.ini': BUILD / 'config/Anatomy/ocbp.ini',
         'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt': BUILD / 'config/Anatomy/OCBPCollisionConfig.txt',
         'Tools/AnatomyBuilder/data/nahka_patch.json.gz': BUILD / 'patch/nahka_patch.json.gz',
@@ -132,11 +156,11 @@ def files(version):
 
 
 def fomod(version):
-    info = (f'<?xml version="1.0" encoding="UTF-8"?>\n<fomod>\n    <Name>{NAME}</Name>\n    <Author>{AUTHOR}</Author>\n'
+    info = (f'<?xml version="1.0" encoding="UTF-8"?>\n<fomod>\n    <Name>{escape(TITLE)}</Name>\n    <Author>{AUTHOR}</Author>\n'
             f'    <Version>{version}</Version>\n    <Description>{escape(NEXT_STEPS)}</Description>\n</fomod>\n')
     config = f"""<?xml version="1.0" encoding="UTF-8"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
-    <moduleName>{NAME}</moduleName>
+    <moduleName>{escape(TITLE)}</moduleName>
     <requiredInstallFiles>
         <folder source="Data" destination="" />
     </requiredInstallFiles>
