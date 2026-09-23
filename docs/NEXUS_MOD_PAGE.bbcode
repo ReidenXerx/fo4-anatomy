@@ -1,0 +1,60 @@
+[center][size=5][b]Anatomy - CBBE Genitals, Physics and Arousal[/b][/size][/center]
+
+[center][size=4][b]Working genitals for CBBE women: they open to what enters them and stretch for something bigger. The mouth opens to what is at the lips, and nipples rise with arousal. Built from your own CBBE and skin, and nothing of another mod is overwritten.[/b][/size][/center]
+
+[size=5][b]What it does[/b][/size]
+[list]
+[*][b]Genitals built onto [i]your[/i] body.[/b] Nahka's vulva and anus (from Animated Fannies) are added to the CBBE you already have by the included Anatomy Builder. They are a shape of their own, with their own material. Their texture is made from your skin mod's own maps, so they match your skin's colour and detail.[/*]
+[*][b]Physics with contact.[/b] Through OCBPC's collision physics they open to a penis, a hand or a toy, and stretch for something bigger. They close again when it leaves. The bones they need are added to whatever skeleton your game loads, at run time: no skeleton file is replaced.[/*]
+[*][b]A mouth that opens to what is at the lips.[/b] During oral, the lips part around the shaft and round on it, over the animation's own face. A moment after contact ends, the face goes back to the animation.[/*]
+[*][b]Arousal you can see.[/b] Women's nipples rise with arousal: from AAF scenes, from watching one, from being naked, and from companions' own arousal (Overture's Desire, and Ivy's, when those mods are installed). The MCM page [i]Anatomy[/i] sets how much and what counts. With Silhouette installed, they stay flat under heavy armour.[/*]
+[/list]
+
+[size=5][b]Nothing of another mod is overwritten[/b][/size]
+[list]
+[*]Anatomy ships its own files, and the builder writes only new ones. Your body, skeleton and skin mods and your physics configs stay exactly as they are.[/*]
+[*]The one exception is [b]cbp.dll[/b]. It [i]is[/i] OCBPC, extended, so it must win over any other mod's cbp.dll (Jiggle Physics, OCBPC). Your physics mod's ocbp.ini and OCBPCollisionConfig.txt are still read, and Anatomy's own lines are added to them at run time.[/*]
+[*][b]Why a builder and not a finished body:[/b] CBBE's permissions do not allow uploading a modified body mesh. So the body is built on your PC, from your CBBE. Only Nahka's own work ships, as a patch, with her page's permission.[/*]
+[/list]
+
+[size=5][b]Requirements[/b][/size]
+[list]
+[*][b]Fallout 4 1.10.163[/b] with [b]F4SE 0.6.23[/b]. cbp.dll is an F4SE plugin for that version and does not load on the next-gen update.[/*]
+[*][b]CBBE[/b], with its BodySlide files, and [b]BodySlide and Outfit Studio[/b].[/*]
+[*][b]LooksMenu[/b], for the arousal nipples.[/*]
+[*][b]AAF[/b], for scenes. [b]MCM[/b], for the settings page (without it, the defaults apply).[/*]
+[*]Optional: a physics config such as Jiggle Physics or MadKita's Actual Jiggle (Anatomy brings its own lines), Silhouette, Overture, Ivy.[/*]
+[/list]
+
+[size=5][b]Installation[/b][/size]
+[list=1]
+[*]Install the archive with your mod manager. Let it win the [b]cbp.dll[/b] conflict. Nothing else of it overlaps another mod.[/*]
+[*]Run [b]Data\Tools\AnatomyBuilder\AnatomyBuilder.exe[/b] once. MO2: add it to MO2's executables and run it from there, as you do BodySlide. It reads your CBBE, your skeleton and your skin as the game loads them, checks every step, and writes only new files. Its log, AnatomyBuilder.log, is next to it.[/*]
+[*]In BodySlide, choose the set [b]Anatomy Body[/b] and your preset, and Build (or Batch Build).[/*]
+[/list]
+Re-run the builder after changing your CBBE or your skin mod. A new BodySlide preset needs only a new Build.
+
+[size=5][b]Questions[/b][/size]
+
+[b]Does it replace my skeleton, body or skin?[/b]
+[spoiler]No. The bones are added at run time to whatever skeleton loads, and the body is built from your own CBBE. The genitals' texture is a new file made from your skin's maps. Uninstalling leaves your mods as they were; rebuild your usual body in BodySlide.[/spoiler]
+
+[b]Does it work with MO2?[/b]
+[spoiler]Yes. Run the builder from MO2's executables so it sees your whole Data folder; its files land in MO2's overwrite, like BodySlide's.[/spoiler]
+
+[b]Does it work on the next-gen (2024) update?[/b]
+[spoiler]No. cbp.dll is built for Fallout 4 1.10.163 and F4SE 0.6.23. The mouth also checks the exact engine code it hooks before touching it, and stays off if that code is different.[/spoiler]
+
+[b]I use another OCBPC config. Do I lose it?[/b]
+[spoiler]No. Anatomy's cbp.dll reads your config first and then adds its own lines, from its own files in F4SE\Plugins\Anatomy.[/spoiler]
+
+[size=5][b]Credits[/b][/size]
+[list]
+[*][b]Nahka[/b]: the vulva and anus geometry, sliders and texture (Animated Fannies on LoversLab), with [b]BringTheNoise[/b] and [b]Alan (UN7B)[/b].[/*]
+[*][b]Ousnius and the CBBE team[/b]: CBBE, which this is built on. It is never included; the builder reads your install.[/*]
+[*][b]ericncream and the OpenCBP authors[/b]: OCBPC, which cbp.dll extends.[/*]
+[*][b]The F4SE team[/b]. [b]expired6978[/b], for LooksMenu. [b]maximusmaxy[/b]: Screen Archer Menu's source documented the face data the mouth uses.[/*]
+[/list]
+
+[size=5][b]Licences[/b][/size]
+cbp.dll is distributed under the GNU GPL version 3, with an additional permission to link with F4SE. It is a fork of OpenCBP_FO4 / OCBPC, whose code it carries under the MIT licence. Both texts are in F4SE\Plugins\Anatomy. Source: [url=https://github.com/ReidenXerx/fo4-ocbpc]github.com/ReidenXerx/fo4-ocbpc[/url]. The builder runs on Python and Pillow, whose licences are in Tools\AnatomyBuilder\licences.
