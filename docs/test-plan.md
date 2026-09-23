@@ -94,3 +94,13 @@ Six new files in Anatomy-dev (`Textures/Actors/Character/BaseHumanFemale/FemaleB
 "CBBE HeadRear Absolute Fix" (load after), then Deploy. To look for: the inside of the lips and
 the canal in Nahka's colouring and tone-matched to the skin; no line where the genitals meet the
 crotch skin; no change anywhere else on the body.
+
+### The owner's look (2026-09-23 16:17-16:25, Photo116-124, build 1b5c6f20 + texture)
+- At rest, from below (116/117): intact, with no holes or spikes. The vulva reads closed with a
+  thin slit line, and the texture patch shows no visible seam. The scene was very dark.
+- Doggy (118-120): a ~5-unit dark spike from the anal pocket toward the partner. Cause and fix:
+  A-11 (anus physics removed). The pale, straight-edged flaps at the frame edges are the camera's
+  near plane cutting the partner's thighs, not the body.
+- Cowgirl (121, 123): the shaft enters the vulva with no spike.
+- Build 59748b34 (A-11) is packaged and waits for the game to close (`tools/restage.py`, in place,
+  no Deploy needed).

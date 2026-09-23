@@ -34,8 +34,9 @@ OUT = ROOT / 'build/config'
 
 ATTACH = [('Vagina_CBP_00', 'Clitoris'),
           ('Vagina_CBP_L_01', 'Labia'), ('Vagina_CBP_R_01', 'Labia'),
-          ('Vagina_CBP_L_02', 'Labia'), ('Vagina_CBP_R_02', 'Labia'),
-          ('Anus_01', 'Anus'), ('Anus_02', 'Anus'), ('Anus_03', 'Anus'), ('Anus_04', 'Anus')]
+          ('Vagina_CBP_L_02', 'Labia'), ('Vagina_CBP_R_02', 'Labia')]
+# No anus bones (decision A-11): OCBPC would SET them and discard their animation, and collisions on
+# them, 1.0-1.4 units behind Nahka's ring, dragged the pocket into a spike in the owner's look.
 
 # Tuned with tools/ocbpc_sim.py, a port of OCBPC's own update (decision A-9). What the source says,
 # and what follows from it:
@@ -50,11 +51,12 @@ SPRING = dict(stiffness=150.0, stiffness2=0.0, damping=6.0, timetick=4.0, timeSt
               gravityBias=0.0, gravityCorrection=0.0, cogOffsetX=0.0, cogOffsetY=0.0, cogOffsetZ=0.0,
               rotationalX=0.0, rotationalY=0.0, rotationalZ=0.0, rotateLinearX=0.0, rotateLinearY=0.0,
               rotateLinearZ=0.0, rotateRotationX=0.0, rotateRotationY=0.0, rotateRotationZ=0.0, absRotX=0)
-QUIET = dict(linearX=0.2, linearY=0.2, linearZ=0.2, maxoffsetX=15.0, maxoffsetY=15.0, maxoffsetZ=15.0)
+# maxoffset 12.5 x linear 0.2 = 2.5 real units per axis: above the ~1.9 a shaft needs (fit_check), below
+# the 3 that pinned bones reached in the owner's look (A-11).
+QUIET = dict(linearX=0.2, linearY=0.2, linearZ=0.2, maxoffsetX=12.5, maxoffsetY=12.5, maxoffsetZ=12.5)
 SECTIONS = {
     'Labia': dict(SPRING, **QUIET),
     'Clitoris': dict(SPRING, **QUIET),
-    'Anus': dict(SPRING, **QUIET),
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons: x-only offsets in the

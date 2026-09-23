@@ -181,6 +181,8 @@ def opening_layers(osd_data, positions):
     import physics_design as pd
     out = {}
     for name, o in pd.OPENINGS.items():
+        if not o.get('physics'):
+            continue                                      # the anus: JaneBod's weights only (A-11)
         morph = osd_data.get(ab.TARGET + o['morph'], {})
         scale = pd.SHAFT_RADIUS / o['drawn_for']
         pushes = {}
@@ -363,8 +365,8 @@ def main():
     pos_all = shape.positions()
     layers = opening_layers(osd_mod.read(ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.osd'), pos_all)
     smoothed = smooth(layers, pos_all, shape.triangles())
-    for name in ('vagina', 'anus'):
-        import physics_design as pd
+    import physics_design as pd
+    for name in [n for n, o in pd.OPENINGS.items() if o.get('physics')]:
         mine = {j: v for j, v in layers.items() if v[3] == name and mask.get(j, 0.0) < 1.0}
         wanted = sum(math.sqrt(sum(c * c for c in v[2])) for v in mine.values())
         missed = sum(v[1] for v in mine.values())

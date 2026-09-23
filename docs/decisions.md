@@ -182,3 +182,24 @@ about six times wider, that inside shows more.
   byte for byte, and a decode shows no black specks (DXT1's transparent mode).
 - **If the owner changes skin mods:** rerun `genital_texture.py` then `restage.py`. The patch is
   derived from whatever skin is deployed.
+
+## A-11 — No physics on the anus; lips capped at 2.5 (the owner's own look, 2026-09-23)
+
+Supersedes A-9 for the anus. The owner looked in game and took screenshots (Photo116-124).
+- **What they showed:** in "[UAP] BP70" doggy, a thin dark spike of the anal pocket, about 5
+  units long, reached from the buttock cleft toward the partner's torso ("stretched and stuck in
+  man's chest ... looks like black hole"). The cowgirl frames showed the shaft entering the vulva
+  with no spike. The spike is about 5 units long, which is OCBPC's cap for a bone (maxoffset 15 ×
+  linear 0.2 = 3 per axis), times the anus layer's weights of up to 0.88. The simulator had
+  predicted exactly this pinning: the anus bones hold at 4.24, the cap, when a shaft passes beside
+  them.
+- **Why the anus cannot have collision physics on this rig:** ZeX's four anus bones sit 1.0-1.4
+  units BEHIND Nahka's ring. A shaft beside them pins them at the cap, and a shaft in her ring
+  pushes all four backwards. Either way the pocket is dragged, never opened.
+- **Now:** no anus bone is attached or affected in the configs, so OCBPC no longer SETS them and
+  animations drive them again. Their weights are JaneBod's light pattern (at most 0.07), as in
+  JaneBod Extended. The lips' cap drops to 2.5 real units (maxoffset 12.5): above the ~1.9 a shaft
+  needs, below what pinned. `fit_check`: the vagina is unchanged on all six paths, the anus neither
+  opens nor spikes, and walking flap is 0.05 / 0.21.
+- **Open:** an anal opening needs either Nahka's ring moved back onto ZeX's anus bones (geometry)
+  or a morph-driven opening (A-1 allows morphs as a layer). Decide from the owner's anal look.

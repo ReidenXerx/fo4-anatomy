@@ -37,8 +37,10 @@ REST = {'Vagina_CBP_L_02': (-0.64, 1.09, -55.71), 'Vagina_CBP_R_02': (0.53, 1.07
 # "x,y,z,r" per sphere; offsets are in the ACTOR's frame (heading only; CollisionHub.cpp:124 and
 # Thing.cpp:326), so only x (left/right) offsets are used: they survive the pelvis pitching.
 AFFECTED = {'Vagina_CBP_L_02': [(-0.6, 0.0, 0.0, 1.2)], 'Vagina_CBP_R_02': [(0.6, 0.0, 0.0, 1.2)],
-            'Anus_01': [(0.0, 0.0, 0.0, 0.5)], 'Anus_02': [(0.0, 0.0, 0.0, 0.5)],
-            'Anus_03': [(1.0, 0.0, 0.0, 0.6)], 'Anus_04': [(-1.0, 0.0, 0.0, 0.6)]}
+            }
+# The anus carries NO physics (decision A-11): in the owner's own look (2026-09-23, Photo118-120) its
+# bones, pushed off to OCBPC's cap by a shaft passing beside them, dragged the anal pocket out into a
+# ~5-unit spike toward the partner. The simulator had predicted the pinning (hold 4.24 = the cap).
 COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_03': [(0.0, 0.0, 0.0, 2.0)], 'Penis_04': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_05': [(0.0, 0.0, 0.0, 1.8)]}
@@ -53,9 +55,9 @@ def unit(v):
 
 OPENINGS = {
     'vagina': dict(morph='VaginaPenetrate', centre=(0.0, 1.55, -55.58), axis=unit((0.0, 0.48, 0.88)),
-                   drawn_for=1.1, bones=('Vagina_CBP_L_02', 'Vagina_CBP_R_02')),
+                   drawn_for=1.1, bones=('Vagina_CBP_L_02', 'Vagina_CBP_R_02'), physics=True),
     'anus': dict(morph='AnusPenetrate', centre=(0.0, -1.58, -54.07), axis=unit((0.0, 0.45, 0.89)),
-                 drawn_for=1.35, bones=('Anus_01', 'Anus_02', 'Anus_03', 'Anus_04')),
+                 drawn_for=1.35, bones=('Anus_01', 'Anus_02', 'Anus_03', 'Anus_04'), physics=False),
 }
 
 
