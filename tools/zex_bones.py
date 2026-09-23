@@ -48,6 +48,13 @@ ANIM = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02',
 TWIN = {'Vagina_00': 'Vagina_CBP_00', 'Vagina_L_01': 'Vagina_CBP_L_01', 'Vagina_L_02': 'Vagina_CBP_L_02',
         'Vagina_R_01': 'Vagina_CBP_R_01', 'Vagina_R_02': 'Vagina_CBP_R_02'}
 TWIN_SHARE = 0.5            # of each vagina weight, to the physics twin (tuned in game)
+# The ANIMATED genital bones carry NO weight (decision A-12). In the owner's own look (2026-09-23,
+# Photo118-130) a thin rod of the genital mesh reached 10-20 units out in doggy and standing poses:
+# longer than any physics bone can move (OCBPC's cap) and than any limb drags the crotch (pose_check.py:
+# a 90-degree thigh tears ours and plain CBBE alike by ~3 units). Only an animation keying the animated
+# genital bones far from where this skeleton rests them moves vertices without a bound. With no weight
+# there, animations cannot move the genitals at all; physics (the _CBP_ twins) is the mechanism (A-1).
+ANIM_WEIGHTS = False
 
 # Breast physics (owner, 2026-09-23: "something wrong with physics config and breasts ... fix").
 # CBBE Body Physics hangs the breasts on CLOTH_Bone_Googles_00/01, Havok-cloth nodes that are in no
@@ -388,12 +395,14 @@ def main():
         genital = {}
         for b, x in g.items():
             if TWIN.get(b) in LIP_TWINS:
-                genital[b] = s * x                        # the animated lip keeps JaneBod's weight whole
+                if ANIM_WEIGHTS:
+                    genital[b] = s * x                    # the animated lip keeps JaneBod's weight whole
             elif b in TWIN:
-                genital[b] = s * x * (1 - TWIN_SHARE)
+                if ANIM_WEIGHTS:
+                    genital[b] = s * x * (1 - TWIN_SHARE)
                 genital[TWIN[b]] = s * x * TWIN_SHARE
-            else:
-                genital[b] = s * x
+            elif ANIM_WEIGHTS:
+                genital[b] = s * x                        # the anus's animated bones (A-11: JaneBod's light pattern)
         layer = smoothed.get(j, {})
         room = MAX_GENITAL - sum(genital.values())
         want = s * sum(layer.values())

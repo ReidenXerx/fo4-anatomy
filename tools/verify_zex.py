@@ -131,8 +131,12 @@ def main():
     for n in want:
         ws = per.get(n, [])
         if not ws:
-            print(f'   {n:16} NO vertex')
-            problems.append(f'{n} carries no weight')
+            import zex_bones as zbw
+            if n in ANIM and not zbw.ANIM_WEIGHTS:
+                print(f'   {n:16} no vertex (by design: animated genital bones carry no weight, A-12)')
+            else:
+                print(f'   {n:16} NO vertex')
+                problems.append(f'{n} carries no weight')
             continue
         c = tuple(sum(pos[i][k] * w for w, i in ws) / sum(w for w, _ in ws) for k in range(3))
         far = math.dist(c, origin.get(n, c))

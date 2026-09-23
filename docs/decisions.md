@@ -203,3 +203,28 @@ Supersedes A-9 for the anus. The owner looked in game and took screenshots (Phot
   opens nor spikes, and walking flap is 0.05 / 0.21.
 - **Open:** an anal opening needs either Nahka's ring moved back onto ZeX's anus bones (geometry)
   or a morph-driven opening (A-1 allows morphs as a layer). Decide from the owner's anal look.
+
+## A-12 — The animated genital bones carry no weight (the owner's own look, 2026-09-23)
+
+Supersedes A-6 and A-9 for the animated bones (Vagina_00, Vagina_L/R_01-02, Anus_01-04). The
+_CBP_ twins keep their weights.
+- **What was seen:** after A-11 removed the anus physics, the owner's frames (Photo125-130, new
+  build) still showed a thin rod of the genital mesh. It was about 10 units long in doggy, and about
+  20 in a standing, bent-over pose.
+- **What cannot make it, measured:**
+  - Physics: OCBPC caps a bone at 2.5 per axis, and the heaviest physics weight is 0.56, so at
+    most ~2.4 units.
+  - Limbs: `tools/pose_check.py` skins the body in bent poses. A 90° thigh stretches the crotch
+    by ~3 units, and it does the same on the owner's untouched CBBE (x12.3 against ours x12.4).
+    Nahka's heavier thigh weights at the perineum (0.34-0.54, against CBBE's 0.08) are real but
+    not the rod.
+  - Bad weights: none. BodySlide's output equals the project on every vertex, and no genital
+    vertex is weighted to a far bone.
+- **What can:** an animation keying the animated genital bones somewhere this skeleton does not
+  rest them, for example a pack rigged on another ZeX version. That displacement has no bound,
+  and the vertices follow it by their weight (up to 0.34 on the lips since A-9).
+- **Now:** those bones keep their place in the skin but carry nothing, so no animation can move
+  the genitals. Physics on the twins is the mechanism, as A-1 intends. Build df85d105:
+  verify_zex PASS, compare_builds PASS.
+- **If the rod survives this build,** the next suspect is OCBPC on the twins (turn their
+  physics off to prove it).
