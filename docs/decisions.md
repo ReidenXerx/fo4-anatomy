@@ -549,3 +549,57 @@ does we have such metric)".
   - The 0.36 rest drift appears on the deployed body too, so it is not from this change.
 - **verify_zex and compare_builds:** PASS.
 - **Open:** the owner's look.
+
+## A-20 — The mouth opens to what is in it (release plan item 3, 2026-09-23)
+
+- **The owner's ask:** "physic based opening with universal override of animation's for restrict them
+  touch it and touch it only by ourself via physics". The poll put it third, after fisting and toys.
+- **What made it possible (field notes §10):**
+  - FO4 heads have no mouth bones. The mouth is expression morph 2 (Jaw Open) and its neighbours.
+  - Screen Archer Menu's source gave the face data's place: MiddleProcess data + 0x3C8, with the
+    final weights at +0x18 and the overrides at +0xF0.
+  - The merge itself was read out of the executable (0x6689D0). It takes max(override, animation),
+    so an override alone can only open the mouth. The owner's "restrict the animations" therefore
+    needs a write AFTER the merge. Its one caller rebuilds the mesh when it returns true.
+- **Built in the fo4-ocbpc fork (1df5ed8), `Mouth.cpp`:**
+  - Each frame, after the colliders move, every penis chain (Penis_01..05, and super mutants'
+    Penis1..4), base to tip, is measured against every mouth.
+  - Where a chain crosses the plane of her lips inside the mouth (2.9 to either side, 3 below, 1.5
+    above), the lower lip must drop below the shaft's bottom: Jaw Open = need / gap + 0.08.
+  - The upper lip lifts (Upper Lip Up, up to its 0.53 move) when the shaft rides above the lip line,
+    and both lip funnels go to 0.3.
+  - A tip within 3 units in front starts opening the mouth, up to Jaw Open 0.3.
+  - The hook on the merge blends these over the final weights (rates 20/s opening, 6/s closing).
+    While a shaft is in her mouth, the animation's, AAF's and Rapport's mouths give way. It holds
+    for 0.35 s between strokes, then blends back to them.
+  - No AAF block is needed.
+- **Measured, not guessed (`tools/mouth.py`, which refuses if the design drifts off the game's own
+  heads):**
+  - Female lips meet at (-1.80, 8.12, 0) in HEAD bone space, and Jaw Open 1.0 parts them 2.97.
+  - Male: (-1.84, 7.78, 0), 2.30.
+  - The solver's mirror was run on six scenes:
+
+    | scene | Jaw Open |
+    | --- | --- |
+    | shaft centred on the lip line | 0.60 |
+    | a unit lower | 0.94 |
+    | its top on the lip line | 1.00 |
+    | a tip 2 units out | 0.33 lead-in |
+    | beside the mouth | nothing |
+    | at her chest | nothing |
+
+- **Safety:**
+  - The hook is installed only if the merge's 17-byte prologue and its one call match what was read.
+    Otherwise the discovery log says so and nothing is patched.
+  - The face data is used only when its vtable is the engine's.
+  - The pointers published for the hook are rebuilt every frame, so an actor who leaves is never
+    steered.
+- **A convention settled on the way:** in memory, a bone's rotation is the transpose of the math.
+  OCBPC's `Thing.cpp` and SAF agree, and both are proven in game. F4SE's `NiTransform * point` does
+  not.
+- **Choices made without a poll (reversible in `ocbp.ini`):**
+  - Props at the mouth are off, because vanilla eating and drinking idles use the same hand nodes.
+  - Fingers are not a mouth chain.
+- **Deploy:** `cbp.dll` and `ocbp.ini` were rewritten in place at 21:42, so no Deploy is needed.
+- **Open:** the owner's look at an oral scene. The discovery log (`anatomy_ocbpc.log`) prints
+  `[mouth] on`, each mouth's place, and each first contact with its Jaw Open.

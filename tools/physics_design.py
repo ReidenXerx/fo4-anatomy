@@ -110,6 +110,26 @@ STRETCH_BONES = {b: b + '_Stretch' for b in ('AnatLip_L', 'AnatLip_R', 'AnatAnus
 PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObjectL2,AnimObjectL3',
              radius=1.6, spacing=1.5, maxLength=40.0, minBound=1.0)
 
+# The mouth (A-20, the fo4-ocbpc fork's [Mouth]). FO4 heads have no mouth bones; the fork writes the
+# face's merged expression weights (Jaw Open, both lip funnels, Upper Lip Up) over the animation's
+# while a penis chain crosses the plane of her lips inside the mouth. Where the lips meet, which way
+# they face and how far Jaw Open parts them are measured on the game's own base heads
+# (tools/mouth.py re-measures them from Fallout4 - Meshes.ba2 and refuses a mismatch):
+#   female: lips meet at (-1.80, 8.12, 0) in the HEAD bone's space; Jaw Open 1.0 puts them 2.97 apart
+#   male:   (-1.84, 7.78, 0); 2.30 apart
+#   the mouth faces the bone's +y, the face's up is the bone's +x (Bethesda bones run along x)
+# The lower lip must drop below the shaft's bottom (the upper lip does not move with Jaw Open), so a
+# visible shaft (collider radius - skin) centred on the lip line needs Jaw Open r / gap + margin
+# (female: 1.55 / 2.97 + 0.08 = 0.60), and one riding a unit lower 0.94. Props at the mouth stay off:
+# vanilla eating and drinking idles hang bottles and food on the same hand nodes.
+MOUTH_CHAINS = (SHAFT, tuple(f'Penis{k}' for k in (1, 2, 3, 4)))
+MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), props=0,
+             femaleX=-1.80, femaleY=8.12, femaleZ=0.0, maleX=-1.84, maleY=7.78, maleZ=0.0,
+             facingX=0.065, facingY=0.998, facingZ=0.0, upX=0.998, upY=-0.065, upZ=0.0,
+             femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.45,
+             ahead=3.0, anticipate=0.3, margin=0.08, funnel=0.3, liftMove=0.53,
+             openRate=20.0, closeRate=6.0, blendRate=12.0, holdSeconds=0.35)
+
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
 # (tools/fit_check.py's judge, entrance ring): x1.35 puts the entrance's median radius at the shaft's

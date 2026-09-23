@@ -39,7 +39,8 @@
 1. ~~Replace the JaneBod-derived weights (the vulva sway and the outer-lip base) with our own
    procedural weights~~ Done (A-19); the owner's look in game is still to come.
 2. ~~MCM for arousal: on/off, nipple strength, which sources count, rise/fade speed.~~ Done (A-18).
-3. The contact-driven mouth (F4SE plugin + `AAF_BlockMFG_Mouth`), coordinated with Rapport.
+3. ~~The contact-driven mouth~~ Built (A-20, fork 1df5ed8); the owner's look is still to come. It
+   writes after the engine's merge, so no AAF block is needed and nothing Rapport does changes.
 4. The builder:
    - Windows exe (the Python pipeline, packaged);
    - finds Data through Vortex/MO2, and CBBE's and Nahka's BodySlide files;

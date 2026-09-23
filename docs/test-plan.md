@@ -158,3 +158,17 @@ crotch skin; no change anywhere else on the body.
 - Look for: in a vaginal scene, the entrance's FRONT edge (toward the clitoris) should clear the
   shaft as it did in Photos 155-156. Walking nude, the vulva should not flap more than before.
 - No Deploy needed for this one. The MCM files above still need theirs.
+
+### The mouth (A-20), restaged in place at 21:42 (fork 1df5ed8; body still 17f97e158c01)
+- No Deploy is needed: `cbp.dll` and `ocbp.ini` were rewritten through their links.
+- First, `Documents/My Games/Fallout4/F4SE/anatomy_ocbpc.log` must say `[mouth] on: 2 chain(s)`. If
+  it says "this game build is not the one...", the hook stayed off and nothing else changed.
+- In an oral scene:
+  - the lips should part around the shaft instead of closing through it (Photo150's case);
+  - the jaw should follow as the shaft slides, and hold between strokes;
+  - once it is out, her own face (the animation's, AAF's, Rapport's) should come back within about
+    half a second.
+- The log also prints each mouth's place, `[mouth] <id> (female): HEAD (...) -> mouth (...)`, and each
+  first contact with its Jaw Open. If the mouth never opens, those lines show whether the mouth
+  point sits on her face.
+- Kissing and ordinary dialogue must look exactly as before: no chain comes near a mouth there.

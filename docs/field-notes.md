@@ -29,7 +29,9 @@ an older note disagree, this file is newer.
 5. **LooksMenu shows, per morph, the MAX over its keyword layers.** A keyed layer can only raise a
    morph. BodyGen generates a body only for an actor with NO stored morphs at all (§8).
 6. **FO4 faces open the mouth with expression morphs, not bones.** A FaceGen head is skinned to 10
-   body bones and none of the face skeleton's mouth bones (§10).
+   body bones and none of the face skeleton's mouth bones. The engine merges the morphs as
+   max(override, animation) at 0x6689D0. Only a write AFTER that merge can close what an animation
+   opens (§10).
 7. **Vortex's first Deploy of a conflicting file may hand it to the OTHER mod.** Check
    `Data/vortex.deployment.json` → `source` for the file (§15).
 8. **Every "against the skeleton" check must use the skeleton that actor actually loads.** Read
@@ -38,6 +40,11 @@ an older note disagree, this file is newer.
    sit beyond the lip bones (§11).
 10. **A simulation is only as good as its scenario's coverage.** A fist modelled with a 7-unit gap
     held the entrance on the gap and "showed" a fist opening less than a penis (§7).
+11. **Bethesda's in-memory rotations are the transpose of the math.** A local offset reaches the
+    world as `pos + rot^T * local`; F4SE's `NiTransform * point` gets this wrong (§10).
+12. **A better fit is not a better result.** Fitting the entrance to the soft outer-lip bones
+    reproduced Nahka's drawing better (73% vs 51%), yet the simulation clipped more and flapped twice
+    as much. Only `fit_check` decides (A-19).
 
 ---
 
@@ -384,26 +391,72 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 
 ---
 
-## 10. The face and the mouth (for the next job)
+## 10. The face and the mouth (A-20)
 
 - **FaceGen heads are skinned to 10 body bones only.** Measured: MaleHeadHuman has 1,696 vertices
   and 10 bones, and no vertex is weighted above 0.05 to any mouth bone.
 - **The face skeleton** (ZeX `skeleton_female_faceBones.nif`, 269 nodes) has `skin_bone_C_MasterMouth`,
   L/R/C MouthTop/Bot, MouthCorners, JawMid/Side, `skin_bone_C_Chin` and Tongue_00-04. Heads do not
   use them.
-- **The mouth opens through expression morphs.** FO4's facial morph table has 50 entries ("Jaw Open",
-  "Lower Lip Down", "Pucker", "Lower Lip Funnel", …); `fo4-rapport/tools/make_mfg.py` lists them.
-  AAF drives them from mfgSet XML; Rapport's `Expressions.cpp` applies AAF mfgSets with `lock="true"`.
+- **The expression morphs.** The engine's table has 50 (ids 0-49, alphabetical by full name). It is
+  quoted in `CHAKPack_mfgSetData.xml`, and `fo4-rapport/tools/make_mfg.py` lists it.
+  - The mouth: 1 Jaw Forward, 2 **Jaw Open**, 21/44 Left/Right Upper Lip Up, 22 Lower Lip Funnel,
+    25 Pucker, 46 Upper Lip Funnel.
+  - 18/41 are the upper eyelids, i.e. the blink (SAM's blink fix patches exactly those two).
+  - The head's expression `.tri` (FRTRI003) names them its own way: `JawOpen`, `LwrLipFunnel`, ...
+  - `AAF_BlockMFG_Mouth` blocks only id 2. `AddMFGBlock` takes a list.
+- **Where the engine keeps them (1.10.163; Steam and GOG are byte-identical at every address below):**
+  - The actor's `BSFaceGenAnimationData*` is at MiddleProcess data + 0x3C8. In F4SE that is
+    `actor->middleProcess->unk08->unk3B0[3]`; CommonLibF4 calls it
+    `MiddleHighProcessData::faceAnimationData`. Its vtable is at RVA 0x2CE9C58.
+  - `+0x18` float[54] holds the FINAL weights, which the face mesh is built from.
+  - `+0xF0` float[54] holds the overrides: the console's `mfg morphs <id> <value>` (value / 100),
+    AAF's mfgSets, and SAM's sliders.
+  - `+0x1C8` float[54] holds the animation's own values (keyframes, lip sync).
+  - `+0x2B4` is a lock the merge takes.
+- **The merge, read out of Fallout4.exe:**
+  - It is at 0x6689D0: `bool merge(data, float dt, bool)`.
+  - It computes `final[i] = clamp(max(override[i], animation[i]), 0, 1)`. **So an override can open
+    the mouth beyond the animation, but never close what the animation opens.**
+  - It runs only when 0x667E50 reports a change. In a paused game (photo mode) that is false, which
+    is why SAM patches the `jz` at 0x668B32.
+  - Its one caller, 0x6860FA, rebuilds the face mesh (0x685A60) when it returns true.
+  - Source: Screen Archer Menu's `SAM/mfg.h` and `SAF/hacks.cpp` (github maximusmaxy/ScreenArcherMenu)
+    gave the layout. The merge itself was disassembled (capstone, `scratchpad/fodis.py`).
+- **In memory, a node's rotation is the TRANSPOSE of the math.** A local offset reaches the world as
+  `pos + rot^T * (scale * local)`.
+  - OCBPC's `Thing.cpp` (rest positions) and SAF's `RotateMatrix` agree, and both are proven in game.
+  - F4SE's own `NiTransform::operator*` (`rot * v`) is the naive version: never use it for bone offsets.
+  - NIF FILES are in the plain math convention. Our Python tools recompose skeleton.nif into the
+    body's stored node transforms to 0.0000.
+- **The base heads' mouth, in HEAD bone space (`tools/mouth.py`, from `Fallout4 - Meshes.ba2`):**
+
+  | head | lips meet at | Jaw Open 1.0 parts them by |
+  | --- | --- | --- |
+  | female | (-1.80, 8.12, 0) | 2.97 |
+  | male | (-1.84, 7.78, 0) | 2.30 |
+
+  - Axes: +y points out of the face and +x is up (Bethesda bones run along x).
+  - In the head `.nif`'s skin space, HEAD sits at the origin.
+  - Jaw Open moves only the lower lip: 2.6 down and 1.6 back at the front. The upper lip stays.
+- **The contact-driven mouth (fo4-ocbpc `Mouth.cpp`, `ocbp.ini [Mouth]`):**
+  - It hooks the merge and, after it, writes Jaw Open, both lip funnels and Upper Lip Up over the
+    final weights. While something is in her mouth, the animation's mouth, AAF's and Rapport's all
+    give way. After 0.35 s without contact, it blends back to them.
+  - The lower lip must drop below the shaft's bottom. A visible shaft (collider radius - 0.45)
+    centred on the lip line needs Jaw Open 0.60, and one riding a unit lower needs 0.94.
+  - A tip 3 in front of the lips starts opening them.
+  - No AAF block is needed: writing after the merge wins over every source.
+  - The hook is installed only if the merge's prologue and its one call match what was read.
 - **The owner's oral look (Photo149-154):**
   - Mostly the animation's open mouth wraps the shaft fine (Photos 152, 153).
   - In Photo150 the lips stay CLOSED while the penis head is at her mouth, so it clips through.
-    This is exactly what a contact-driven mouth fixes.
-- **The plan for a contact-driven mouth:**
-  - An F4SE plugin measures the partner's penis, finger or toy against her mouth every frame, and
-    sets Jaw Open and the lips to fit.
-  - It puts `AAF_BlockMFG_Mouth` on her, so animations stop touching the mouth.
-  - Lip-sync is left alone when nothing is there.
-  - Coordinate with the Rapport session, which also sets faces.
+    This is what the contact-driven mouth fixes.
+- **Left out on purpose:**
+  - Props at the mouth (`props=0`): vanilla eating and drinking idles hang bottles and food on the
+    same hand nodes.
+  - Fingers (the fist ball is too big for a finger).
+  - The tongue.
 
 ---
 
