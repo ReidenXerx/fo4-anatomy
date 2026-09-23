@@ -11,3 +11,4 @@ lab/
 *.dds
 *.tga
 __pycache__/
+AnatomyBuilder.log

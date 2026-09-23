@@ -64,6 +64,10 @@ VULVA_FRONT = (3.2, 4.0)                    # y where the pad starts and where i
 # 1,913 on each Googles bone). CBBE's own breast weight painting moves across unchanged, so at
 # rest the mesh is identical and OCBP (and the hand collisions already configured) now reach it.
 BREAST_MOVE = {'CLOTH_Bone_Googles_00': 'LBreast_skin', 'CLOTH_Bone_Googles_01': 'RBreast_skin'}
+# The move is for a player whose physics config drives LBreast_skin/RBreast_skin (the owner's MadKita
+# ini). The builder turns it off when theirs does not: a player on CBBE's own Havok cloth physics
+# keeps the cloth-bone weights, or their breasts would stop moving.
+MOVE_BREASTS = True
 
 # Collision-grade weights (decision A-9). JaneBod's pattern swings with animations: at most 0.17 on a
 # lip after the split, 0.07 on the anus (measured). A collision moves a bone only as far as it takes
@@ -424,23 +428,26 @@ def main():
 
     # breasts: the same weights, on the bones OCBP drives. Only the bone slot changes (index bytes),
     # never the weight bytes, so every moved weight stays bit-identical.
+    move = BREAST_MOVE if MOVE_BREASTS else {}
     breast = {}                                   # vertex -> [(new bone, weight)] for the spheres
     moved = collections.Counter()
     for j in range(shape.count):
         ws = [(bones[sl], w) for sl, w in shape.skin_weights(j)]
-        if any(b in BREAST_MOVE for b, _ in ws):
+        if any(b in move for b, _ in ws):
             if j in new_weights:
                 raise SystemExit(f'vertex {j} carries both genital and breast weight: regions overlap')
-            breast[j] = [(BREAST_MOVE.get(b, b), w) for b, w in ws]
-            moved.update(BREAST_MOVE[b] for b, _ in ws if b in BREAST_MOVE)
-    print(f'   breast weights moved off the Havok cloth bones: {dict(moved)}')
+            breast[j] = [(move.get(b, b), w) for b, w in ws]
+            moved.update(move[b] for b, _ in ws if b in move)
+    print(f'   breast weights moved off the Havok cloth bones: {dict(moved) if MOVE_BREASTS else "not moved (the player's physics does not drive LBreast_skin/RBreast_skin)"}')
 
     # ---- 4. the bones, with bone-space bounding spheres of what they now carry
     new_names = ([b for b in pd.REST if b not in pd.STRETCH_BONES] + list(pd.STRETCH_BONES.values())
-                 + list(BREAST_MOVE.values()))
+                 + list(move.values()))
     defs = []
     for name in new_names:
-        wr, wt, ws = ours[name] if name in ours and name not in BREAST_MOVE.values() else world[name]
+        if name not in ours and name not in world:
+            raise SystemExit(f'{name} is in no skeleton here: turn the breast move off (MOVE_BREASTS)')
+        wr, wt, ws = ours[name] if name in ours and name not in move.values() else world[name]
         sr, st = skin_to_bone(wr, wt)
         carried = [apply(sr, pos[j]) for j, ws_ in list(new_weights.items()) + list(breast.items())
                    for b, w in ws_ if b == name and w > 0]
@@ -466,7 +473,7 @@ def main():
     slot = {b: i for i, b in enumerate(dbones)}
     for j, ws_ in new_weights.items():
         ds.set_skin_weights(j, [(slot[b], w) for b, w in ws_])
-    remap = {slot[old]: slot[new] for old, new in BREAST_MOVE.items()}
+    remap = {slot[old]: slot[new] for old, new in move.items()}
     for j in breast:
         ds.remap_skin_slots(j, remap)
     done.save(out_nif)

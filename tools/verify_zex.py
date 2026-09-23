@@ -79,7 +79,8 @@ def main():
     # the openings' bones are carried through their stretch children (A-17), which sit on them
     at = {n: p for n, p in pd.REST.items() if n not in pd.STRETCH_BONES}
     at.update({child: pd.REST[bone] for bone, child in pd.STRETCH_BONES.items()})
-    want = list(at) + ['LBreast_skin', 'RBreast_skin']
+    import zex_bones as zbm
+    want = list(at) + (['LBreast_skin', 'RBreast_skin'] if zbm.MOVE_BREASTS else [])
     missing = [n for n in want if n not in bones]
     zex_left = [n for n in ZEX_GENITAL if n in bones]
     print(f'3. bones {len(bones)}; ours present {len(want) - len(missing)}/{len(want)}; missing {missing or "none"}; '
@@ -101,7 +102,10 @@ def main():
     import zex_bones as zb
     bind = zb.skeleton_world(zb.SKELETON)
     runtime = {name for name, _, _ in physics_config.bone_table(bind[pd.PARENT])}
-    stranded = [n for n in weighted if n not in bind and n not in runtime]
+    # CBBE's Havok cloth bones (CLOTH_*) are made by the body's own cloth data, not by any skeleton
+    cloth = after_nif.extra_block('BSClothExtraData') is not None
+    stranded = [n for n in weighted if n not in bind and n not in runtime
+                and not (cloth and n.startswith('CLOTH_'))]
     print(f'   weighted bones {len(weighted)}: in the bind skeleton or added at run time by the fork; '
           f'neither: {stranded or "none"}')
     if stranded:
@@ -109,7 +113,7 @@ def main():
 
     # 4. untouched outside the mask -- apart from the breast move, which must be exact
     import zex_bones
-    move = zex_bones.BREAST_MOVE
+    move = zex_bones.BREAST_MOVE if zex_bones.MOVE_BREASTS else {}
     m = mask_values(ab.OUT / 'Masks/AnatomyGenitalRegion.xml')
     bb, _ = before_nif.skin(b)
     changed = 0
@@ -130,7 +134,7 @@ def main():
                                        if bones[s] in move.values())
     print(f'   breasts: weights left on the Havok cloth bones {left_on_cloth}; carried before {dict(before_cloth)}, '
           f'now on the OCBP bones {dict(after_breast)}')
-    if left_on_cloth or before_cloth != after_breast:
+    if move and (left_on_cloth or before_cloth != after_breast):
         problems.append('breast weights did not move exactly onto LBreast_skin/RBreast_skin')
 
     # 5. where the genital weights went
