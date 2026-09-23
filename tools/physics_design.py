@@ -79,7 +79,12 @@ COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.
              # across the four knuckles (MaleHands/FemaleHands): a fist ~6.5 wide. ONE ball on the
              # middle knuckle, not four small ones: a row of spheres wider than the opening puts the
              # outer ones beyond the lips, where they push the lips back IN (A-17, simulated).
-             'LArm_Finger31': [(0.0, 0.0, 0.0, 3.0)], 'RArm_Finger31': [(0.0, 0.0, 0.0, 3.0)]}
+             'LArm_Finger31': [(0.0, 0.0, 0.0, 3.0)], 'RArm_Finger31': [(0.0, 0.0, 0.0, 3.0)],
+             # UAP's super mutants carry penis bones of their own (Supermutant/skeleton.nif: Penis1-4;
+             # measured 2026-09-23, the only creature skeleton here with any). Bigger than a man's.
+             **{f'Penis{k}': [(0.0, 0.0, 0.0, 2.5)] for k in (1, 2, 3, 4)}}
+# which skeleton carries each collider, for physics_config's check (the rest are human, ZeX's)
+CREATURE_COLLIDERS = {f'Penis{k}': 'Supermutant' for k in (1, 2, 3, 4)}
 SHAFT = ('Penis_01', 'Penis_02', 'Penis_03', 'Penis_04', 'Penis_05')
 SHAFT_RADIUS = 1.55          # what the partner's visible shaft needs cleared
 PENIS_SPACING = 3.0

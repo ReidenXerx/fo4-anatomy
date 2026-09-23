@@ -69,7 +69,7 @@ SECTIONS = {
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
-from physics_design import AFFECTED, COLLIDERS, PARENT, PROPS, STRETCH  # noqa: E402
+from physics_design import AFFECTED, COLLIDERS, CREATURE_COLLIDERS, PARENT, PROPS, STRETCH  # noqa: E402
 
 
 def sections(text):
@@ -183,7 +183,11 @@ def main():
     ini, dead = ocbp(source('ocbp.ini'), (women, men))
     (OUT / 'ocbp.ini').write_text(ini, encoding='utf-8')
     (OUT / 'OCBPCollisionConfig.txt').write_text(collisions(source('OCBPCollisionConfig.txt')), encoding='utf-8')
-    missing = [b for b, _ in ATTACH if b not in women] + [n for n in AFFECTED if n not in women] +               [n for n in COLLIDERS if n not in men]
+    creatures = {}
+    for race in set(CREATURE_COLLIDERS.values()):
+        creatures[race] = set(zb.skeleton_world(zb.ab.DEFAULT_DATA / f'Meshes/Actors/{race}/CharacterAssets/skeleton.nif'))
+    missing = [b for b, _ in ATTACH if b not in women] + [n for n in AFFECTED if n not in women] + \
+              [n for n in COLLIDERS if n not in (creatures[CREATURE_COLLIDERS[n]] if n in CREATURE_COLLIDERS else men)]
     print(f'ocbp.ini: every source line kept ({len(dead)} name a bone no skeleton has: {sorted(set(dead)) or "none"}); '
           f'{len(ATTACH)} anatomy bones attached in {len(SECTIONS)} new sections')
     print(f'OCBPCollisionConfig.txt: +{len(AFFECTED)} affected, +{len(COLLIDERS)} colliders '
