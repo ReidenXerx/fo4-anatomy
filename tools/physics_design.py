@@ -73,7 +73,12 @@ AFFECTED = {'AnatLip_L': [(0.0, 0.0, 0.0, 1.2)], 'AnatLip_R': [(0.0, 0.0, 0.0, 1
             'AnatAnus_L': [(0.0, 0.0, 0.0, 0.6)], 'AnatAnus_R': [(0.0, 0.0, 0.0, 0.6)]}
 COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_03': [(0.0, 0.0, 0.0, 2.0)], 'Penis_04': [(0.0, 0.0, 0.0, 2.0)],
-             'Penis_05': [(0.0, 0.0, 0.0, 1.8)]}
+             'Penis_05': [(0.0, 0.0, 0.0, 1.8)],
+             # the knuckles (fisting, the owner's poll 2026-09-23). Jiggle Physics' own hand colliders
+             # are the wrist (2.5) and the fingertips (1.5-1.8), so a fist's front had nothing. A hand
+             # measures 5.42 across the four knuckles (MaleHands/FemaleHands), so 1.6 spheres on the
+             # four proximal bones close the fist's front; every actor's hands, as with theirs.
+             **{f'{side}Arm_Finger{f}1': [(0.0, 0.0, 0.0, 1.6)] for side in 'LR' for f in (2, 3, 4, 5)}}
 SHAFT_RADIUS = 1.55          # what the partner's visible shaft needs cleared
 PENIS_SPACING = 3.0
 

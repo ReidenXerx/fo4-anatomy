@@ -57,11 +57,15 @@ QUIET = dict(linearX=0.2, linearY=0.2, linearZ=0.2, maxoffsetX=12.5, maxoffsetY=
 # a walk, 0.42 per thrust, the 1.2 cap when running; x the 0.45 layer = 0.26 / 0.19 / 0.54 at the crest.
 SOFT = dict(SPRING, stiffness=60.0, damping=3.0, linearX=0.5, linearY=0.5, linearZ=0.5,
             maxoffsetX=2.4, maxoffsetY=2.4, maxoffsetZ=2.4)
+# The openings get a higher cap (fisting, the owner's poll 2026-09-23): a fist pushes the inner lips
+# and the anus bones 2.8-2.85 (tools/ocbpc_sim.py), which the 2.5 cap clipped; 20 x 0.2 = 4.0 per
+# axis. A penis pushes 2.2 and is unaffected (simulated: every penis path identical).
+WIDE = dict(QUIET, maxoffsetX=20.0, maxoffsetY=20.0, maxoffsetZ=20.0)
 SECTIONS = {
     'LabiaOuter': SOFT,
-    'Labia': dict(SPRING, **QUIET),
+    'Labia': dict(SPRING, **WIDE),
     'Vulva': dict(SPRING, **QUIET),
-    'Anus': dict(SPRING, **QUIET),
+    'Anus': dict(SPRING, **WIDE),
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
