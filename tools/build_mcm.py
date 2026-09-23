@@ -87,9 +87,43 @@ def build(values):
     return pages, ini, used
 
 
-def check_reads(ini):
+def code_only(source):
+    """Papyrus with every comment removed (;/ block /;, {doc}, ; to end of line), strings kept, so a
+    read that exists only in a comment does not count (Chemistry's build-mcm rule, 9f21d36)."""
+    out, i, n, in_str = [], 0, len(source), False
+    while i < n:
+        ch = source[i]
+        if in_str:
+            out.append(ch)
+            if ch == '\\' and i + 1 < n:
+                out.append(source[i + 1])
+                i += 2
+                continue
+            if ch == '"':
+                in_str = False
+            i += 1
+        elif ch == '"':
+            in_str = True
+            out.append(ch)
+            i += 1
+        elif source.startswith(';/', i):
+            end = source.find('/;', i + 2)
+            i = n if end < 0 else end + 2
+        elif ch == ';':
+            end = source.find('\n', i)
+            i = n if end < 0 else end
+        elif ch == '{':
+            end = source.find('}', i + 1)
+            i = n if end < 0 else end + 1
+        else:
+            out.append(ch)
+            i += 1
+    return ''.join(out)
+
+
+def check_reads(ini, source=None):
     """Every setting the menu writes must be one LoadSettings reads under the same id, and back."""
-    source = SCRIPT.read_text(encoding='utf-8')
+    source = code_only(source if source is not None else SCRIPT.read_text(encoding='utf-8'))
     read = set(re.findall(rf'GetModSetting\w+\("{MOD}", "(\w+:\w+)"\)', source))
     sentinel = f'{SENTINEL[1]}:{SENTINEL[0]}'
     if sentinel not in read:

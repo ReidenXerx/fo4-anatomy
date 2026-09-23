@@ -688,3 +688,45 @@ does we have such metric)".
 - **Deploy:** the new body (build b72181014994) is already in Data through its hardlink, but its
   material and textures are NEW files. The owner must Deploy before playing, or the genitals
   render with missing textures.
+
+## A-23 — Nahka's work ships as a patch against the player's CBBE, not as her files (2026-09-23)
+
+- **Why:**
+  - The owner's poll said to ship Nahka's files with credit. Her page permits any use of HER work.
+  - But her CBBEVaginaMorphsPhysics files are a whole 2017 CBBE body with her genitals in it.
+  - CBBE's rule 3 asks permission for "uploading a modified body mesh outside of sliders".
+  - So only what she added ships, expressed against the player's own CBBE. This is the settled
+    principle of the release plan (nothing third-party redistributed), applied to her files.
+- **`make_patch.py`** (run once, here) writes `build/patch/nahka_patch.json.gz`, 2.5 MB:
+  - her 2,811 new vertex records, with bone slots as names;
+  - her 5,579 new triangles, whose references are CBBE indices or new ones;
+  - the 514 CBBE triangles and 220 CBBE vertices her geometry replaces;
+  - per new vertex, the CBBE neighbours `align_body` blends from, with their weights;
+  - per CBBE slider, her own deviation from that blend. That is `align_body`'s correction with no
+    CBBE data in it;
+  - her 12 genital sliders;
+  - a fingerprint of the CBBE it was made against.
+- **`apply_patch.py`** (what the builder runs; now also stage 1 here) rebuilds stage 1 from the
+  player's CBBE plus the patch:
+  - CBBE's vertices in CBBE order, minus the replaced ones, then hers;
+  - hers take CBBE's bone slots by name. 51 that leaned on her 2017 cloth bones are re-weighted
+    from their neighbours;
+  - CBBE's own slider data;
+  - segments recounted;
+  - a CBBE other than the fingerprinted one is refused.
+- **Proven against `align_body`** (by geometry, since the vertex order differs):
+  - all 48,215 triangles are identical as positions;
+  - all 25,292 distinct vertices (position + UV) match;
+  - weights are identical by bone name;
+  - records are identical outside the slot bytes;
+  - the 96 slider sets agree to 7e-8.
+  - Downstream:
+    - `verify_zex` passes;
+    - `fit_check` is identical to the deployed build on every path;
+    - the BodySlide build equals b72181014994 per shape as positions.
+  - The skin's bone table drops from 74 to 69: her 2017 cloth bones are gone.
+- **Build e030b9406d09**, restaged in place at 22:34. No Deploy was needed. The Silhouette session
+  was told this is the final vertex order before it regenerates.
+- **Also in this build:** the arousal nipple layer comes off while Silhouette's refit marker says
+  heavy clothes (its S-49/S-50 contract). Silhouette_Refit under Silhouette.esp|0x803 is then an
+  even whole number of at least 2. It is read directly, with no call into Silhouette's scripts.

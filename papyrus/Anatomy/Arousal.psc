@@ -69,6 +69,7 @@ Keyword _busy
 ActorValue _desire
 GlobalVariable _ivyAroused
 ActorBase _ivy
+Keyword _refit                   ; Silhouette's refit marker keyword, None without Silhouette
 
 Event OnInit()
 	Setup()
@@ -126,6 +127,12 @@ Function Setup()
 	If Game.IsPluginInstalled("CompanionIvy.esm")
 		_ivyAroused = Game.GetFormFromFile(0x000011AA, "CompanionIvy.esm") as GlobalVariable
 		_ivy = Game.GetFormFromFile(0x00000803, "CompanionIvy.esm") as ActorBase
+	EndIf
+	; Silhouette's refit marker (its S-49/S-50 contract, 2026-09-23): the keyword SilhouetteRefitKeyword
+	; (Silhouette.esp 0x803, light) carries the morph "Silhouette_Refit"
+	_refit = None
+	If Game.IsPluginInstalled("Silhouette.esp")
+		_refit = Game.GetFormFromFile(0x00000803, "Silhouette.esp") as Keyword
 	EndIf
 	; asked once per load, not every tick: without MCM.pex the call fails (and logs) and answers False
 	_mcm = MCM.IsInstalled()
@@ -327,6 +334,20 @@ Float Function Next(Actor a, Float cur, Actor[] busy, Float dt)
 	Return nxt
 EndFunction
 
+; Silhouette's marker: an EVEN whole number of 2 or more is heavy clothing (odd = light, 0.25 = being
+; written, 0 or absent = none). Read directly, so any Silhouette version works and nothing is called.
+Bool Function HeavilyDressed(Actor a)
+	If _refit == None
+		Return False
+	EndIf
+	Float v = BodyGen.GetMorph(a, True, "Silhouette_Refit", _refit)
+	If v < 2.0
+		Return False
+	EndIf
+	Int n = Math.Floor(v)
+	Return (n as Float) == v && n % 2 == 0
+EndFunction
+
 Bool Function Watching(Actor a, Actor[] busy)
 	Int j = 0
 	While j < busy.Length
@@ -347,6 +368,12 @@ EndFunction
 Function Show(Int k)
 	Actor a = _who[k]
 	Float stepped = Math.Floor(_level[k] * 10.0 + 0.5) / 10.0
+	; heavily dressed (Silhouette's refit marker): her nipples stay flat under the armour. Our layer
+	; comes off so Silhouette's NipBGone floor wins (LooksMenu shows the MAX: any value of ours would
+	; beat a floor); her arousal keeps counting, and taking the armour off shows where it is
+	If stepped > 0.0 && HeavilyDressed(a)
+		stepped = 0.0
+	EndIf
 	If stepped == _shown[k]
 		Return
 	EndIf

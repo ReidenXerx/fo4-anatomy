@@ -197,3 +197,8 @@ crotch skin; no change anywhere else on the body.
 - After the Deploy, the genitals should show Nahka's mucosa, which A-10 never actually showed. The
   seam to the crotch skin should not show.
 - In BodySlide the set is now "Anatomy Body", for rebuilding with any preset.
+
+### Build e030b9406d09 (A-23), restaged in place at 22:34: no Deploy needed
+- Same geometry and physics as b72181014994, rebuilt from the player's CBBE plus Nahka's patch.
+- The arousal script now removes our nipple layer under Silhouette's heavy-armour marker. Nothing
+  changes until Silhouette ships its refit.

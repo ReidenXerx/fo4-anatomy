@@ -70,13 +70,27 @@ def parse_ini(text):
 
 
 class Build:
-    def __init__(self, label, nif_path, ini_path, col_path):
+    def __init__(self, label, nif_path, ini_paths, col_paths):
+        """ini_paths / col_paths: read in order, as the fork reads them (A-21): the player's files,
+        then ours. A bone's section comes from the file whose [Attach] names it (a later file wins);
+        a collision node gains every file's spheres."""
         self.label = label
         n = nif.Nif(nif_path)
         s = n.shape(ab.SHAPE)
         bones, _ = n.skin(s)
         self.pos = s.positions()
         self.tris = s.triangles()
+        # the genitals' own shape (A-22) holds copies of body records: fold its triangles back onto the
+        # body's vertices, matched by position and UV, so the whole surface is judged as one
+        if any(g.name == 'AnatomyGenitals' for g in n.shapes()):
+            g = n.shape('AnatomyGenitals')
+            at = {}
+            for j in range(s.count):
+                at.setdefault((s.position(j), s.uv(j)), j)
+            back = [at.get((g.position(k), g.uv(k))) for k in range(g.count)]
+            if any(b is None for b in back):
+                raise SystemExit(f'{nif_path}: {sum(b is None for b in back)} genital vertices have no body twin')
+            self.tris = self.tris + [tuple(back[k] for k in t) for t in g.triangles()]
         self.weights = {}
         # a body weighted to the openings' stretch children (A-17) moves with their bones below the
         # stretch knee, which every path here stays under
@@ -86,10 +100,18 @@ class Build:
                  if fold.get(bones[sl], bones[sl]) in pd.REST}
             if w:
                 self.weights[j] = w
-        ini = parse_ini(ini_path.read_text(encoding='utf-8', errors='replace'))
-        attach = ini.get('Attach', {})
-        self.section = {b: ini[attach[b]] for b in pd.REST if b in attach and attach[b] in ini}
-        spheres = parse_spheres(col_path.read_text(encoding='utf-8', errors='replace'))
+        self.section = {}
+        for ini_path in ini_paths:
+            if not ini_path.exists():
+                continue
+            ini = parse_ini(ini_path.read_text(encoding='utf-8', errors='replace'))
+            attach = ini.get('Attach', {})
+            self.section.update({b: ini[attach[b]] for b in pd.REST if b in attach and attach[b] in ini})
+        spheres = {}
+        for col_path in col_paths:
+            if col_path.exists():
+                for node, rows in parse_spheres(col_path.read_text(encoding='utf-8', errors='replace')).items():
+                    spheres.setdefault(node, []).extend(rows)
         self.affected = {b: spheres[b][0] for b in pd.REST if b in spheres}
         self.colliders = [max(r for *_, r in spheres[p]) for p in PENIS if p in spheres]
 
@@ -195,10 +217,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--old', type=pathlib.Path, default=DEPLOYED)
     args = ap.parse_args()
-    builds = [Build('deployed', args.old / BODY, args.old / 'F4SE/Plugins/ocbp.ini',
-                    args.old / 'F4SE/Plugins/OCBPCollisionConfig.txt'),
-              Build('new', ab.OUT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif', ROOT / 'build/config/ocbp.ini',
-                    ROOT / 'build/config/OCBPCollisionConfig.txt')]
+    # A-21: the physics the game runs is the player's files plus ours, merged by the fork
+    plugins = ab.DEFAULT_DATA / 'F4SE/Plugins'
+    builds = [Build('deployed', args.old / BODY,
+                    [plugins / 'ocbp.ini', args.old / 'F4SE/Plugins/Anatomy/ocbp.ini'],
+                    [plugins / 'OCBPCollisionConfig.txt', args.old / 'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt']),
+              Build('new', ab.OUT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif',
+                    [plugins / 'ocbp.ini', ROOT / 'build/config/Anatomy/ocbp.ini'],
+                    [plugins / 'OCBPCollisionConfig.txt', ROOT / 'build/config/Anatomy/OCBPCollisionConfig.txt'])]
     for b in builds:
         print(f'{b.label}: {len(b.weights)} vertices on the affected bones; colliders {b.colliders}; '
               f'affected {b.affected}')
