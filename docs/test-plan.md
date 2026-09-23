@@ -172,3 +172,21 @@ crotch skin; no change anywhere else on the body.
   first contact with its Jaw Open. If the mouth never opens, those lines show whether the mouth
   point sits on her face.
 - Kissing and ordinary dialogue must look exactly as before: no chain comes near a mouth there.
+
+### Zero-touch (A-21), staged 22:08: needs ONE Deploy (fork 0e60cc0, body 17f97e158c01)
+- The Deploy (Vortex):
+  - gives `female/skeleton.nif`, `ocbp.ini` and `OCBPCollisionConfig.txt` back to Skeletal Adjustments,
+    MadKita and Jiggle Physics;
+  - adds `F4SE/Plugins/Anatomy/ocbp.ini`, `F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt` and the MCM
+    files.
+- Without the Deploy, the new DLL runs on the old files exactly as before.
+- After it, check `anatomy_ocbpc.log`:
+  - `[bones] <id>: created 15 of our nodes under Pelvis_skin, pointed 9 skin entries at them`, once for
+    each woman in range;
+  - `[mouth] on: 2 chain(s)`.
+- In game:
+  - women exactly as before: no fin when walking, sitting or in scenes;
+  - lips open to a shaft;
+  - a fist stretches the entrance;
+  - the mouth opens in an oral scene.
+- If a fin comes back, the run-time bones failed. Re-adding the patched skeleton is one restage away.
