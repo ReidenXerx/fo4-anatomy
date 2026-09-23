@@ -107,8 +107,11 @@ STRETCH_BONES = {b: b + '_Stretch' for b in ('AnatLip_L', 'AnatLip_R', 'AnatAnus
 # Props (A-17, the fork's [Props]): whatever an animation hangs on a hand's AnimObject nodes (DR pack's
 # dildos and bat) collides along its rendered length. The hands' WEAPON nodes are left out on purpose:
 # a rifle held against her chest would squash her breasts.
+# targets (fork 2026-09-23): a prop pushes ONLY our genital and anus bones. The first zero-touch log
+# showed everyday idle props on AnimObjectR1 (mugs, clipboards, up to 37 units long); an actor's own
+# colliders act on its own bones, so without this a woman drinking would push her own breasts.
 PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObjectL2,AnimObjectL3',
-             radius=1.6, spacing=1.5, maxLength=40.0, minBound=1.0)
+             radius=1.6, spacing=1.5, maxLength=40.0, minBound=1.0, targets=','.join(AFFECTED))
 
 # The mouth (A-20, the fo4-ocbpc fork's [Mouth]). FO4 heads have no mouth bones; the fork writes the
 # face's merged expression weights (Jaw Open, both lip funnels, Upper Lip Up) over the animation's
