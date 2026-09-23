@@ -87,6 +87,8 @@ def main():
         if not src.exists():
             raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config, make_esp, '
                              f'build-papyrus.ps1, build_mcm and the zero build first')
+    import make_esp
+    print(make_esp.verify(PLUGIN))          # a keyword-less Anatomy.esp would move our layer into bodies
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)

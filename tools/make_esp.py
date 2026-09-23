@@ -12,6 +12,7 @@ CNAM (colour), TNAM (type 0).
 Flagged LIGHT (TES4 0x200): no load-order slot; object ids 0x800-0xFFF (0x800 and 0x801 here).
 
     python tools/make_esp.py build/plugin/Anatomy.esp
+    python tools/make_esp.py --verify <plugin>          (package, restage and release call verify())
 """
 import pathlib
 import struct
@@ -63,14 +64,66 @@ def build():
     return record('TES4', 0, header, flags=TES4_LIGHT) + body
 
 
+def records(blob):
+    """(signature, form id, flags, EDID or None) of every record in a plugin, TES4 included."""
+    out = []
+
+    def walk(pos, end):
+        while pos < end:
+            sig = blob[pos:pos + 4].decode('ascii', 'replace')
+            size = struct.unpack_from('<I', blob, pos + 4)[0]
+            if sig == 'GRUP':                               # size counts its own 24-byte header
+                walk(pos + 24, pos + size)
+                pos += size
+                continue
+            flags, form_id = struct.unpack_from('<II', blob, pos + 8)
+            data, edid, f = blob[pos + 24:pos + 24 + size], None, 0
+            while f + 6 <= len(data) and not flags & 0x40000:   # compressed records keep no plain EDID
+                fsig, fsize = data[f:f + 4], struct.unpack_from('<H', data, f + 4)[0]
+                if fsig == b'EDID':
+                    edid = data[f + 6:f + 6 + fsize].rstrip(b'\0').decode('ascii', 'replace')
+                    break
+                f += 6 + fsize
+            out.append((sig, form_id, flags, edid))
+            pos += 24 + size
+
+    walk(0, len(blob))
+    return out
+
+
+def verify(path):
+    """Refuse a plugin that must not ship as Anatomy.esp. LooksMenu stores our nipple values under the
+    keyword 0x801 and, on load, looks the keyword up by plugin NAME and form id: a plugin of this name
+    without that keyword (an older build, a renumbered one) files every stored value under key 0, the
+    woman's own body, for good (f4ee BodyMorphInterface.cpp, read by the Silhouette session
+    2026-09-23). Removing the plugin entirely is safe; shipping a wrong one is not."""
+    blob = pathlib.Path(path).read_bytes()
+    found = records(blob)
+    problems = []
+    if not found or found[0][0] != 'TES4' or not found[0][2] & TES4_LIGHT:
+        problems.append('not a light plugin')
+    by_id = {(sig, form_id): edid for sig, form_id, _, edid in found}
+    if by_id.get(('KYWD', LAYER_ID)) != LAYER_EDID:
+        problems.append(f'no KYWD {LAYER_ID:08X} "{LAYER_EDID}" (the LooksMenu layer key)')
+    if by_id.get(('QUST', QUEST_ID)) != QUEST_EDID:
+        problems.append(f'no QUST {QUEST_ID:08X} "{QUEST_EDID}"')
+    if problems:
+        raise SystemExit(f'{path} must not ship as Anatomy.esp: {"; ".join(problems)}')
+    return f'{path}: KYWD {LAYER_ID:08X} {LAYER_EDID}, QUST {QUEST_ID:08X} {QUEST_EDID}, light'
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         return 1
     out = pathlib.Path(sys.argv[1])
     out.parent.mkdir(parents=True, exist_ok=True)
+    if sys.argv[1] == '--verify':
+        print(verify(sys.argv[2]))
+        return 0
     blob = build()
     out.write_bytes(blob)
+    verify(out)
     print(f'wrote {out} ({len(blob)} bytes): light; keyword {LAYER_EDID} {LAYER_ID:08X}; quest {QUEST_EDID} '
           f'{QUEST_ID:08X} running {SCRIPT}; master {MASTER}')
     return 0

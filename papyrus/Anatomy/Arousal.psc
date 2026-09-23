@@ -89,6 +89,20 @@ Event OnTimer(Int aiTimerID)
 	EndIf
 EndEvent
 
+; Silhouette put a new body on her (its S-24 event). Our layer is her own strongest value plus the
+; rise, so it is rebuilt against the new body now, not when her arousal next changes a step.
+Event Silhouette:Bridge.OnActorGenerated(Silhouette:Bridge akSender, Var[] akArgs)
+	If akArgs == None || akArgs.Length < 1
+		Return
+	EndIf
+	Actor a = akArgs[0] as Actor
+	Int k = _who.Find(a)
+	If k >= 0 && _shown[k] > 0.0
+		_shown[k] = -1.0                         ; "a layer may be on her": Show rebuilds it
+		Show(k)
+	EndIf
+EndEvent
+
 Function Setup()
 	RegisterForRemoteEvent(Game.GetPlayer(), "OnPlayerLoadGame")
 	If _who == None
@@ -133,6 +147,11 @@ Function Setup()
 	_refit = None
 	If Game.IsPluginInstalled("Silhouette.esp")
 		_refit = Game.GetFormFromFile(0x00000803, "Silhouette.esp") as Keyword
+		; its new bodies (the Silhouette session's request, 2026-09-23): the event handler above
+		Silhouette:Bridge bridge = Game.GetFormFromFile(0x00000802, "Silhouette.esp") as Silhouette:Bridge
+		If bridge != None
+			RegisterForCustomEvent(bridge, "OnActorGenerated")
+		EndIf
 	EndIf
 	; asked once per load, not every tick: without MCM.pex the call fails (and logs) and answers False
 	_mcm = MCM.IsInstalled()

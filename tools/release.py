@@ -173,6 +173,9 @@ def main():
         raise SystemExit(f'missing: {missing}')
     if not any(k.endswith('AnatomyBuilder.exe') for k in wanted):
         raise SystemExit('PyInstaller ran but left no AnatomyBuilder.exe in build/dist/AnatomyBuilder')
+    sys.path.insert(0, str(ROOT / 'tools'))
+    import make_esp
+    print(make_esp.verify(wanted['Anatomy.esp']))    # a keyword-less Anatomy.esp would move our layer into bodies
     print(f'cbp.dll from fork commit {commit}; builder exe from this tree')
     for rel, src in wanted.items():
         dst = stage / 'Data' / rel
