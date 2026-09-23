@@ -509,3 +509,43 @@ does we have such metric)".
     numbers: the scene's 1.0 was already the top.
 - **Save compatibility:** the new variables start at their declared values in an old save, and
   `LoadSettings` overwrites them at the first tick.
+
+## A-19 — Our own weights everywhere: JaneBod's painting is gone (release plan item 1, 2026-09-23)
+
+- **Why:** JaneBod Extended (Nexus 32442) needs permission for asset use, and the body's vulva and
+  outer-lip base still came from its painting (half of it, copied by proximity since A-6). After
+  this, no build step reads JaneBod. `references.py` and `inspect_jbe.py` stay as research tools.
+- **What that painting contributed, measured on our mesh before removing it:**
+  - AnatVulva: a near-flat 0.07-0.09 on 558 vertices around the bone (x ±1.9, y 3.4..6.0). That
+    bone is stiff and nothing collides with it, so it moved the skin about 0.05 units.
+  - AnatLipOuter_L/R: at most 0.10, median 0.02. On 1,188 vertices that is all the weight they
+    have; those vertices are mostly near the midline, where A-13's layer is 0. The layer itself
+    reaches 0.45.
+- **The replacement (`zex_bones.vulva_weights`):**
+  - The vulva gets a pad: 0.09 within 1.8 of the bone, fading to nothing at 3.0.
+  - It is limited to what lies ahead of the lips. It fades in between the outer-lip bones' depth
+    and its own (y 3.2 → 4.0), so the openings stay their fitted layers' alone.
+  - It is symmetric by construction; JaneBod's needed mirror-averaging.
+  - The outer lips keep only their own A-13 layer.
+- **The entrance, simulated (`fit_check`, deployed build = with JaneBod):**
+  - Without that painting, the entrance's front clipped a little more at gain 1.35: 30% → 32% as
+    drawn, 27% → 31% steeper. Its small midline outer-lip weights had been pushing the front
+    forward: the outer-lip bones are pushed outward and forward (0.85, 0.46), so on a midline
+    vertex the two sides cancel in x and add in y.
+  - **Rejected: fitting the entrance with the outer-lip bones too.** The fit itself improved (51% →
+    73% of Nahka's displacement reproduced), yet the simulation clipped MORE (30% → 38%) and the
+    walking flap doubled (run 0.63 → 1.00). Those bones are soft (stiffness 60) and can move 1.2
+    units at most (maxoffset 2.4 × linear 0.5), so the fit's expected push is more than they can
+    deliver. **Lesson:** a better fit to `expected_push` is not a better result. Only the
+    simulation (`fit_check`) decides.
+  - **Taken: vagina gain 1.35 → 1.40.** The six paths total 3,233 vertices still inside, against
+    3,207 deployed (+0.8%). Stretch p99 as drawn is 5.17, Nahka's own slider and A-15's limit.
+    Walking flap is lower than deployed: 0.26 / 0.55 against 0.30 / 0.63. The anus is identical on
+    every path.
+- **Poses (`pose_check` on the BodySlide output):**
+  - Thighs are identical to deployed; those come from CBBE's own weights.
+  - Spine bent ±60: 13 and 9 edges grown past 3× before, 0 now.
+  - Kneeling and lying back: x1.5-1.6 → x1.7-1.9, both +0.04 units.
+  - The 0.36 rest drift appears on the deployed body too, so it is not from this change.
+- **verify_zex and compare_builds:** PASS.
+- **Open:** the owner's look.

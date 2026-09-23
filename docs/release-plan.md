@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | Vulva/anus geometry | Nahka's, shipped in Animated Fannies (LL 4302). Its page: "up for adoption … can be used in whatever way any other modders see fit - no need to ask me for permission". Credits Nahka, BringTheNoise, Alan (UN7B). | the builder reads the player's own download; credit all |
 | CBBE body base | Nexus 15, rule 3: "For uploading a modified body mesh outside of sliders, please ask for permission first" (contact Ousnius). | built on the player's PC from their CBBE; never uploaded |
-| JaneBod's genital weight pattern | Nexus 32442: asset use needs permission. | **replace with our own weights** before release |
+| JaneBod's genital weight pattern | Nexus 32442: asset use needs permission. | **replaced by our own weights (A-19)**: nothing of it ships or is read |
 | Women's skeleton (Skeletal Adjustments, Nexus 39006) | asset use with credit is allowed; modification needs permission; no upload elsewhere | the builder adds our bones to whatever skeleton the player has |
 | ocbp.ini (MadKita's Actual Jiggle, Nexus 90677) | modification and asset use free, no credit needed | the builder merges our lines into the player's own ini |
 | OCBPCollisionConfig.txt (Jiggle Physics, Nexus 82699) | asset use needs permission | the builder appends our lines to the player's own file |
@@ -36,8 +36,8 @@
 
 ## Work list
 
-1. Replace the JaneBod-derived weights (the vulva sway and the outer-lip base) with our own
-   procedural weights, then look again in game.
+1. ~~Replace the JaneBod-derived weights (the vulva sway and the outer-lip base) with our own
+   procedural weights~~ Done (A-19); the owner's look in game is still to come.
 2. ~~MCM for arousal: on/off, nipple strength, which sources count, rise/fade speed.~~ Done (A-18).
 3. The contact-driven mouth (F4SE plugin + `AAF_BlockMFG_Mouth`), coordinated with Rapport.
 4. The builder:

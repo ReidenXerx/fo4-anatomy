@@ -12,13 +12,12 @@ weights are written here, and every step is proven against something already in 
            recomputing the bones already in the file from ZeX's skeleton (the body is bound to
            it), and the pelvis the new bones hang from must be the same in both. Skin-to-bone
            transforms use the file's own skin offset, proven by reproducing its stored BoneData.
-  weights  JaneBod's genital weights, copied by proximity (inverse distance, the K nearest within
-           R units) from the reference moved into our frame (tools/references.py), half of each
-           onto the bone that plays that part here (ROLE); confined by the mask (tools/mask.py):
+  weights  All ours, computed from our own bones and Nahka's openings (A-19: nothing of JaneBod's
+           painting is left). The bones collisions push (the inner lips, the anus) carry a layer
+           fitted to Nahka's own openings (A-9, below at "Collision-grade weights"), the outer lips a
+           soft layer (A-13), the vulva a soft pad (A-19); all confined by the mask (tools/mask.py):
            free vertices take the full pattern, the blend band a fraction, protected vertices
-           nothing. The bones collisions push (the inner lips, the anus) carry a layer fitted to
-           Nahka's own openings instead (A-9, below at "Collision-grade weights"), the outer lips a
-           soft layer (A-13). The rest of the vertex's weights make room proportionally; at most 4
+           nothing. The rest of the vertex's weights make room proportionally; at most 4
            influences, as the vertex format allows.
 
 Output: build/project/ShapeData/AnatomyBodyZeX (+ .osd) and SliderSets/AnatomyBodyZeX.osp.
@@ -38,7 +37,6 @@ import nif
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKELETON = ab.DEFAULT_DATA / 'Meshes/Actors/Character/CharacterAssets/skeleton.nif'
-REFERENCE = ROOT / 'build/references/AnatomyRefJBE.nif'
 MASK = ab.OUT / 'Masks/AnatomyGenitalRegion.xml'
 STAGE1 = ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.nif'
 OUT_FOLDER = 'AnatomyBodyZeX'
@@ -46,18 +44,18 @@ SET_NAME = 'Anatomy Body ZeX'
 
 import physics_design as pd  # noqa: E402  (our bones and the openings)
 
-# JaneBod's genital bones (in the reference) and the part each plays here. JaneBod's pattern is for
-# ANIMATIONS, which swing a bone several units; physics sways ours a fraction of that, so half of it
-# (ROLE_SHARE, as the _CBP_ twins had) is enough for the vulva and the outer lips to move as one piece.
-# JaneBod's inner lips and anus are not carried over: the fitted layers below replace them.
-JBE_GENITAL = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02',
-               'Anus_01', 'Anus_02', 'Anus_03', 'Anus_04']
-ROLE = {'Vagina_00': 'AnatVulva', 'Vagina_L_01': 'AnatLipOuter_L', 'Vagina_R_01': 'AnatLipOuter_R'}
-ROLE_SHARE = 0.5
-# JaneBod's painting is lopsided (measured on ours: 1,501 vertices on the left outer lip, 1,020 on the
-# right, the difference all in the light tail), so each vertex takes the mean of the pattern at its
-# own place and, on the other side's bone, at its mirror image: both lips sway alike.
-MIRROR = {'Vagina_00': 'Vagina_00', 'Vagina_L_01': 'Vagina_R_01', 'Vagina_R_01': 'Vagina_L_01'}
+# The vulva sways as one piece (A-19): a soft pad on AnatVulva, full within VULVA_FLAT of the bone and
+# nothing past VULVA_REACH, and only ahead of the lips: it fades in between the outer-lip bones'
+# depth (y 2.45) and its own (y 4.0), so the openings stay their fitted layers' alone. Its physics
+# (ocbp.ini [Vulva]) is stiff and nothing collides with it, so it moves little. This replaces
+# JaneBod's painting, whose asset use needs permission (docs/release-plan.md). Measured on ours,
+# half of that painting was a near-flat 0.07-0.09 on this bone over the same region, and at most 0.1
+# (median 0.02) on the outer lips, where the A-13 layer already reaches 0.45. So the pad keeps its
+# level, and the outer lips keep only their own layer.
+VULVA = 'AnatVulva'
+VULVA_W = 0.09
+VULVA_FLAT, VULVA_REACH = 1.8, 3.0
+VULVA_FRONT = (3.2, 4.0)                    # y where the pad starts and where it is full
 OUR_SKELETON = pathlib.Path(__file__).resolve().parent.parent / 'build/skeleton/female/skeleton.nif'
 
 # Breast physics (owner, 2026-09-23: "something wrong with physics config and breasts ... fix").
@@ -67,7 +65,6 @@ OUR_SKELETON = pathlib.Path(__file__).resolve().parent.parent / 'build/skeleton/
 # 1,913 on each Googles bone). CBBE's own breast weight painting moves across unchanged, so at
 # rest the mesh is identical and OCBP (and the hand collisions already configured) now reach it.
 BREAST_MOVE = {'CLOTH_Bone_Googles_00': 'LBreast_skin', 'CLOTH_Bone_Googles_01': 'RBreast_skin'}
-K, RADIUS = 4, 1.0          # the two genital meshes coincide within 0.77 units (research.md)
 
 # Collision-grade weights (decision A-9). JaneBod's pattern swings with animations: at most 0.17 on a
 # lip after the split, 0.07 on the anus (measured). A collision moves a bone only as far as it takes
@@ -106,6 +103,14 @@ def outer_lip_weights(p):
     if w <= 0.0:
         return {}
     return {OUTER_TWINS[0] if x < 0 else OUTER_TWINS[1]: w}
+
+
+def vulva_weights(p):
+    """The vulva's pad (A-19): symmetric by construction, a function of the distance to the bone and
+    of depth only."""
+    w = (VULVA_W * _ramp(math.dist(p, pd.REST[VULVA]), VULVA_REACH, VULVA_FLAT)
+         * _ramp(p[1], *VULVA_FRONT))
+    return {VULVA: w} if w > 0.0 else {}
 MAX_GENITAL = 0.95                          # the vertex keeps at least this much of its own
 MOVE_MIN = 0.02                             # morph moves below this carry no layer
 SMOOTH_ROUNDS = 3
@@ -376,27 +381,8 @@ def main():
         raise SystemExit(f'the skin offset {off} is not physics_design.SKIN_OFFSET {pd.SKIN_OFFSET}: '
                          f'our bones would sit elsewhere than designed')
 
-    # ---- 3. weights: JaneBod's pattern, by proximity, inside the mask
-    ref = nif.Nif(REFERENCE)
-    rs = ref.shapes()[0]
-    rbones, _ = ref.skin(rs)
-    rpos = rs.positions()
-    rgen = {}
-    for v in range(rs.count):
-        g = {rbones[s]: w for s, w in rs.skin_weights(v) if rbones[s] in JBE_GENITAL}
-        if g:
-            rgen[v] = g
-    grid = ab.Grid(rpos, list(range(rs.count)))
-
-    def jbe_at(p):
-        """JaneBod's genital weights at a point: inverse distance over the K nearest within RADIUS."""
-        g = collections.defaultdict(float)
-        near = grid.nearest(p, K, limit=RADIUS)
-        for v, w in (ab.idw(p, rpos, near) if near else []):
-            for b, x in rgen.get(v, {}).items():
-                g[b] += w * x
-        return g
-    mask = {int(v.get('i')): float(v.get('m')) for v in ET.parse(MASK).getroot().iter('V')}
+    # ---- 3. weights: the vulva's pad, the fitted opening layers and the outer lips, inside the mask
+    mask ={int(v.get('i')): float(v.get('m')) for v in ET.parse(MASK).getroot().iter('V')}
     import osd as osd_mod
     pos_all = shape.positions()
     layers = opening_layers(osd_mod.read(ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.osd'), pos_all)
@@ -414,14 +400,9 @@ def main():
         m = mask.get(j, 0.0)
         if m >= 1.0:
             continue
-        here, there = jbe_at(pos[j]), jbe_at((-pos[j][0], pos[j][1], pos[j][2]))
         s = 1.0 - m
-        genital = {}
-        for b in ROLE:
-            x = 0.5 * (here.get(b, 0.0) + there.get(MIRROR[b], 0.0))
-            if x > 0.0:
-                genital[ROLE[b]] = s * x * ROLE_SHARE
-        layer = dict(smoothed.get(j, {}))
+        genital = {b: s * x for b, x in vulva_weights(pos[j]).items()}
+        layer =dict(smoothed.get(j, {}))
         for b, x in outer_lip_weights(pos[j]).items():
             layer[b] = layer.get(b, 0.0) + x
         room = MAX_GENITAL - sum(genital.values())
@@ -437,8 +418,10 @@ def main():
         # plus the fork's stretch when something bigger than a penis is in the opening
         new_weights[j] = [(pd.STRETCH_BONES.get(b, b), w) for b, w in pick_four(mine, genital)]
     touched_protected = [j for j in new_weights if mask.get(j, 0.0) >= 1.0]
-    print(f'3. JaneBod genital-weighted reference vertices {len(rgen)}; our vertices given genital weight '
-          f'{len(new_weights)} (protected among them: {len(touched_protected)})')
+    pad = [w for w in (vulva_weights(pos[j]).get(VULVA, 0.0) * (1.0 - mask.get(j, 0.0))
+                       for j in range(shape.count)) if w > 0.0]
+    print(f'3. vulva pad on {len(pad)} vertices (max {max(pad, default=0.0):.3f}); vertices given genital '
+          f'weight {len(new_weights)} (protected among them: {len(touched_protected)})')
 
     # breasts: the same weights, on the bones OCBP drives. Only the bone slot changes (index bytes),
     # never the weight bytes, so every moved weight stays bit-identical.

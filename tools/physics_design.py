@@ -54,7 +54,7 @@ ANUS_CENTRE, ANUS_AXIS = (0.0, -1.58, -54.07), unit((0.0, 0.45, 0.89))
 ANUS_FRONT = (0.0, ANUS_AXIS[2], -ANUS_AXIS[1])    # in the ring's plane, toward the vulva (3.5 away)
 
 REST = {
-    # the whole vulva's small sway (JaneBod's Vagina_00 pattern, halved); where ZeX kept Vagina_CBP_00
+    # the whole vulva's small sway (our pad, zex_bones.vulva_weights, A-19); where ZeX kept Vagina_CBP_00
     'AnatVulva': (0.0, 4.0, -55.5),
     # outer lips (labia majora, A-13): on each crest; they wobble and a hand or the shaft squishes them
     'AnatLipOuter_L': (-1.4, 2.45, -55.71), 'AnatLipOuter_R': (1.4, 2.45, -55.71),
@@ -115,9 +115,13 @@ PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObje
 # (tools/fit_check.py's judge, entrance ring): x1.35 puts the entrance's median radius at the shaft's
 # 1.55 (from 1.33) with 30% of the entrance still inside it (from 56%), and stretches less than Nahka's
 # own slider (p99 5.0 / max 9.3 against 5.2 / 13.0); x1.5 would pass her p99.
+# x1.40 (A-19): JaneBod's painting is gone, and its small outer-lip weights near the midline had
+# been opening the entrance's front a little (x1.35 without them: 30% -> 32% as drawn, 27% -> 31%
+# steeper). x1.40 puts the six paths' total back within 1% of the deployed build (3,233 vs 3,207
+# vertices still inside), at p99 5.17 as drawn: Nahka's own, the limit above.
 OPENINGS = {
     'vagina': dict(morph='VaginaPenetrate', centre=VAGINA_CENTRE, axis=VAGINA_AXIS, drawn_for=1.1,
-                   bones=('AnatLip_L', 'AnatLip_R'), physics=True, gain=1.35),
+                   bones=('AnatLip_L', 'AnatLip_R'), physics=True, gain=1.40),
     'anus': dict(morph='AnusPenetrate', centre=ANUS_CENTRE, axis=ANUS_AXIS, drawn_for=1.35,
                  bones=('AnatAnus_F', 'AnatAnus_B', 'AnatAnus_L', 'AnatAnus_R'), physics=True),
 }

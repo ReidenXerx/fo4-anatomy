@@ -1,5 +1,8 @@
 """The two weight references for Outfit Studio's CopyBoneWeights (decision A-6).
 
+RESEARCH ONLY since A-19: no build step reads these any more (zex_bones.py's weights are all
+ours), and the release never needs JaneBod Extended.
+
     build/references/AnatomyRefJBE.nif      JaneBod Extended's body, as shipped
     build/references/AnatomyRefJBE_CBP.nif  the same file with the five vagina bones renamed to
                                             ZeX's _CBP_ twins, so a second copy pass puts the
