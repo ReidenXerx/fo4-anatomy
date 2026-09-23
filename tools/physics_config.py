@@ -1,6 +1,6 @@
 """The physics configs for the anatomy body, built from the owner's DEPLOYED ones (decision A-7).
 
-Inputs (read only): Data/F4SE/Plugins/ocbp.ini (from MadKita's Actual Jiggle) and
+Inputs (read only): the staging copies of ocbp.ini (MadKita's Actual Jiggle) and
 OCBPCollisionConfig.txt (from Jiggle Physics); the plugin is OCBPC 0.3. Nothing they tune is
 dropped; the output (build/config/, never committed: it carries their work, A-2) differs by:
 
@@ -119,14 +119,31 @@ def _append_list(lines, names):
     return lines[:last + 1] + list(names) + lines[last + 1:]
 
 
+# Once Anatomy-dev is deployed, Data's copies ARE our output, and building from them again would
+# append our sections a second time. So the inputs are the owning mods' staging copies, by name,
+# and an input that already carries our marker is refused.
+MODS = pathlib.Path(r'D:\Vortex\fallout4\mods')
+SOURCES = {'ocbp.ini': "MadKita's Actual Jiggle-90677-1-1-1737600200",
+           'OCBPCollisionConfig.txt': 'Jiggle Physics-82699-1-1715599262'}
+MARKER = 'fo4-anatomy'
+
+
+def source(name):
+    p = MODS / SOURCES[name] / 'F4SE/Plugins' / name
+    if not p.exists():
+        raise SystemExit(f'{p} is gone: the owner changed physics mods; point SOURCES at the new one')
+    text = p.read_text(encoding='utf-8', errors='replace')
+    if MARKER in text:
+        raise SystemExit(f'{p} already carries our additions: refusing to stack them twice')
+    return text
+
+
 def main():
     skeleton = set(zb.skeleton_world(zb.SKELETON))
     OUT.mkdir(parents=True, exist_ok=True)
-    src_ini = (PLUGINS / 'ocbp.ini').read_text(encoding='utf-8', errors='replace')
-    ini, dead = ocbp(src_ini, skeleton)
+    ini, dead = ocbp(source('ocbp.ini'), skeleton)
     (OUT / 'ocbp.ini').write_text(ini, encoding='utf-8')
-    src_col = (PLUGINS / 'OCBPCollisionConfig.txt').read_text(encoding='utf-8', errors='replace')
-    (OUT / 'OCBPCollisionConfig.txt').write_text(collisions(src_col), encoding='utf-8')
+    (OUT / 'OCBPCollisionConfig.txt').write_text(collisions(source('OCBPCollisionConfig.txt')), encoding='utf-8')
     missing = [b for b, _ in ATTACH if b not in skeleton] + [n for n in list(AFFECTED) + list(COLLIDERS) if n not in skeleton]
     print(f'ocbp.ini: {len(dead)} dead attach lines commented out ({sorted(set(dead))}); '
           f'{len(ATTACH)} anatomy bones attached in {len(SECTIONS)} new sections')

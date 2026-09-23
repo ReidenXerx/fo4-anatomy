@@ -54,6 +54,7 @@ def main():
     print(f'{archive} ({archive.stat().st_size // 1024} KB): {count}/{len(files)} files listed back')
     if count != len(files):
         raise SystemExit('the archive does not list every file')
+    return stage
 
 
 if __name__ == '__main__':
