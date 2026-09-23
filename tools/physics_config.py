@@ -94,7 +94,7 @@ def ocbp(text, skeleton):
                 else:
                     kept.append(line)
             if name == 'Attach':
-                kept += ['; --- anatomy (fo4-anatomy A-7): vagina physics on the _CBP_ twins, anus on its bones'] + \
+                kept += ['; --- anatomy (fo4-anatomy A-7, A-11): vagina physics on the _CBP_ twins; the anus has none (A-11)'] + \
                         [f'{b}={s}' for b, s in ATTACH]
             new.append((name, kept))
         else:
