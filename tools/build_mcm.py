@@ -15,6 +15,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / 'papyrus/Anatomy/Arousal.psc'
 OUT = ROOT / 'build/mcm/MCM/Config/Anatomy'
 MOD = 'Anatomy'
+# on no control: proves MCM loaded settings.ini (a missing key reads -1, a missing switch false)
+SENTINEL = ('Meta', 'iDefaults', '1')
 
 # (section, key, label, help, min, max, step); step None = a switch
 PAGES = [
@@ -89,6 +91,10 @@ def check_reads(ini):
     """Every setting the menu writes must be one LoadSettings reads under the same id, and back."""
     source = SCRIPT.read_text(encoding='utf-8')
     read = set(re.findall(rf'GetModSetting\w+\("{MOD}", "(\w+:\w+)"\)', source))
+    sentinel = f'{SENTINEL[1]}:{SENTINEL[0]}'
+    if sentinel not in read:
+        raise SystemExit(f'the script never tests {sentinel}: it cannot tell loaded defaults from a missing file')
+    read.discard(sentinel)
     written = {f'{k}:{section}' for section, keys in ini.items() for k in keys}
     if read != written:
         raise SystemExit(f'the script reads {sorted(read - written)} that the menu lacks, and the menu '
@@ -107,6 +113,7 @@ def main():
         lines.append(f'[{section}]')
         lines += [f'{k}={v}' for k, v in keys.items()]
         lines.append('')
+    lines += [f'[{SENTINEL[0]}]', f'{SENTINEL[1]}={SENTINEL[2]}', '']
     (OUT / 'settings.ini').write_text('\n'.join(lines), encoding='utf-8')
     print(f'wrote {OUT / "config.json"} and settings.ini: {len(used)} settings across {len(pages)} page(s)')
 

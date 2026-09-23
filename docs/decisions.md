@@ -603,3 +603,16 @@ does we have such metric)".
 - **Deploy:** `cbp.dll` and `ocbp.ini` were rewritten in place at 21:42, so no Deploy is needed.
 - **Open:** the owner's look at an oral scene. The discovery log (`anatomy_ocbpc.log`) prints
   `[mouth] on`, each mouth's place, and each first contact with its Jaw Open.
+
+### A-18, corrected the same evening: a sentinel instead of the rise speed
+- The rise-speed tell had a hole, found by the Overture session:
+  - Suppose MCM never loaded our `settings.ini` (for example, the file is not deployed yet).
+  - A player's one moved slider is still answered, from `Data/MCM/Settings/Anatomy.ini`.
+  - Every other key is then missing, so `bEnabled` reads false and arousal switches itself off.
+- **Measured in MCM's own source** (reg2k/f4mcm `SettingStore.cpp`):
+  - It loads EVERY key of `MCM/Config/<Mod>/settings.ini` through `GetPrivateProfileSection`,
+    whether or not a control uses it.
+  - A key it never loaded reads -1 (int), -1.0 (float) or false (bool).
+- So `settings.ini` now ends with `[Meta] iDefaults=1`, on no control. `LoadSettings` reads the menu
+  only when `GetModSettingInt("Anatomy", "iDefaults:Meta") == 1`; otherwise the defaults stand.
+- `build_mcm.py` refuses a script that never tests the sentinel.

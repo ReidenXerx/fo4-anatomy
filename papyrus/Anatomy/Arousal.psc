@@ -148,10 +148,12 @@ EndFunction
 
 Function LoadSettings()
 	Defaults()
-	; MCM answers 0 / false for a mod it has no settings for, and a false bEnabled would then read as
-	; the player switching it off. The rise speed can never be 0 (its slider starts at 0.25), so a 0
-	; there means MCM has nothing for Anatomy: the defaults stand (fo4-chemistry's LoadSettings).
-	If _mcm && MCM.GetModSettingFloat("Anatomy", "fRiseSpeed:General") > 0.0
+	; MCM answers -1 / false for any key it never loaded (f4mcm SettingStore.cpp), and a false bEnabled
+	; would read as the player switching it off. A slider key cannot prove the defaults were loaded: a
+	; player's one moved slider is answered from Settings/Anatomy.ini while every other key is missing.
+	; So settings.ini carries [Meta] iDefaults=1 on no control (MCM loads every key of it, measured in
+	; its source); without it the defaults stand.
+	If _mcm && MCM.GetModSettingInt("Anatomy", "iDefaults:Meta") == 1
 		bEnabled = MCM.GetModSettingBool("Anatomy", "bEnabled:General")
 		fNippleStrength = AtLeast(MCM.GetModSettingFloat("Anatomy", "fNippleStrength:General"), 0.0)
 		fRiseSpeed = AtLeast(MCM.GetModSettingFloat("Anatomy", "fRiseSpeed:General"), 0.1)
