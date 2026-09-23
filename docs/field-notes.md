@@ -496,8 +496,23 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 ## 12. Textures and materials
 
 - **The body's shader names a material** (`basehumanFemaleskin.bgsm`), and the material decides the
-  textures. The mesh's own texture paths are ignored. So a skin patch must replace the files at the
-  material's paths and win the conflict (A-10; CBBE HeadRear Absolute Fix owns them here).
+  textures. The mesh's own texture paths are ignored.
+- **A-10's patch was never shown, and this is why (found 2026-09-23 late, A-22):**
+  - The winning material is CBBE Holy Fix's, from `CBBEHolyFix - Main.ba2`. It names
+    `Actors/Character/custombody/FemaleBody_*.dds`: 4096 px maps from CBBE HeadRear Absolute Fix.
+  - A-10 wrote `BaseHumanFemale/`, which only the vanilla material uses.
+  - Rule: **read the winning material's texture paths** (`bgsm.py`, and `gamedata.py` for which copy
+    wins) before touching any skin texture.
+- **Since A-22 the genitals are their own shape with their own material**,
+  `Materials/Anatomy/AnatomyGenitals.bgsm`.
+  - It is a copy of the winning skin material with only the three texture paths changed, so skin
+    tint, subsurface and wet template all stay the player's.
+  - Its textures are the player's skin, as that material names it, with Nahka's island in them, at
+    `Textures/Anatomy/`. No skin file of anyone else's is ever replaced.
+- **BGSM v2** (`bgsm.py`): 63 fixed bytes (flags, UV transform, alpha, blend, the bools, refraction,
+  env map), then 9 length-prefixed texture strings: diffuse, normal, smooth/spec, greyscale, envmap,
+  glow, inner layer, wrinkles, displacement. The paths are relative to Textures/. The rest (root
+  material, e.g. `template/SkinTemplate_Wet.bgsm`) is copied as it is.
 - **`genital_texture.py`:**
   - It patches only the genital island's texels: triangles in the corner UV block with a new vertex,
     padded 8.
@@ -568,8 +583,18 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 - **Conflicts:** a new file that collides with another mod's needs a rule, and **the first Deploy may
   give it to the other mod.**
   - Check `Data/vortex.deployment.json`: the file's `source`.
-  - Anatomy-dev must win `female/skeleton.nif` over Skeletal Adjustments, the textures over CBBE
-    HeadRear Absolute Fix, and `cbp.dll` over Jiggle Physics.
+  - Since A-21, Anatomy-dev collides only on `cbp.dll` (over Jiggle Physics). The skeleton, the
+    physics configs and the skin belong to their owners again.
+- **Deleting a file from a mod's staging folder** makes the next Deploy show "External Changes: Source
+  files were deleted".
+  - "Save change (delete file)" removes the deployed copy and gives the path back to whichever mod
+    also has it.
+  - "Revert" restores ours.
+  - The owner saw 12 of these at the zero-touch switch: the patched skeleton, the two merged configs,
+    the six unused BaseHumanFemale textures and the old BodySlide set. "Save" was right.
+- **Files a tool writes into Data that no mod ships** (the builder's outputs, BodySlide's) are
+  unmanaged. Vortex leaves them alone: no prompt, no conflict. MO2 puts them in overwrite when the
+  tool runs from MO2.
 - **Plugins:** a new plugin lands in `plugins.txt` unticked. Watch for `*Anatomy.esp`.
 - **Deployment watchers:** poll for the file's hash in Data, or for `vortex.deployment.json`'s mtime,
   then verify the source. One-shot background scripts beat asking the owner.
@@ -673,6 +698,65 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 - Tune the stretch max/gain and the prop radius from the owner's look.
 - The mouth (§10).
 - Release:
-  - permission for the women's skeleton derivative (or an F4SE node injector);
-  - GPL source for the fork;
-  - Nahka's and the CBBE team's permissions for the body (A-2).
+  - ~~the skeleton derivative~~: gone. The fork adds our bones at run time (A-21, §21);
+  - GPL source for the fork: a public repo, which is the owner's act;
+  - ~~Nahka's and CBBE's permissions~~: only Nahka's own work ships, as a patch applied to the
+    player's CBBE (A-23).
+- Props: since the fork's `[Props] targets=`, a prop pushes only the genital and anus bones. Idle
+  props (mugs) no longer push the carrier's breasts.
+
+---
+
+## 21. Zero-touch: the release architecture (A-21 to A-23), and what each part rests on
+
+The owner's rule (poll, 2026-09-23): "manual steps is very badly treated by noobs". So **no file of
+ours overwrites another mod's** except `cbp.dll`, and the player never resolves a conflict.
+
+- **Our bones are added at run time** (fork `Bones.cpp`):
+  - The body names them, and no skeleton has them.
+  - For each skinned geometry that names one, the fork takes the skeleton's own `Pelvis_skin` from
+    the skin instance (so it is right for any skeleton), creates the missing nodes under it
+    (`Anatomy/ocbp.ini [Bones]`: name=parent,x,y,z with identity rotation), and sets their world
+    transforms at once (no first-frame flash).
+  - It points `BSSkin::Instance` bones (+0x10) and worldTransforms (+0x28) at them.
+  - OCBPC's per-frame `UpdateConfig` then binds them by name like any bone.
+  - Skins are cached by bones-array pointer + count, so the steady state costs one comparison.
+  - The log says the table size at load and, once per actor, each body skin's bone count, how many
+    are ours and how many entries are empty.
+- **Our physics lines live in our own files:** `F4SE/Plugins/Anatomy/ocbp.ini` and
+  `OCBPCollisionConfig.txt`.
+  - The fork reads the player's files first, then ours.
+  - `[Attach]` and sections come per file.
+  - Collisions are appended: a node both files list keeps one entry and gains our spheres.
+  - `[Props]`, `[Mouth]` and `[Bones]` come from ours.
+- **The genitals are their own shape**, `AnatomyGenitals` (`split_genitals.py`, A-22):
+  - The 4,913 triangles `genital_texture` paints move over, with byte-identical records, the same
+    bones and slots, and the atlas UVs (overlays unaffected).
+  - The body keeps every vertex, so its slider data stays valid.
+  - The BSSubIndexTriShape segments are recounted: 4 segments, all triangles in the last.
+- **Nahka ships as a patch** (`make_patch.py` / `apply_patch.py`, A-23):
+  - Her files embed a whole 2017 CBBE, and CBBE rule 3 forbids re-uploading a modified body.
+  - So only her work ships: new vertices and triangles, the CBBE triangles and vertices she
+    replaces, her deviation from the neighbour blend per CBBE slider, her 12 sliders, and a
+    fingerprint of the CBBE.
+  - Her texture ships only as the island crop (512x704 of 4096) plus her crotch-skin means, which
+    the colour match needs.
+  - Every step is byte-identical or 7e-8 to the full-file path.
+- **The builder** (`builder.py`, `AnatomyBuilder.exe` via PyInstaller 6.22.3):
+  - It reads everything as the game loads it (`gamedata.py`).
+  - It decides the breast-weight move from the player's own `ocbp.ini`, because a player on CBBE's
+    Havok cloth physics must keep the cloth-bone weights.
+  - It runs every stage with its proof and writes only our paths into Data, atomically.
+  - On the owner's install its outputs are byte-identical to the dev pipeline's.
+- **`gamedata.py`, the game's own lookup:** a loose file wins, then BA2s later in the load order win.
+  - The load order is:
+    - the INI archive lists (`Fallout4_Default.ini`, `Fallout4.ini`, `Fallout4Custom.ini`
+      `[Archive]`);
+    - then per active plugin, in plugins.txt order after the base masters and `Fallout4.ccc`:
+      `<plugin> - Main.ba2`, then `- Textures.ba2`, then the rest.
+  - GNRL entries are zlib. DX10 entries are mip chunks with no header; the DDS header is rebuilt
+    (legacy FourCC for BC1/BC3/BC5, DX10 otherwise). Pillow decodes the result.
+  - On the owner's install: 809 plugins, 540 archives.
+- **Gotcha:** re-running `zex_bones` changes the body's sha1 even when nothing real changed. Bone bind
+  transforms move by float bits (2.4e-7). Tell the Silhouette session, whose verifier measures
+  geometry, not the hash.
