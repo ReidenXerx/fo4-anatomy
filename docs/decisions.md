@@ -616,3 +616,38 @@ does we have such metric)".
 - So `settings.ini` now ends with `[Meta] iDefaults=1`, on no control. `LoadSettings` reads the menu
   only when `GetModSettingInt("Anatomy", "iDefaults:Meta") == 1`; otherwise the defaults stand.
 - `build_mcm.py` refuses a script that never tests the sentinel.
+
+## A-21 — Zero-touch install: nothing of another mod is overwritten (owner polls, 2026-09-23)
+
+- **The polls:**
+  - Nahka's files: "Ship them, with credit". Her page says "up for adoption ... no need to ask me
+    for permission"; credit Nahka, BringTheNoise and Alan (UN7B).
+  - Output: the owner wrote "manual steps is very badly treated by noobs".
+  - Then: "Yes, zero-touch design".
+- **What that means:** every file of ours has a path no other mod ships, so the player never
+  resolves a conflict. The one exception is `cbp.dll`, which must replace the physics mod's copy.
+- **Bones at run time (fork 0e60cc0, `Bones.cpp`):**
+  - Before, a patched skeleton had to win over Skeletal Adjustments, or over whatever skeleton the
+    player has.
+  - Now the fork finds the body's skin instance, takes the skeleton's own Pelvis_skin from it, and
+    creates our 15 nodes under it from `Anatomy/ocbp.ini [Bones]`. It then points the skin's entries
+    at them.
+  - This works with any skeleton. A skeleton that already has them (the owner's current one) is left
+    alone.
+  - The bone table matches the patched skeleton to 1.2e-7 (`physics_config.py` checks it).
+- **Physics lines at run time (fork 0e60cc0, `config.cpp`):**
+  - `[Attach]` and the bone sections are read from the player's ocbp.ini and then from ours,
+    `Data/F4SE/Plugins/Anatomy/ocbp.ini`.
+  - The collision file is read the same way and appended: a node both files list keeps one entry
+    and gains our spheres.
+  - `[Props]`, `[Mouth]` and `[Bones]` come from ours.
+- **Still to do for zero-touch:** the genitals get their own mesh part and texture, colour-matched
+  once by the builder, so the skin mod is never overwritten. Raiders' dirty skin will not reach
+  them (accepted in the poll).
+- **The dev mod follows:**
+  - Anatomy-dev drops the patched skeleton and the merged configs (`package.RETIRED`; `restage.py`
+    deletes them from our own folder).
+  - The owner's Deploy gives those paths back to Skeletal Adjustments, MadKita and Jiggle Physics,
+    and adds `F4SE/Plugins/Anatomy/*`.
+  - Until that Deploy, the new DLL runs on the old merged files exactly as before, with no sphere
+    loaded twice.

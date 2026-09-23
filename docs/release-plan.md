@@ -50,3 +50,12 @@
 5. FOMOD for our static files, the Nexus page (through nexus-tools), credits, GPL source link, a
    public fo4-ocbpc repo, and the final name.
 6. Courtesy messages: Nahka, and Skeletal Adjustments' author. Sending them is the owner's act.
+
+## Zero-touch (A-21, owner polls 2026-09-23)
+
+- Nahka's files ship with credit (her page allows any use).
+- Nothing we ship or generate overwrites another mod's file, except `cbp.dll`:
+  - the fork adds our bones at run time and reads its own physics lines;
+  - the genitals get their own texture.
+- The builder writes only new files, straight into Data (or MO2's overwrite).
+- See builder-design.md.

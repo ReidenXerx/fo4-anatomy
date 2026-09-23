@@ -75,20 +75,34 @@ def main():
             dst.parent.mkdir(parents=True, exist_ok=True)
             dst.write_bytes(content)
             new.append(rel)
+    # files an older package carried and this one does not: removed from OUR mod folder only; the
+    # owner's Deploy then hands those paths back to the mods that own them (A-21)
+    removed = []
+    for rel in package.RETIRED:
+        dst = MOD / rel
+        if dst.exists():
+            dst.unlink()
+            removed.append(rel)
     stale = [rel for rel in changed if (DATA / rel).exists() and (DATA / rel).read_bytes() != (MOD / rel).read_bytes()]
-    print(f'Anatomy-dev: {len(changed)} file(s) rewritten in place, {len(new)} new (need a Deploy): '
-          f'{[str(r) for r in new]}')
+    print(f'Anatomy-dev: {len(changed)} file(s) rewritten in place, {len(new)} new, {len(removed)} removed '
+          f'(new and removed need a Deploy): new {[str(r) for r in new]}, removed {removed}')
     if stale:
         raise SystemExit(f'Data does not see the new bytes for {stale}: a hardlink is broken')
     body = 'Meshes/Actors/Character/CharacterAssets/FemaleBody.nif'
     print(f'build id {sha(DATA / body)} (Data {body}) = staged {sha(MOD / body)}')
     # 7. the body must not reach the game ahead of its bones: a weighted bone the women's skeleton
-    #    lacks leaves its vertices at their standing-pose place whenever she moves (A-14)
+    #    lacks leaves its vertices at their standing-pose place whenever she moves (A-14). Our own
+    #    bones are the fork's to add at run time since A-21, so only OTHER missing bones stop play.
+    import physics_design as pd
     import skeleton
-    if skeleton.deployed():
-        print('!! NOT READY TO PLAY: the skeleton women load lacks bones the body is weighted to. '
-              'Deploy Anatomy-dev in Vortex first (it must win female/skeleton.nif over Skeletal Adjustments '
-              'for CBBE), then run: python tools/skeleton.py --deployed')
+    ours = set(pd.REST) | set(pd.STRETCH_BONES.values())
+    missing = skeleton.deployed()
+    others = [b for b in missing if b not in ours]
+    if others:
+        print(f'!! NOT READY TO PLAY: the skeleton women load lacks bones the body is weighted to: {others}')
+    elif missing:
+        print(f'   our {len(missing)} bones are not in that skeleton: the fork adds them at run time (A-21), '
+              f'which needs Data/F4SE/Plugins/Anatomy/ocbp.ini ([Bones]) and the fork\'s cbp.dll deployed')
 
 
 if __name__ == '__main__':
