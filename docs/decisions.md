@@ -806,3 +806,23 @@ anus ... just make it slightly bigger for being slightly noticeable from front".
   0.186 units, deep in the slit, where no outfit is fitted). compare_builds now expects exactly
   CBBE + 50% of the slider there and CBBE everywhere else. A gate expecting 100% fails.
 - Restaged: build cb5d101c41f0.
+
+**A-25 revised, the same night: the opening is BAKED into the base; the slider only adds.**
+- The first version put the opening in a slider with a 50% default. A default applies wherever a
+  preset does not name the slider, and that includes every tool that turns presets into run-time
+  morphs the way BodySlide would.
+- Silhouette's generator did exactly that. Its templates would have written AnatomyOpening 0.5 on
+  top of the baked 0.5, doubling the opening on every body; its verifier caught it before anything
+  was deployed.
+- A player would do the same: build with zeroed sliders (the default bakes 50% in), then apply a
+  BodySlide-saved preset through LooksMenu, which names AnatomyOpening=50.
+- Now:
+  - `opening.py` bakes 0.3 of the weighted VaginaPenetrate shape into Anatomy.nif, the old 50%.
+  - AnatomyOpening ("Opening, front") is an EXTRA with default 0: 100% adds 0.3 more, so the
+    maximum is unchanged.
+  - Nothing that honours defaults can apply it twice.
+  - A set already baked is refused (checked).
+- The zero build is geometrically the live one: 6 vertices per shape differ by at most 0.00005.
+  Build 9117dc1cb72f.
+- compare_builds expects the bake on the 26 rim vertices, from CBBE's own positions. A gate
+  expecting 0.6 fails (checked).

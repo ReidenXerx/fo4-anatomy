@@ -57,8 +57,8 @@ INSTALL
        Textures\\Anatomy\\*, Materials\\Anatomy\\*, the genitals' own texture and material
      Its log is AnatomyBuilder.log next to it.
   3. BodySlide: choose "Anatomy Body", your preset, Build (or Batch Build). The category "Anatomy"
-     has "Opening, front": how far the vaginal opening reaches toward the front (50% unless your
-     preset sets it).
+     has "Opening, front": extra opening toward the front, on top of the built-in one (0% leaves
+     it as designed).
   Re-run the builder after changing your CBBE or skin mod.
 
 WHAT IT DOES

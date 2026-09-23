@@ -80,14 +80,17 @@ def main():
     c = nif.Nif(find(args.cbbe, '.nif')).shape(ab.SHAPE)
     a = nif.Nif(find(args.anatomy, '.nif')).shape(ab.SHAPE)
     cv, av = c.positions(), a.positions()
-    # The one intended difference: the front of the vaginal opening, which our AnatomyOpening slider
-    # moves at its default (opening.py; the slit's front rim is partly CBBE's own vertices). Those
-    # must sit exactly where the slider puts them; every other shared vertex must be CBBE's.
+    # The one intended difference: the front of the vaginal opening, which opening.py bakes into the
+    # base (the slit's front rim is partly CBBE's own vertices). Those must sit exactly where the bake
+    # puts them, from CBBE's own position; every other shared vertex must be CBBE's.
     import opening
     import osd
-    designed = {j: tuple(c * opening.DEFAULT / 100.0 for c in d) for j, d in
-                osd.read(args.project / f'ShapeData/{opening.FOLDER}/{opening.FOLDER}.osd')
-                .get(ab.SHAPE + opening.SLIDER, {}).items()}
+    pen = (osd.read(args.project / f'ShapeData/{opening.FOLDER}/{opening.FOLDER}.osd')
+           .get(ab.SHAPE + opening.SOURCE, {}))
+    designed = {}
+    for j, i in mapping.items():
+        if j in pen and opening.weight(cv[i][1]) > 0.0:
+            designed[j] = opening.displacement(pen[j], cv[i][1], opening.BAKED)
     off, by_design, design_worst = [], 0, 0.0
     for j, i in mapping.items():
         want = tuple(cv[i][k] + designed.get(j, (0.0, 0.0, 0.0))[k] for k in range(3))
@@ -100,7 +103,7 @@ def main():
             design_worst = max(design_worst, max(abs(x) for x in designed[j]))
     print(f'mesh: {len(mapping)} shared vertices; beyond half-float rounding: {len(off)}'
           + (f' (worst {max(off)[0]:.4f})' if off else '')
-          + f'; moved by design ({opening.SLIDER} at {opening.DEFAULT}%), each where the slider puts it: '
+          + f'; moved by design (the opening baked into the base), each where the bake puts it: '
             f'{by_design} (up to {design_worst:.3f})')
 
     ct, at = read_tri(find(args.cbbe, '.tri')), read_tri(find(args.anatomy, '.tri'))

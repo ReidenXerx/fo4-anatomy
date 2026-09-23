@@ -254,3 +254,11 @@ running one cannot be moved. Checked outside the game.
 - In a scene the entrance should clip a little less than before (fit_check: 31% -> 26% as drawn).
 - More or less opening: the slider's default is one number, `opening.DEFAULT` (percent), followed
   by a restage. Players can move "Opening, front" in BodySlide themselves.
+
+### Build 9117dc1cb72f (A-25 revised: the opening baked, the slider an extra), restaged in place
+
+- The same body as cb5d101c41f0 to within 0.00005 units: nothing new to see in game.
+- What changed: the base mesh now carries the opening, and "Opening, front" in BodySlide adds to it
+  (default 0).
+- The .tri's AnatomyOpening morph is now that extra, so at run time it must stay 0 (Silhouette
+  never writes it).
