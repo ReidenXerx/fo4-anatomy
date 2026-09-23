@@ -224,3 +224,21 @@ Check:
 - In an oral scene the mouth opens to the shaft, and it gives the face back 0.35 s after contact ends.
 - If the game ever closes by itself, look in the Windows Application log (event 1000) before
   anything else.
+
+### In game, 2026-09-23 ~23:49: the run-time bones on a woman (first proof)
+
+Seen in the Silhouette session's run (game from 23:46:13, fixed cbp.dll e57d45f5f8df), in
+`anatomy_ocbpc.log`:
+- `[bones] 001D1F4B: a skin of 69 bones with Pelvis_skin; 9 of them ours, 0 empty entries`
+- `[bones] 001D1F4B: created 15 of our nodes under Pelvis_skin, pointed 18 skin entries at them`
+
+So the fork found her skeleton's own Pelvis_skin and created the 15 table nodes under it. It pointed
+the 9 genital bones in each of her two skinned shapes (CBBE and AnatomyGenitals) at them: 18
+entries. Still to see with eyes: no fin when she walks and sits, the genital texture, and the mouth
+in an oral scene.
+
+Also in that run: a SECOND Fallout4.exe started at 23:48:57 while the first ran, and died 5 s
+later. WER: c000000d in ntdll, then c0000409 in ucrtbase.dll. It was not in cbp.dll, which links
+its runtime statically. Its log rotation truncated the running game's log (16,789 NUL bytes, and the
+previous run's log lost). Fixed in fork 884ca81: delete sharing, and a per-process log when the
+running one cannot be moved. Checked outside the game.
