@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Proves Outfit Studio 5.8.2 runs automation headless: exit code 0 and this line in Log_OS.txt. -->
+<!-- Proves Outfit Studio 5.8.2 runs automation headless: Log_OS.txt says "Running script ... in headless
+     mode" and "Step 1/1: ClearProject" with no error line. 5.8.2 has no LogMessage step (master added
+     it later), and an unknown type silently becomes LoadReference. -->
 <AutomationScript version="1">
-    <Step type="LogMessage" active="true">
-        <Message>Anatomy lab: headless automation works</Message>
-    </Step>
+    <Step type="ClearProject" active="true"/>
 </AutomationScript>

@@ -83,11 +83,25 @@ The character's left is -x and the front is +y. ZeX 6.0 also has `_CBP_` copies 
 - **FO4FasterHdtSMP** is installed too. SMP is the other route (A-Body uses it).
 - Nexus 95003 is a newer OCBPC with an FPS fix and an MCM, worth checking before we tune.
 
-## Outfit Studio 5.8.2 runs headless
+## Outfit Studio 5.8.2 runs headless, but it is not master
 
-`OutfitStudio.exe -a <script name>` runs `<BodySlide>/Automations/<name>.xml` (`<AutomationScript>`
-with `<Step>` children) without showing a window. It exits 0 when clean and 10 on errors. Steps
-include AddBone, AddCustomBone, DeleteBones, CopyBoneWeights, TransferWeights, ConformSliders,
-ImportSliderData, LoadReference, AddProject and SaveProject, plus masks. `AddBone` takes bones from
-`Anim/DefaultSkeletonReference` in `Config.xml`. The owner's points at BodySlide's vanilla skeleton,
-which has no ZeX bones, so the lab copy gets its own config.
+`OutfitStudio.exe -a <script name>` runs `<ProjectPath>/Automations/<name>.xml` (`<AutomationScript>`
+with `<Step type="...">` children) without showing a window. This was proven in the lab: the log
+said "Running script ... in headless mode".
+
+The v5.8.2 tag's source differs from master, and master is what I read first:
+
+- **39 step types.** Among them LoadReference, AddProject, CopyBoneWeights, DeleteBones,
+  AddCustomBone (name, parent, translation and rotation vector), EditBone, ConformSliders,
+  ImportSliderData, SaveProject, LoadMask, ClearMask and RemoveUnusedNodes. There is **no
+  AddBone** from the skeleton, no TransferWeights and no LogMessage. An unknown type silently
+  becomes LoadReference: measured, a LogMessage step ran as "LoadReference - no source file".
+- **The exit code is 0 even when a step fails.** Only master passes it on. Judge a run by
+  `Log_OS.txt`, where level `[1]` is an error; `tools/lab.py` does this.
+- **Bones reach the body through CopyBoneWeights.** It copies the listed bones' weights from the
+  loaded reference by proximity (ProximityRadius, MaxResults), adds the bones the target lacks,
+  honours a loaded mask, spreads the difference over the normalize bones, then runs
+  `CleanupBones`, which probably drops zero-weight bones. Hence a WEIGHTED reference (A-3):
+  bones added with no weights would not survive.
+- `Anim/DefaultSkeletonReference` in `Config.xml` names the skeleton that custom bones and poses
+  use. The owner's points at BodySlide's vanilla skeleton, so the lab copy points at ZeX.

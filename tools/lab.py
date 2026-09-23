@@ -93,15 +93,21 @@ def automate(script, timeout):
     """Run one automation script headless; returns Outfit Studio's exit code (0 = clean, 10 = step errors)."""
     if not (LAB / 'Automations' / f'{script}.xml').exists():
         raise SystemExit(f'no {script}.xml in {LAB / "Automations"} (run setup after adding it to automation/)')
+    # 5.8.2 exits 0 even when a step fails (master propagates the code, 5.8.2 does not), so the
+    # verdict comes from the log it rewrites on every start: level [1] is an error.
     log = LAB / 'Log_OS.txt'
-    before = log.stat().st_size if log.exists() else 0
+    started = log.stat().st_mtime if log.exists() else 0
     r = subprocess.run([str(LAB / 'OutfitStudio.exe'), '-a', script], cwd=LAB, timeout=timeout)
-    if log.exists():
-        text = log.read_bytes()[before:].decode('utf-8', 'replace')
-        lines = [l for l in text.splitlines() if 'Automation' in l or 'rror' in l or 'arning' in l]
-        print('\n'.join(lines[-40:]))
-    print(f'OutfitStudio exit code {r.returncode}')
-    return r.returncode
+    if not log.exists() or log.stat().st_mtime <= started:
+        print('Outfit Studio wrote no log: it did not run the script')
+        return 1
+    text = log.read_bytes().decode('utf-8', 'replace').splitlines()
+    shown = [l for l in text if 'Automation' in l or '][1]' in l]
+    print('\n'.join(shown[-60:]))
+    errors = [l for l in text if '][1]' in l or 'failed with error' in l]
+    ran = any('headless mode' in l for l in text)
+    print(f'OutfitStudio exit code {r.returncode}; headless run: {ran}; error lines: {len(errors)}')
+    return 0 if ran and not errors else 1
 
 
 def build(group, preset, target, timeout):
