@@ -80,14 +80,28 @@ def main():
     c = nif.Nif(find(args.cbbe, '.nif')).shape(ab.SHAPE)
     a = nif.Nif(find(args.anatomy, '.nif')).shape(ab.SHAPE)
     cv, av = c.positions(), a.positions()
-    off = []
+    # The one intended difference: the front of the vaginal opening, which our AnatomyOpening slider
+    # moves at its default (opening.py; the slit's front rim is partly CBBE's own vertices). Those
+    # must sit exactly where the slider puts them; every other shared vertex must be CBBE's.
+    import opening
+    import osd
+    designed = {j: tuple(c * opening.DEFAULT / 100.0 for c in d) for j, d in
+                osd.read(args.project / f'ShapeData/{opening.FOLDER}/{opening.FOLDER}.osd')
+                .get(ab.SHAPE + opening.SLIDER, {}).items()}
+    off, by_design, design_worst = [], 0, 0.0
     for j, i in mapping.items():
-        d = max(abs(p - q) for p, q in zip(cv[i], av[j]))
-        tol = max(half_step(x) for x in cv[i]) * 1.01
+        want = tuple(cv[i][k] + designed.get(j, (0.0, 0.0, 0.0))[k] for k in range(3))
+        d = max(abs(p - q) for p, q in zip(want, av[j]))
+        tol = max(half_step(x) for x in cv[i]) * (2.02 if j in designed else 1.01)
         if d > tol:
             off.append((d, j, i))
+        elif j in designed and max(abs(x) for x in designed[j]) > tol:
+            by_design += 1
+            design_worst = max(design_worst, max(abs(x) for x in designed[j]))
     print(f'mesh: {len(mapping)} shared vertices; beyond half-float rounding: {len(off)}'
-          + (f' (worst {max(off)[0]:.4f})' if off else ''))
+          + (f' (worst {max(off)[0]:.4f})' if off else '')
+          + f'; moved by design ({opening.SLIDER} at {opening.DEFAULT}%), each where the slider puts it: '
+            f'{by_design} (up to {design_worst:.3f})')
 
     ct, at = read_tri(find(args.cbbe, '.tri')), read_tri(find(args.anatomy, '.tri'))
     cm, am = ct.get(ab.SHAPE, {}), at.get(ab.SHAPE, {})
