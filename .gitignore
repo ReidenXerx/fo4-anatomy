@@ -1,0 +1,13 @@
+# Third-party assets never enter this repository (A-2): the tools rebuild everything from them.
+inputs/
+build/
+lab/
+*.rar
+*.7z
+*.zip
+*.nif
+*.osd
+*.tri
+*.dds
+*.tga
+__pycache__/
