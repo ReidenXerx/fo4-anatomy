@@ -45,6 +45,14 @@ ANIM = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02',
 TWIN = {'Vagina_00': 'Vagina_CBP_00', 'Vagina_L_01': 'Vagina_CBP_L_01', 'Vagina_L_02': 'Vagina_CBP_L_02',
         'Vagina_R_01': 'Vagina_CBP_R_01', 'Vagina_R_02': 'Vagina_CBP_R_02'}
 TWIN_SHARE = 0.5            # of each vagina weight, to the physics twin (tuned in game)
+
+# Breast physics (owner, 2026-09-23: "something wrong with physics config and breasts ... fix").
+# CBBE Body Physics hangs the breasts on CLOTH_Bone_Googles_00/01, Havok-cloth nodes that are in no
+# skeleton, while the deployed ocbp.ini drives LBreast_skin/RBreast_skin, which ZeX parents under
+# Chest and the body never weighted: OCBP moved nothing (measured: 0 vertices on LBreast_skin,
+# 1,913 on each Googles bone). CBBE's own breast weight painting moves across unchanged, so at
+# rest the mesh is identical and OCBP (and the hand collisions already configured) now reach it.
+BREAST_MOVE = {'CLOTH_Bone_Googles_00': 'LBreast_skin', 'CLOTH_Bone_Googles_01': 'RBreast_skin'}
 K, RADIUS = 4, 1.0          # the two genital meshes coincide within 0.77 units (research.md)
 
 
@@ -241,13 +249,27 @@ def main():
     print(f'3. JaneBod genital-weighted reference vertices {len(rgen)}; our vertices given genital weight '
           f'{len(new_weights)} (protected among them: {len(touched_protected)})')
 
+    # breasts: the same weights, on the bones OCBP drives. Only the bone slot changes (index bytes),
+    # never the weight bytes, so every moved weight stays bit-identical.
+    breast = {}                                   # vertex -> [(new bone, weight)] for the spheres
+    moved = collections.Counter()
+    for j in range(shape.count):
+        ws = [(bones[sl], w) for sl, w in shape.skin_weights(j)]
+        if any(b in BREAST_MOVE for b, _ in ws):
+            if j in new_weights:
+                raise SystemExit(f'vertex {j} carries both genital and breast weight: regions overlap')
+            breast[j] = [(BREAST_MOVE.get(b, b), w) for b, w in ws]
+            moved.update(BREAST_MOVE[b] for b, _ in ws if b in BREAST_MOVE)
+    print(f'   breast weights moved off the Havok cloth bones: {dict(moved)}')
+
     # ---- 4. the bones, with bone-space bounding spheres of what they now carry
-    new_names = ANIM + [TWIN[b] for b in ANIM if b in TWIN]
+    new_names = ANIM + [TWIN[b] for b in ANIM if b in TWIN] + list(BREAST_MOVE.values())
     defs = []
     for name in new_names:
         wr, wt, ws = world[name]
         sr, st = skin_to_bone(wr, wt)
-        carried = [apply(sr, pos[j]) for j, ws_ in new_weights.items() for b, w in ws_ if b == name and w > 0]
+        carried = [apply(sr, pos[j]) for j, ws_ in list(new_weights.items()) + list(breast.items())
+                   for b, w in ws_ if b == name and w > 0]
         carried = [[p[i] + st[i] for i in range(3)] for p in carried]
         if carried:
             ctr = [sum(p[i] for p in carried) / len(carried) for i in range(3)]
@@ -270,6 +292,9 @@ def main():
     slot = {b: i for i, b in enumerate(dbones)}
     for j, ws_ in new_weights.items():
         ds.set_skin_weights(j, [(slot[b], w) for b, w in ws_])
+    remap = {slot[old]: slot[new] for old, new in BREAST_MOVE.items()}
+    for j in breast:
+        ds.remap_skin_slots(j, remap)
     done.save(out_nif)
     shutil.copy2(ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.osd', out_dir / f'{OUT_FOLDER}.osd')
     osp = (ab.OUT / 'SliderSets' / f'{ab.DATA_FOLDER}.osp').read_text(encoding='utf-8')

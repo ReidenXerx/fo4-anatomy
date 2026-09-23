@@ -77,7 +77,7 @@ def main():
     # 3. bones
     bones, xf = after_nif.skin(a)
     origin = {n: nif.bone_origin(xf[i]) for i, n in enumerate(bones)}
-    want = ANIM + list(TWIN.values())
+    want = ANIM + list(TWIN.values()) + ['LBreast_skin', 'RBreast_skin']
     missing = [n for n in want if n not in bones]
     leftover = [n for n in CLOTH if n in bones]
     print(f'3. bones {len(bones)}; genital present {len(want) - len(missing)}/{len(want)}; missing {missing or "none"}; '
@@ -94,21 +94,31 @@ def main():
     if missing:
         problems.append(f'genital bones missing: {missing}')
 
-    # 4. untouched outside the mask
+    # 4. untouched outside the mask -- apart from the breast move, which must be exact
+    import zex_bones
+    move = zex_bones.BREAST_MOVE
     m = mask_values(ab.OUT / 'Masks/AnatomyGenitalRegion.xml')
     bb, _ = before_nif.skin(b)
     changed = 0
     for i, v in m.items():
         if v < 1.0:
             continue
-        wb = sorted((bb[s], round(w, 4)) for s, w in b.skin_weights(i))
+        wb = sorted((move.get(bb[s], bb[s]), round(w, 4)) for s, w in b.skin_weights(i))
         wa = sorted((bones[s], round(w, 4)) for s, w in a.skin_weights(i))
         if wb != wa:
             changed += 1
     protected = sum(1 for v in m.values() if v >= 1.0)
-    print(f'4. protected vertices {protected}; weights changed on {changed}')
+    print(f'4. protected vertices {protected}; weights changed on {changed} (breast move applied before comparing)')
     if changed:
         problems.append(f'{changed} protected vertices changed weight')
+    left_on_cloth = sum(1 for i in range(a.count) for s, w in a.skin_weights(i) if bones[s] in move)
+    before_cloth = collections.Counter(move[bb[s]] for i in range(b.count) for s, w in b.skin_weights(i) if bb[s] in move)
+    after_breast = collections.Counter(bones[s] for i in range(a.count) for s, w in a.skin_weights(i)
+                                       if bones[s] in move.values())
+    print(f'   breasts: weights left on the Havok cloth bones {left_on_cloth}; carried before {dict(before_cloth)}, '
+          f'now on the OCBP bones {dict(after_breast)}')
+    if left_on_cloth or before_cloth != after_breast:
+        problems.append('breast weights did not move exactly onto LBreast_skin/RBreast_skin')
 
     # 5. where the genital weights went
     pos = a.positions()
@@ -128,7 +138,8 @@ def main():
         far = math.dist(c, origin.get(n, c))
         print(f'   {n:16} {len(ws):5} vertices, max {max(w for w, _ in ws):.2f}, weighted centre '
               f'({c[0]:6.2f},{c[1]:6.2f},{c[2]:7.2f}), {far:.2f} from its bone')
-        if far > 3.0:
+        # a genital bone sits inside what it carries; a breast bone is a pivot above the bust
+        if far > 3.0 and n not in move.values():
             problems.append(f'{n} weights centre {far:.1f} units from the bone')
     four = sum(1 for i in range(a.count) if len(a.skin_weights(i)) == 4)
     print(f'   vertices using all 4 influence slots: {four}')

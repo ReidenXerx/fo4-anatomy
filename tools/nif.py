@@ -115,6 +115,16 @@ class Shape:
         struct.pack_into('<4e', self.nif.b, o, *(w for _, w in pairs))
         struct.pack_into('<4B', self.nif.b, o + 8, *(s for s, _ in pairs))
 
+    def remap_skin_slots(self, i, remap):
+        """Point vertex i's influences at other bone slots ({old slot: new slot}); the weight bytes
+        are not touched, so the vertex keeps its weights to the last bit (set_skin_weights would
+        renormalise and re-round them: measured, 5 of 3,826 moved breast vertices changed)."""
+        if not self.flags & VA_SKINNED:
+            raise ValueError(f'{self.name}: not skinned')
+        o = self.data_at + i * self.stride + self.skin_at + 8
+        slots = struct.unpack_from('<4B', self.nif.b, o)
+        struct.pack_into('<4B', self.nif.b, o, *(remap.get(s, s) for s in slots))
+
     def triangles(self):
         o = self.data_at + self.count * self.stride
         return [struct.unpack_from('<3H', self.nif.b, o + 6 * k) for k in range(self.triangle_count)]
