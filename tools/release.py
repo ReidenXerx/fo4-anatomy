@@ -12,6 +12,11 @@ What ships (nothing of anyone else's but Nahka's own work, with her page's permi
     fomod/info.xml, fomod/ModuleConfig.xml                             one page: what to do next
     Anatomy - README.txt                                               install, credits, licences
 Every file is checked present, and the archive must list every one of them back.
+
+Both binaries are built from source on every run, so an archive never carries one older than its
+code: the builder exe (PyInstaller, one folder) and cbp.dll (MSBuild). The fork must have no
+uncommitted change. The DLL is GPL, and the source we point players to is that commit, which the
+README names.
 """
 import argparse
 import pathlib
@@ -68,8 +73,38 @@ CREDITS
   maximusmaxy - Screen Archer Menu's source, which documented the face data the mouth uses.
 
 LICENCES
-  cbp.dll is a fork of OpenCBP_FO4 (GPL-3.0); its source: {FORK_URL}
+  cbp.dll is a fork of OpenCBP_FO4 (GPL-3.0); its source: {FORK_URL} (commit @FORK_COMMIT@)
 """
+
+
+MSBUILD = r'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe'
+
+
+def build_dll():
+    """cbp.dll from the fork's committed source; returns that commit (the GPL source players get)."""
+    dirty = subprocess.run(['git', 'status', '--porcelain'], cwd=FORK, capture_output=True, text=True).stdout
+    if dirty.strip():
+        raise SystemExit('the fork has uncommitted changes, so no published commit would be the source of '
+                         f'this cbp.dll; commit them first:\n{dirty}')
+    subprocess.run([MSBUILD, 'OpenCBP_FO4.sln', '/t:CBPSSE', '/p:Configuration=Release', '/p:Platform=x64',
+                    '/p:PlatformToolset=v143', '/p:WindowsTargetPlatformVersion=10.0.22621.0', '/v:m'],
+                   cwd=FORK, check=True, stdout=subprocess.DEVNULL)
+    return subprocess.run(['git', 'rev-parse', '--short=12', 'HEAD'], cwd=FORK, capture_output=True,
+                          text=True, check=True).stdout.strip()
+
+
+BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', 'mask', 'split_genitals',
+                   'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm')
+
+
+def build_exe():
+    """PyInstaller one-folder build of tools/builder.py into build/dist/AnatomyBuilder (wiped first).
+    The builder imports its stages by name at run time, so each is named here as a hidden import."""
+    hidden = [arg for m in BUILDER_MODULES for arg in ('--hidden-import', m)]
+    subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', '--console',
+                    '--name', 'AnatomyBuilder', '--paths', 'tools', *hidden,
+                    '--distpath', 'build/dist', '--workpath', 'build/pyi', '--specpath', 'build/pyi',
+                    'tools/builder.py'], cwd=ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def files(version):
@@ -130,12 +165,15 @@ def main():
     stage = BUILD / 'release' / f'{NAME}-{args.version}'
     if stage.exists():
         shutil.rmtree(stage)
+    commit = build_dll()
+    build_exe()
     wanted = files(args.version)
     missing = [str(src) for src in wanted.values() if not src.exists()]
     if missing:
         raise SystemExit(f'missing: {missing}')
     if not any(k.endswith('AnatomyBuilder.exe') for k in wanted):
-        raise SystemExit('the builder is not built: python -m PyInstaller ... (see builder-design.md)')
+        raise SystemExit('PyInstaller ran but left no AnatomyBuilder.exe in build/dist/AnatomyBuilder')
+    print(f'cbp.dll from fork commit {commit}; builder exe from this tree')
     for rel, src in wanted.items():
         dst = stage / 'Data' / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -144,7 +182,8 @@ def main():
     (stage / 'fomod').mkdir(parents=True, exist_ok=True)
     (stage / 'fomod/info.xml').write_text(info, encoding='utf-8')
     (stage / 'fomod/ModuleConfig.xml').write_text(config, encoding='utf-8')
-    (stage / f'{NAME} - README.txt').write_text(README.replace('\n', '\r\n'), encoding='utf-8')
+    readme = README.replace('@FORK_COMMIT@', commit)
+    (stage / f'{NAME} - README.txt').write_text(readme.replace('\n', '\r\n'), encoding='utf-8')
     import xml.etree.ElementTree as ET
     ET.parse(stage / 'fomod/info.xml')
     ET.parse(stage / 'fomod/ModuleConfig.xml')                 # both must at least be well-formed

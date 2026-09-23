@@ -218,8 +218,11 @@ def main():
             print(f'(work folder kept for a bug report: {work})')
         sys.stdout, sys.stderr = sys.__stdout__, sys.__stderr__
         log.close()
-    if FROZEN:
-        input('\nPress Enter to close.')
+    if FROZEN and sys.stdin is not None and sys.stdin.isatty():
+        try:                                            # a double-clicked window would close unread;
+            input('\nPress Enter to close.')            # run from a script or launcher, nobody is there
+        except EOFError:
+            pass
     return 0 if ok else 1
 
 
