@@ -5,6 +5,9 @@
                                                                     bones (tools/skeleton.py, A-14); must
                                                                     win over Skeletal Adjustments for CBBE
     F4SE/Plugins/ocbp.ini, OCBPCollisionConfig.txt                  tools/physics_config.py output
+    Anatomy.esp, Scripts/Anatomy/Arousal.pex                        arousal and nipples (A-16): tools/make_esp.py
+                                                                    and scripts/build-papyrus.ps1; the plugin
+                                                                    must be enabled
     Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp                   the project, to rebuild with any preset
     Tools/BodySlide/ShapeData/AnatomyBodyZeX/...
     Textures/Actors/Character/BaseHumanFemale/FemaleBody*, femalebodydirty*
@@ -33,6 +36,8 @@ TEXTURE_FILES = ['FemaleBody_d.dds', 'FemaleBody_n.DDS', 'FemaleBody_s.DDS',
 CONFIG = ROOT / 'build/config'
 PROJECT = ROOT / 'build/project'
 SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
+PLUGIN = ROOT / 'build/plugin/Anatomy.esp'
+PAPYRUS = ROOT / 'build/papyrus'
 OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\package')
 
 
@@ -45,6 +50,8 @@ def main():
         'Meshes/Actors/Character/CharacterAssets/FemaleBody.nif': BUILT / 'FemaleBody.nif',
         'Meshes/Actors/Character/CharacterAssets/FemaleBody.tri': BUILT / 'FemaleBody.tri',
         'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif': SKELETON,
+        'Anatomy.esp': PLUGIN,
+        'Scripts/Anatomy/Arousal.pex': PAPYRUS / 'Anatomy/Arousal.pex',
         'F4SE/Plugins/ocbp.ini': CONFIG / 'ocbp.ini',
         'F4SE/Plugins/OCBPCollisionConfig.txt': CONFIG / 'OCBPCollisionConfig.txt',
         'Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp': PROJECT / 'SliderSets/AnatomyBodyZeX.osp',
@@ -55,7 +62,8 @@ def main():
     }
     for rel, src in files.items():
         if not src.exists():
-            raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config and the zero build first')
+            raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config, make_esp, '
+                             f'build-papyrus.ps1 and the zero build first')
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)

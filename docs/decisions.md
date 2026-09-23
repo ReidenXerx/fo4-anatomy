@@ -364,3 +364,56 @@ vagina and anus and manage it by ourself with physics only".
   slider (5.2 / 13.0). At 1.5 the p99 passes hers.
 - **Build:** bbbc36acde38, restaged in place (no Deploy). The rebuilt body measures 1.55 / 30% /
   5.0 / 9.3, as predicted. verify_zex PASS.
+
+## A-16 — Arousal, and her nipples follow it (the owner's poll, 2026-09-23)
+
+The owner, relayed by the Silhouette session: "nipple feature when char is aroused (i am not sure
+does we have such metric)".
+- **The poll:**
+  - Triggers: "Scenes + nudity + watching" AND "Companions' own arousal" (the owner: "lets make
+    2 + 3").
+  - Strength: "Clearly visible".
+- **No arousal metric exists** in the owner's game (measured):
+  - AAF's stat layer is empty. UAP defines an `Arousal` actor stat, but it is not persistent and
+    decays almost at once, and nothing reads it.
+  - Ivy keeps her own flag (`_ivy_IsAroused`, CompanionIvy.esm 0011AA).
+  - Overture's companion Desire is an actor value (`OvertureCompanionDesire`, Overture.esp 0x851,
+    0..1; a scaffold on their side). Overture belongs to another session; we only read it.
+- **The model (`papyrus/Anatomy/Arousal.psc`):**
+  - Every 3 s, each human woman within ~43 m of the player (and the player) moves toward the
+    strongest source. Each source has a drive and a half-life:
+
+    | source                         | drive          | half-life |
+    | ------------------------------ | -------------- | --------- |
+    | in an AAF scene (busy keyword) | 1.0            | 10 s      |
+    | Ivy's own flag                 | 0.8            | 20 s      |
+    | watching a scene within ~17 m  | 0.55           | 30 s      |
+    | Overture Desire                | 0.7 × Desire   | 45 s      |
+    | naked (body slot empty)        | 0.3            | 45 s      |
+
+  - Arousal falls with a 60 s half-life, so she stays aroused a while after a scene.
+  - Time is real time, and a step is capped at 10 s, because menus stop the timer but not the
+    clock.
+- **The nipples:** NippleLength +0.55, NipplePerk2 +0.5, NippleTip +0.4, NippleSize +0.25 at full
+  arousal, in tenths.
+  - Measured on the body: NippleLength is the erection itself, up to 1.1 units out at 1.0.
+  - The rise goes under Anatomy.esp's keyword, on top of her strongest other layer. LooksMenu shows
+    the MAX over its layers, so the rise adds to her own shape (Silhouette's variety, AAF's scene
+    values) instead of replacing it.
+  - Silhouette's NipBGone under heavy clothes still wins.
+  - At zero the layer is removed and she is forgotten.
+- **What is not done:**
+  - No AAF call is made (one can end the calling stack); only `AAF_API.AAF_ActorBusy` is read.
+  - Every source is optional: a missing plugin only removes that source.
+- **Built:**
+  - `Anatomy.esp` is light, made by `tools/make_esp.py`: quest 0x800 running the script, and
+    keyword 0x801, a vanilla v131 KYWD's fields. It has the same shape as Silhouette.esp and
+    Chemistry.esp, which run in the owner's game.
+  - `scripts/build-papyrus.ps1` imports F4SE's own sources (for `GetWornItem`), then the base, AAF
+    and a BodyGen stub.
+  - Compiled first time. The plugin tiles exactly, and fo4-rapport's reader parses its VMAD.
+- **Deploy:** both files are new in Anatomy-dev, so they need the owner's Deploy and the plugin
+  enabled.
+- **To uninstall:** do it when no woman is aroused. Otherwise her layer stays in LooksMenu's
+  co-save under a keyword that no longer resolves.
+- **Open:** gains and half-lives, tuned by the owner's look.
