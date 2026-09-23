@@ -51,6 +51,8 @@ def setup():
     if PROJECT.exists():
         shutil.copytree(PROJECT / 'ShapeData', LAB / 'ShapeData', dirs_exist_ok=True)
         shutil.copytree(PROJECT / 'SliderSets', LAB / 'SliderSets', dirs_exist_ok=True)
+        if (PROJECT / 'Masks').exists():
+            shutil.copytree(PROJECT / 'Masks', LAB / 'Masks', dirs_exist_ok=True)
     (LAB / 'SliderGroups').mkdir(exist_ok=True)
     (LAB / 'SliderGroups/AnatomyLab.xml').write_text(
         '<SliderGroups>\n'
@@ -94,14 +96,17 @@ def automate(script, timeout):
     if not (LAB / 'Automations' / f'{script}.xml').exists():
         raise SystemExit(f'no {script}.xml in {LAB / "Automations"} (run setup after adding it to automation/)')
     # 5.8.2 exits 0 even when a step fails (master propagates the code, 5.8.2 does not), so the
-    # verdict comes from the log it rewrites on every start: level [1] is an error.
+    # verdict comes from the log, where level [1] is an error. The log is APPENDED to across runs
+    # (measured: a 06:58 failure was still there at 07:11), so only this run's part counts.
     log = LAB / 'Log_OS.txt'
-    started = log.stat().st_mtime if log.exists() else 0
+    before = log.stat().st_size if log.exists() else 0
     r = subprocess.run([str(LAB / 'OutfitStudio.exe'), '-a', script], cwd=LAB, timeout=timeout)
-    if not log.exists() or log.stat().st_mtime <= started:
-        print('Outfit Studio wrote no log: it did not run the script')
+    size = log.stat().st_size if log.exists() else 0
+    if size == before:
+        print('Outfit Studio wrote nothing to its log: it did not run the script')
         return 1
-    text = log.read_bytes().decode('utf-8', 'replace').splitlines()
+    raw = log.read_bytes()
+    text = (raw[before:] if size > before else raw).decode('utf-8', 'replace').splitlines()
     shown = [l for l in text if 'Automation' in l or '][1]' in l]
     print('\n'.join(shown[-60:]))
     errors = [l for l in text if '][1]' in l or 'failed with error' in l]

@@ -102,7 +102,10 @@ class Grid:
     def key(self, p):
         return tuple(int(math.floor(c / self.cell)) for c in p)
 
-    def nearest(self, p, k):
+    def nearest(self, p, k, limit=40.0):
+        """The k nearest points, nearest first. The search stops at `limit` units: fewer than k
+        (possibly none) come back when there are not k points that close. The shell grows as
+        r^3, so a far query with a large limit is slow; pass the limit the caller needs."""
         cx, cy, cz = self.key(p)
         r = 1
         while True:
@@ -111,13 +114,14 @@ class Grid:
                 for dy in range(-r, r + 1):
                     for dz in range(-r, r + 1):
                         found.extend(self.cells.get((cx + dx, cy + dy, cz + dz), ()))
-            if len(found) >= k or r > 40:
+            beyond = (r - 1) * self.cell > limit
+            if len(found) >= k or beyond:
                 found.sort(key=lambda i: math.dist(self.points[i], p))
-                # a point further than r cells may still be closer than the k-th found; widen once
-                if len(found) >= k and math.dist(self.points[found[k - 1]], p) <= r * self.cell:
+                # everything within (r - 1) cells of p is certainly inside the searched cube
+                if len(found) >= k and math.dist(self.points[found[k - 1]], p) <= (r - 1) * self.cell:
                     return found[:k]
-                if r > 40:
-                    return found[:k]
+                if beyond:
+                    return [i for i in found[:k] if math.dist(self.points[i], p) <= limit]
             r += 1
 
 
@@ -252,7 +256,7 @@ def main():
             # are CBBE's) next to her new geometry. Measured: 8, all at the top of the vulva.
             flip = sum(frozenset(p) in cedges for p in ((m[0], m[1]), (m[1], m[2]), (m[2], m[0]))) == 2
             centre = tuple(sum(npos[v][a] for v in t) / 3 for a in range(3))
-            if flip and math.dist(centre, npos[new_grid.nearest(centre, 1)[0]]) < 1.0:
+            if flip and new_grid.nearest(centre, 1, limit=1.0):
                 seam += 1
     print(f'shared   {len(shared)} vertices (UV + position); new or changed {len(new)}; '
           f'CBBE vertices replaced {cs.count - len(mapping)}')
