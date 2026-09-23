@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The aligned body (tools/align_body.py) gets ZeX's genital bones; the 2017 cloth bones nothing
+     uses any more are dropped. Outfit Studio writes the skin, so bind transforms come from the ZeX
+     skeleton the lab's Config.xml names. Weights are added afterwards, in place (tools/nif.py). -->
+<AutomationScript version="1">
+    <Step type="AddProject" active="true">
+        <SourceFile>SliderSets/AnatomyBody.osp</SourceFile>
+        <Set>Anatomy Body Physics</Set>
+    </Step>
+    <Step type="DeleteBones" active="true">
+        <BoneNames>CLOTH_Bone_LefTtools, CLOTH_Bone_RightTools, CLOTH_Bone_Tape, CLOTH_Bone_Pouch, CLOTH_Bone_Googles_03</BoneNames>
+        <FromProject>true</FromProject>
+    </Step>
+    <Step type="AddBone" active="true">
+        <BoneNames>Vagina_00, Vagina_L_01, Vagina_L_02, Vagina_R_01, Vagina_R_02, Vagina_CBP_00, Vagina_CBP_L_01, Vagina_CBP_L_02, Vagina_CBP_R_01, Vagina_CBP_R_02, Anus_00, Anus_01, Anus_02, Anus_03, Anus_04</BoneNames>
+    </Step>
+    <Step type="SaveProject" active="true">
+        <DisplayName>Anatomy Body ZeX</DisplayName>
+        <OutputFileName>FemaleBody</OutputFileName>
+        <OutputDataPath>meshes\actors\character\characterassets</OutputDataPath>
+        <SliderSetFile>SliderSets\AnatomyBodyZeX.osp</SliderSetFile>
+        <ShapeDataFolder>AnatomyBodyZeX</ShapeDataFolder>
+        <ShapeDataFile>AnatomyBodyZeX.nif</ShapeDataFile>
+        <GenWeights>false</GenWeights>
+        <AutoCopyRef>false</AutoCopyRef>
+    </Step>
+</AutomationScript>

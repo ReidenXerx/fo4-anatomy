@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Proves Outfit Studio 5.8.2 runs automation headless: exit code 0 and this line in Log_OS.txt. -->
+<AutomationScript version="1">
+    <Step type="LogMessage" active="true">
+        <Message>Anatomy lab: headless automation works</Message>
+    </Step>
+</AutomationScript>
