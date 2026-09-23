@@ -126,12 +126,36 @@ PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObje
 # (female: 1.55 / 2.97 + 0.08 = 0.60), and one riding a unit lower 0.94. Props at the mouth stay off:
 # vanilla eating and drinking idles hang bottles and food on the same hand nodes.
 MOUTH_CHAINS = (SHAFT, tuple(f'Penis{k}' for k in (1, 2, 3, 4)))
+
+# The rest of the face while the mouth is busy (the owner, 2026-09-24: "expressions on the face
+# instead of stony but mouth ... cheeks, brows, nose"). Rapport's oral set shapes the mouth and
+# half-closes the eyes but leaves brows, cheeks and nose at rest, so the upper face went still. Each
+# term: its value at contact, + at full depth (FACE_DEPTH units past the lips), + at full stroke speed
+# (FACE_STROKE units/s in and out). The fork only ever RAISES a morph (max with what the face has),
+# so Rapport's sets and the animation's own face stay. Ids: the engine's 50-morph expression table,
+# alphabetical by full name (fo4-rapport/tools/make_mfg.py quotes it; the mouth's own ids 2/21/22/
+# 44/46 prove the numbering in game). 3 and 26 are the outer brows (the table calls 26 "Right Outer
+# Brow Up"; it sits where "Right Brow Outer Up" sorts, the mirror of 3).
+FACE_MORPHS = {'Brow Squeeze': 0, 'Left Brow Outer Up': 3, 'Left Cheek Up': 4, 'Left Middle Brow Up': 14,
+               'Left Nose Up': 15, 'Right Outer Brow Up': 26, 'Right Cheek Up': 27,
+               'Right Middle Brow Up': 37, 'Right Nose Up': 38}
+FACE_WHILE_BUSY = [               # (morph, at contact, + at full depth, + at full stroke speed)
+    ('Left Middle Brow Up', 0.30, 0.30, 0.0), ('Right Middle Brow Up', 0.30, 0.30, 0.0),  # pleading
+    ('Left Brow Outer Up', 0.10, 0.10, 0.0), ('Right Outer Brow Up', 0.10, 0.10, 0.0),
+    ('Brow Squeeze', 0.0, 0.15, 0.20),                                                     # effort
+    ('Left Cheek Up', 0.30, 0.15, 0.0), ('Right Cheek Up', 0.30, 0.15, 0.0),               # cheeks
+    ('Left Nose Up', 0.0, 0.10, 0.15), ('Right Nose Up', 0.0, 0.10, 0.15),                 # nose
+]
+FACE_DEPTH, FACE_STROKE = 6.0, 20.0
+
 MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), props=0,
              femaleX=-1.80, femaleY=8.12, femaleZ=0.0, maleX=-1.84, maleY=7.78, maleZ=0.0,
              facingX=0.065, facingY=0.998, facingZ=0.0, upX=0.998, upY=-0.065, upZ=0.0,
              femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.45,
              ahead=3.0, anticipate=0.3, margin=0.08, funnel=0.3, liftMove=0.53,
-             openRate=20.0, closeRate=6.0, blendRate=12.0, holdSeconds=0.35)
+             openRate=20.0, closeRate=6.0, blendRate=12.0, holdSeconds=0.35,
+             face=','.join(f'{FACE_MORPHS[m]}:{c}:{d}:{s}' for m, c, d, s in FACE_WHILE_BUSY),
+             faceDepth=FACE_DEPTH, faceStroke=FACE_STROKE, faceRate=6.0, strokeRate=4.0)
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated

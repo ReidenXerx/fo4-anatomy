@@ -248,8 +248,15 @@ def main():
     # the zero-touch files (A-21): ours alone, merged by the fork at run time
     bind = zb.skeleton_world(zb.SKELETON)                  # the skeleton the body is bound to
     ANATOMY.mkdir(parents=True, exist_ok=True)
-    (ANATOMY / 'ocbp.ini').write_text(anatomy_ini(bind[PARENT]), encoding='utf-8')
-    (ANATOMY / 'OCBPCollisionConfig.txt').write_text(anatomy_collisions(), encoding='utf-8')
+    ours = {'ocbp.ini': anatomy_ini(bind[PARENT]), 'OCBPCollisionConfig.txt': anatomy_collisions()}
+    # the fork's INIReader (inih) reads at most INI_MAX_LINE = 200 bytes a line, newline included, and
+    # silently cuts the rest: a long [Mouth] face= list would lose its last term without a word
+    for name, text in ours.items():
+        long_lines = [(n + 1, len(line)) for n, line in enumerate(text.splitlines()) if len(line) + 2 > 200]
+        if long_lines:
+            raise SystemExit(f'{name}: line(s) too long for the fork\'s INI reader (200 with the newline): '
+                             f'{long_lines}')
+        (ANATOMY / name).write_text(text, encoding='utf-8')
     # the run-time bones must land exactly where the patched skeleton put them
     import nif
     built = nif.Nif(skeleton.OUT)
