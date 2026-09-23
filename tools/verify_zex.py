@@ -27,7 +27,7 @@ import nif
 import osd
 
 import physics_design as pd
-import skeleton
+
 
 ZEX_GENITAL = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02', 'Anus_01', 'Anus_02',
                'Anus_03', 'Anus_04', 'Vagina_CBP_00', 'Vagina_CBP_L_01', 'Vagina_CBP_L_02', 'Vagina_CBP_R_01',
@@ -95,12 +95,17 @@ def main():
     if zex_left:
         problems.append(f'ZeX genital bones in the skin (women\'s skeleton has none): {zex_left}')
     weighted = sorted({bones[s] for i in range(a.count) for s, w in a.skin_weights(i) if w > 0})
-    women = {n['name'] for n in nif.Nif(skeleton.OUT).nodes.values()}
-    stranded = [n for n in weighted if n not in women]
-    print(f'   weighted bones {len(weighted)}; missing from the women\'s skeleton ({skeleton.OUT.name} built by '
-          f'tools/skeleton.py): {stranded or "none"}')
+    # A-21: a weighted bone must be in the skeleton the body is bound to, or one the fork adds at run
+    # time ([Bones]); anything else would leave its vertices behind when she moves
+    import physics_config
+    import zex_bones as zb
+    bind = zb.skeleton_world(zb.SKELETON)
+    runtime = {name for name, _, _ in physics_config.bone_table(bind[pd.PARENT])}
+    stranded = [n for n in weighted if n not in bind and n not in runtime]
+    print(f'   weighted bones {len(weighted)}: in the bind skeleton or added at run time by the fork; '
+          f'neither: {stranded or "none"}')
     if stranded:
-        problems.append(f'weighted bones the women\'s skeleton lacks (their vertices would stay behind): {stranded}')
+        problems.append(f'weighted bones neither the skeleton nor the fork provides (their vertices would stay behind): {stranded}')
 
     # 4. untouched outside the mask -- apart from the breast move, which must be exact
     import zex_bones

@@ -56,7 +56,6 @@ VULVA = 'AnatVulva'
 VULVA_W = 0.09
 VULVA_FLAT, VULVA_REACH = 1.8, 3.0
 VULVA_FRONT = (3.2, 4.0)                    # y where the pad starts and where it is full
-OUR_SKELETON = pathlib.Path(__file__).resolve().parent.parent / 'build/skeleton/female/skeleton.nif'
 
 # Breast physics (owner, 2026-09-23: "something wrong with physics config and breasts ... fix").
 # CBBE Body Physics hangs the breasts on CLOTH_Bone_Googles_00/01, Havok-cloth nodes that are in no
@@ -327,20 +326,20 @@ def main():
           f'rotation {worst_r:.5f}')
     if worst_t > 0.01 or worst_r > 1e-3:
         raise SystemExit('the skeleton does not reproduce the file\'s bone nodes: convention wrong')
-    # our bones live in the women's skeleton (tools/skeleton.py); they hang from its pelvis, which must
-    # be the pelvis this body is bound to
-    if not OUR_SKELETON.exists():
-        raise SystemExit(f'{OUR_SKELETON} is missing: run tools/skeleton.py first')
-    ours = skeleton_world(OUR_SKELETON)
-    pr_ours, pt_ours, _ = ours[pd.PARENT]
-    pr_zex, pt_zex, _ = world[pd.PARENT]
-    parent_gap = max(max(abs(a - b) for a, b in zip(pt_ours, pt_zex)),
-                     max(abs(a - b) for a, b in zip(flat(pr_ours), flat(pr_zex))))
-    absent = [b for b in pd.REST if b not in ours]
-    print(f'   women\'s skeleton (ours): {pd.PARENT} differs from the bound one by {parent_gap:.2e}; '
-          f'our bones present {len(pd.REST) - len(absent)}/{len(pd.REST)}')
-    if parent_gap > 1e-4 or absent:
-        raise SystemExit(f'our skeleton cannot carry this body: {pd.PARENT} moved {parent_gap}, bones absent {absent}')
+    # our bones (A-21): the fork creates them at run time under the skeleton's own Pelvis_skin, from
+    # physics_config.bone_table (identity rotation, the local offset). Their bind world transforms are
+    # therefore the bound Pelvis_skin composed with that offset: computed here from the SAME table, so
+    # the body is bound exactly where the fork will put them (no patched skeleton file is involved).
+    import physics_config
+    identity = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    ours = {pd.PARENT: world[pd.PARENT]}
+    for name, parent, local in physics_config.bone_table(world[pd.PARENT]):
+        ours[name] = compose(ours[parent], (identity, list(local), 1.0))
+    off_design = max(math.dist([ours[b][1][i] + pd.SKIN_OFFSET[i] for i in range(3)], pd.REST[b]) for b in pd.REST)
+    print(f'   our {len(ours) - 1} bones at the fork\'s run-time offsets under the bound {pd.PARENT}: '
+          f'worst distance from the design {off_design:.1e}')
+    if off_design > 1e-4:
+        raise SystemExit(f'the run-time bone table does not put our bones where the design does ({off_design})')
 
     # ---- 2. the skin offset: skin-to-bone = inverse(node) after moving skin space by -offset
     # Only bones the skeleton knows: the cloth bones (CLOTH_Bone_*) are not in ZeX, and their nodes

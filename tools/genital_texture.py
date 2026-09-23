@@ -46,6 +46,10 @@ import nif
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKIN = ab.DEFAULT_DATA / 'Textures/Actors/Character/BaseHumanFemale'
 NAHKA = ROOT / 'build/nahka_tex/Data/Body Textures/Textures/Actors/Character/BaseHumanFemale'
+# What ships (A-23): only her island, cut out by make_patch.textures(), and her crotch-skin means. The
+# builder points CROPS at its own data folder; FULL_NAHKA=True uses her whole files (dev, for the proof).
+CROPS = ROOT / 'build/patch/tex'
+FULL_NAHKA = False
 OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\textures')
 CORNER = (0.15, 0.80, 0.55, 1.0)      # u0, v0, u1, v1: where the genital island lies (uv_check.py)
 PAD = 8                               # texels of padding around the island, at the top level
@@ -191,16 +195,34 @@ def matched(nahka, fit, kind):
 # build one map
 # --------------------------------------------------------------------------
 
+def nahka_texture(nahka_name):
+    """(her map as a full-size image, her crotch-skin means by size or None). From the shipped island
+    crop: a blank canvas with the crop pasted where it was cut. The island never reaches the blank:
+    the crop has a margin on a 64-texel grid, so every reduction keeps its blocks inside it."""
+    if FULL_NAHKA:
+        return Image.open(NAHKA / nahka_name).convert('RGB'), None
+    meta = json.loads((CROPS / 'crops.json').read_text())
+    x0, y0, _, _ = meta['box']
+    canvas = Image.new('RGB', (meta['size'], meta['size']), 0)
+    canvas.paste(Image.open(CROPS / f'{pathlib.Path(nahka_name).stem}.png').convert('RGB'), (x0, y0))
+    return canvas, meta['ring'].get(nahka_name)
+
+
 def build(src, nahka_name, kind, geometry):
     mask, island, ring, facts = geometry(src.w)
     own = src.top()
-    nah_full = Image.open(NAHKA / nahka_name).convert('RGB')
+    nah_full, rings = nahka_texture(nahka_name)
     nah = nah_full.reduce(nah_full.size[0] // src.w) if nah_full.size[0] != src.w else nah_full
     report = dict(facts)
     fit = None
     if kind != 'normal':
         om, n = ring_means(own, ring, kind == 'colour')
-        nm, _ = ring_means(nah, ring, kind == 'colour')
+        if rings is not None:
+            if str(src.w) not in rings:
+                raise SystemExit(f'{nahka_name}: no crotch-skin means for a {src.w} texture (have {sorted(rings)})')
+            nm = rings[str(src.w)]
+        else:
+            nm, _ = ring_means(nah, ring, kind == 'colour')
         report.update(ring_texels=n, owner_ring=[round(x, 4) for x in om], nahka_ring=[round(x, 4) for x in nm])
         if kind == 'colour':
             fit = [om[k] / nm[k] if nm[k] > 1e-6 else 1.0 for k in range(3)]

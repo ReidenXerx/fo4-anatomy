@@ -133,5 +133,43 @@ def make(data=None):
     return patch
 
 
+TEX = OUT.parent / 'tex'
+CROP_ALIGN = 64                       # crop edges on a 64-texel grid: every mip reduction down to 64x stays aligned
+CROP_MARGIN = 64                      # beyond the padded island, so no reduced block ever mixes in blank texels
+RING_SIZES = (512, 1024, 2048, 4096)
+
+
+def textures():
+    """Her three maps cut to the genital island (PNG, lossless), and her crotch-skin means per texture
+    size (the colour match needs her skin there, which is NOT part of the island): build/patch/tex/."""
+    from PIL import Image
+    import genital_texture as gt
+    TEX.mkdir(parents=True, exist_ok=True)
+    full = 4096
+    mask, island, ring, _ = gt.islands(full)
+    box = mask.getbbox()
+    x0 = max(0, (box[0] - CROP_MARGIN) // CROP_ALIGN * CROP_ALIGN)
+    y0 = max(0, (box[1] - CROP_MARGIN) // CROP_ALIGN * CROP_ALIGN)
+    x1 = min(full, -(-(box[2] + CROP_MARGIN) // CROP_ALIGN) * CROP_ALIGN)
+    y1 = min(full, -(-(box[3] + CROP_MARGIN) // CROP_ALIGN) * CROP_ALIGN)
+    rings = {}
+    for _, _, nahka_name, kind in gt.MAPS:
+        img = Image.open(gt.NAHKA / nahka_name).convert('RGB')
+        if img.size != (full, full):
+            raise SystemExit(f'{nahka_name}: {img.size}, expected {full}x{full}')
+        img.crop((x0, y0, x1, y1)).save(TEX / f'{pathlib.Path(nahka_name).stem}.png', optimize=True)
+        if kind != 'normal':
+            for size in RING_SIZES:
+                small = img.reduce(full // size) if size != full else img
+                _, _, r, _ = gt.islands(size)
+                means, _ = gt.ring_means(small, r, kind == 'colour')
+                rings.setdefault(nahka_name, {})[str(size)] = means
+    (TEX / 'crops.json').write_text(json.dumps({'size': full, 'box': [x0, y0, x1, y1], 'ring': rings}, indent=1))
+    kb = sum(p.stat().st_size for p in TEX.iterdir()) // 1024
+    print(f'textures: her island cut to {x1 - x0}x{y1 - y0} at ({x0},{y0}) of {full}; crotch-skin means for '
+          f'{list(RING_SIZES)}; {kb} KB -> {TEX}')
+
+
 if __name__ == '__main__':
     make()
+    textures()
