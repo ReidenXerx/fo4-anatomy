@@ -833,9 +833,25 @@ anus ... just make it slightly bigger for being slightly noticeable from front".
 handled for open mouth ... lets make expressions on the face instead of stony but mouth ... cheeks,
 brows, nose".
 
-**Why the face was still.** Rapport's oral set (`Rapport_Oral`, AAF mfg data) shapes the mouth
-(funnels, pucker, lip rolls) and half-closes the eyes. It sets no brow, cheek or nose morph, so
-during oral the upper face rested.
+**What Rapport already does there (corrected the same night, from the file the game loads).**
+- Rapport has SIX oral styles, `Rapport_Oral_1` to `_6` in `fo4-rapport/data/AAF/Rapport_mfgSetData.xml`.
+  All are locked.
+- Each writes a few of these morphs and leaves the rest at rest:
+  - Oral_1: outer brows 38;
+  - Oral_2: nose 46, squeeze 56;
+  - Oral_3: nose R 28, outer L 42;
+  - Oral_4: inner brows 49;
+  - Oral_5: nose 46/24, outer L 49;
+  - Oral_6: cheeks 49, inner brows 42.
+- This first said the oral set writes none of them. That came from make_mfg.py's single
+  `Rapport_Oral` entry; the six styles are in the generated XML.
+- The owner still saw a still face, and the styles differ: Oral_1 and Oral_3 deliberately leave
+  the inner brows and cheeks alone.
+- **Effect of max():** a style's value is the floor. Ours shows only where it is higher, e.g.
+  Oral_4's inner brows 0.49 go to 0.6 at full depth, and Oral_1/3 gain inner brows and cheeks.
+- The lock is AAF's own and does not reach a write after the merge.
+- A look the owner dislikes can come from either side: ours is `FACE_WHILE_BUSY`, Rapport's is
+  its styles. Rapport offered to move this into its styles if that is ever wanted.
 
 **Decision.**
 - The mouth hook, which already writes after the engine's merge, also shapes the upper face while

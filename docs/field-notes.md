@@ -473,6 +473,9 @@ GPL-3.0; it never ships.
     as max(merged, ours x contact).
   - Depth is how far the tip is past the lip plane (F points out of the mouth, so it is -dT). Stroke
     is the smoothed |d depth / dt|.
+  - Rapport's six oral styles (Rapport_Oral_1..6) write some of the same ids, locked (for example
+    Oral_4's inner brows 49, Oral_6's cheeks 49), so max() keeps a style's value as the floor.
+    Read the generated XML, not make_mfg.py's single entry: that is how this was first got wrong.
   - The ids are the engine's 50-morph table as fo4-rapport/tools/make_mfg.py quotes it. 26 is
     labelled "Right Outer Brow Up" but sorts as "Right Brow Outer Up", the mirror of 3.
   - inih cuts lines at 200 bytes: physics_config guards it.

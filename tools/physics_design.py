@@ -128,8 +128,9 @@ PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObje
 MOUTH_CHAINS = (SHAFT, tuple(f'Penis{k}' for k in (1, 2, 3, 4)))
 
 # The rest of the face while the mouth is busy (the owner, 2026-09-24: "expressions on the face
-# instead of stony but mouth ... cheeks, brows, nose"). Rapport's oral set shapes the mouth and
-# half-closes the eyes but leaves brows, cheeks and nose at rest, so the upper face went still. Each
+# instead of stony but mouth ... cheeks, brows, nose"). Rapport's six oral styles (Rapport_Oral_1..6,
+# its generated mfgSetData.xml) each write only a few of these, and some leave the inner brows and
+# cheeks at rest; with max() below, a style's value is the floor and ours shows where higher. Each
 # term: its value at contact, + at full depth (FACE_DEPTH units past the lips), + at full stroke speed
 # (FACE_STROKE units/s in and out). The fork only ever RAISES a morph (max with what the face has),
 # so Rapport's sets and the animation's own face stay. Ids: the engine's 50-morph expression table,
