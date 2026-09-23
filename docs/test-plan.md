@@ -43,3 +43,27 @@ To undo, disable the mod and Deploy again; every original file comes back.
 | Opening sideways or backwards | the offsets ARE rotated and the placement assumption is off | zero offsets make this unlikely; check where Penis_01-05 actually sit |
 | Wobble while walking | spring too soft | raise `stiffness` / `damping` in `[Labia]` |
 | Interior textured wrongly | the owner's skin texture has nothing painted at the new UVs | Nahka's `labia_*.tga` ship with the source archive; merge them into the skin |
+
+## Results
+
+### Pass 1 (2026-09-23 11:35, build e52678e0, fo4-mcp): inconclusive
+The deploy was verified and OCBPC loaded. Every frame showed clothed actors, or a camera pointed away
+from the scene.
+
+### Pass 2 (12:22, build 86f6fc78 = Skin Tint shader fix, fo4-mcp)
+- The body renders correctly (Photo78, stripped and standing): CBBE shape, nipples, textures.
+  There are no spikes or explosions in any frame.
+- Skin tone: after the scene her body and head read as one tone, with no neck seam (Photo111/112).
+  This is the shader fix; Photo78's darker face is a dark frame and inconclusive.
+- The genitals are not seen yet. Missionary shot from behind the male hides them (Photo104/105),
+  and the anal frames came out in a dark corner (Photo106-110).
+- **Owner install finding (fo4-mcp):** the ORIGINAL BP70 and Atomic Lust positions do not animate.
+  Ulfberth's AAF Patch (UAP) replaced their ESPs, and the original XMLs point at idle forms that
+  are gone; the actors stand stripped in idles. Every "[UAP] BP70 - ..." position animates. aaf.log
+  also warns "UlfEquip_KW not found in keyword database". Use UAP names in tests; the stripped idle
+  of an original name is handy for rest shots.
+- Scene mechanics: `skipwalk` starts a scene in 4-6 s; the scene happens at the first actor's position.
+
+### Pass 3 (requested): camera at hip height, lit
+Rest from the front (stripped via a non-animating original position), then "[UAP] BP70 - Pit Doggy 02"
+from behind at hip height.
