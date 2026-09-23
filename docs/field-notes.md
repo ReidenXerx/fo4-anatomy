@@ -781,3 +781,50 @@ ours overwrites another mod's** except `cbp.dll`, and the player never resolves 
 - **Gotcha:** re-running `zex_bones` changes the body's sha1 even when nothing real changed. Bone bind
   transforms move by float bits (2.4e-7). Tell the Silhouette session, whose verifier measures
   geometry, not the hash.
+
+---
+
+## 22. Silhouette's genital variety against our contact physics (measured 2026-09-24)
+
+Silhouette's S-17 (the owner's poll) rolls per-woman values into BodyGen's layer:
+
+| Slider | Range |
+| --- | --- |
+| VaginaLabiaSize | 0..0.9 |
+| VaginaInnie | 0..0.4 |
+| VaginaSize | -0.35..0.35 |
+| VaginaNarrower | 0..0.5 |
+| VaginaClitSize | 0..0.5 |
+| AnusDonut | 0..0.35 |
+
+Never rolled: Innie2, AnusBack, and the states Penetrate, Spread and AnusPenetrate. AnatomyOpening
+is ours and Silhouette leaves it alone (a runtime value would add to the baked 50%).
+
+**Method.** Each variant is built the way LooksMenu builds it at run time: the built base, plus the
+opening at 50%, plus value x the slider's diff, on both shapes. It then runs through `fit_check`
+(game colliders and weights). The script is `variety_fit.py` in the session scratchpad.
+
+**Result: nothing breaks.**
+- The worst depth stays about 1.5 and the worst stretch stays within the body the owner approved
+  before A-25 (9.59).
+- What changes is the share of the entrance a shaft passes through ("through"). The bones and
+  colliders do not scale with her shape.
+
+| Body | As drawn | 0.4 right | 0.6 ahead (always the worst) |
+| --- | --- | --- | --- |
+| as built | 26% | 37% | 55% |
+| VaginaSize +0.35 | **39%** | 47% | 56% |
+| VaginaSize +0.15 | 31% | 41% | 56% |
+| VaginaSize -0.35 | 16% | 28% | 52% |
+| VaginaInnie +0.40 | 33% | 40% | 57% |
+| VaginaInnie +0.30 | 30% | 40% | 56% |
+| every edge at once, Size +0.35 | 44% | 50% | 60% |
+| every edge at once, Size -0.35 | 20% | 30% | 58% |
+| narrowed edges (Size +0.15, Innie 0.3) | 35% | 41% | 59% |
+
+- LabiaSize, Narrower, ClitSize and AnusDonut change nothing that matters. AnusDonut takes one anal
+  path's stretch from 8.52 to 9.59.
+- The approved body before A-25 measured 31% as drawn. VaginaSize up to +0.15 and Innie up to 0.30
+  each stay at or under it.
+- Recommended to Silhouette for its poll: keep S-17 and narrow those two ranges. Scaling our spheres
+  per woman would lift the limit altogether; it is not built.
