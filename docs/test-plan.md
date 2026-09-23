@@ -121,7 +121,8 @@ crotch skin; no change anywhere else on the body.
 - What to look at:
   - Vaginal (missionary, doggy, cowgirl): no fin or rod anywhere. The inner lips part around the
     shaft; the outer lips squish a little.
-  - Whether the opening is doubled (BP70's VaginaPenetrate morph plus physics).
+  - Only in ZaZOut4 pillory scenes, whose animations also set VaginaPenetrate 1.0: whether the
+    opening is too wide (simulated median radius 1.82 against a 1.55 shaft).
   - One anal position: the ring opens around the shaft, and the shaft enters the ring rather
     than behind it.
   - Walking or running nude: a small lip wobble (0.3 / 0.6 units).

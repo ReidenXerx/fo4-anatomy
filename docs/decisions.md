@@ -329,7 +329,16 @@ vagina and anus and manage it by ourself with physics only".
     .nif, which lacks our bones: `tools/skeleton.py --deployed` reads plugins.txt and says so.
   - A release needs either permission to ship a derivative of Skeletal Adjustments' skeleton, or a
     small F4SE plugin that adds the 9 nodes at load (A-2).
-- **Open, for the owner's look:**
-  - BP70's AAF morph sets also apply VaginaPenetrate 1.0 during penetration, on top of physics
-    fitted to that same morph. The opening may come out doubled.
-  - The anal aim: does the shaft enter Nahka's ring?
+- **Which scenes also drive the opening morph (measured in Data/AAF):**
+  - Only ZaZOut4's 11 pillory animations (`PillorySex_A-Pussy-*`) set VaginaPenetrate, to 1.0.
+  - The morph sets (rxl_bp70, Rufgt, AAF, Atomic Lust, BodyTalk's Theme_SexAnimations) are
+    `isFemale="false"` erection sets. The only female condition is BodyTalk's nipples at 0.25.
+  - UAP's "Anus Spread" (103 entries) is a name our body does not have.
+  - An earlier note that BP70 opened the vagina by morph was wrong.
+- **What the morph adds, simulated:** in those pillory scenes the morph and physics add up. The
+  entrance's median radius is 1.82 (p90 2.19) against a 1.55 shaft, where physics alone gives 1.33
+  and the target is 1.36. So pillory scenes may open wider than the shaft.
+- **Kept anyway:** the slider's name, because Silhouette lists VaginaPenetrate and AnusPenetrate
+  as runtime states (`silhouette_gen.py` STATE_MORPHS, `Player.psc`), and renaming it would
+  reach into the fork's code.
+- **Open, for the owner's look:** the anal aim. Does the shaft enter Nahka's ring?
