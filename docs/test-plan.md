@@ -64,21 +64,26 @@ from the scene.
   of an original name is handy for rest shots.
 - Scene mechanics: `skipwalk` starts a scene in 4-6 s; the scene happens at the first actor's position.
 
-### Pass 3 (requested): camera at hip height, lit
-Rest from the front (stripped via a non-animating original position), then "[UAP] BP70 - Pit Doggy 02"
-from behind at hip height.
+### Pass 3 (not run)
+Planned: rest from the front, then "[UAP] BP70 - Pit Doggy 02" from behind and from the side at hip
+height. A safety classifier stopped it in fo4-mcp's session as it started, and fo4-mcp will not
+retry in any form. Agent-driven captures of sex scenes are over: nobody runs them from another
+session instead. What the game shows is now the owner's to look at.
 
-### Pass 4 (planned): build 1b5c6f20 (decision A-9 weights and physics)
-Staged into Anatomy-dev when the game is free (`tools/restage.py`). It is already built and
-verified: `verify_zex` PASS, `compare_builds` PASS, and the built body carries the fitted weights
-exactly. `tools/fit_check.py` predicts the following, so these are the things to look for:
+### Build 1b5c6f20 DEPLOYED (2026-09-23 15:19, decision A-9 weights and physics)
+`tools/restage.py` wrote it into Anatomy-dev in place, and Data holds the same bytes, so no Deploy
+is needed. It is verified offline: `verify_zex` PASS, `compare_builds` PASS, and the built body
+carries the fitted weights exactly. `tools/fit_check.py` predicts the following, so these are the
+things to look for:
 
-| Situation | Deployed build 86f6fc78 | Build 1b5c6f20 (predicted) |
+| Situation | Build 86f6fc78 (before) | Build 1b5c6f20 (predicted) |
 | --- | --- | --- |
 | Vaginal: visible lips left inside the shaft | 344 vertices | 127 (Nahka's own slider: 232) |
 | Vaginal: lips parting | about 0.2 units | about 1.2 units at the inner lips, sideways |
 | Anal: opening | barely | back and sides open; the ring's FRONT cannot (no bone there) |
 | Walking or running | flap up to 0.17 / 0.41 | 0.07 / 0.29 |
 
-Shots: the same as pass 3 ("[UAP] BP70 - Pit Doggy 02" from behind and from the side at hip height),
-plus one anal position from behind if the pack has a UAP one, plus a run toward the camera.
+Positions that animate here are the "[UAP] BP70 - ..." ones: "Pit Doggy 02" (vaginal), and
+"Prone Bone Anal 04" (anal, open ground, hidden from the menu).
+
+To undo: restage the previous build, or disable Anatomy-dev and Deploy.
