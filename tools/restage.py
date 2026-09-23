@@ -51,7 +51,7 @@ def main():
     lab.setup()
     if ZERO.exists():
         shutil.rmtree(ZERO)
-    if lab.build('AnatomyZeXLab', 'Anatomy Zero', ZERO, 600):
+    if lab.build('AnatomyFinalLab', 'Anatomy Zero', ZERO, 600):
         raise SystemExit('BodySlide build failed')
     run(['compare_builds.py', str(CURRENT), str(ZERO)])
     stage = package.main()

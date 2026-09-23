@@ -190,3 +190,10 @@ crotch skin; no change anywhere else on the body.
   - a fist stretches the entrance;
   - the mouth opens in an oral scene.
 - If a fin comes back, the run-time bones failed. Re-adding the patched skeleton is one restage away.
+
+### The genitals' own shape (A-22), restaged 22:21, build b72181014994: DEPLOY BEFORE PLAYING
+- The body in Data is already the two-shape one. Its material and textures reach Data only with the
+  Deploy; before it, the genitals would render with missing textures.
+- After the Deploy, the genitals should show Nahka's mucosa, which A-10 never actually showed. The
+  seam to the crotch skin should not show.
+- In BodySlide the set is now "Anatomy Body", for rebuilding with any preset.

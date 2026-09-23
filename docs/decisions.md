@@ -651,3 +651,40 @@ does we have such metric)".
     and adds `F4SE/Plugins/Anatomy/*`.
   - Until that Deploy, the new DLL runs on the old merged files exactly as before, with no sphere
     loaded twice.
+
+## A-22 — The genitals are their own shape, with their own material (zero-touch, 2026-09-23)
+
+- **Found on the way (it corrects A-10):** the genital texture patch was never shown in the owner's
+  game.
+  - A-10 wrote the patched skin to `Textures/Actors/Character/BaseHumanFemale/`.
+  - But the body's material, `basehumanFemaleskin.bgsm`, wins from CBBE Holy Fix's archive, and it
+    names `Actors/Character/custombody/FemaleBody_*.dds`.
+  - Those files come from CBBE HeadRear Absolute Fix, at 4096 px; our patch was a 2048 px file.
+  - Measured with `gamedata.py` and `bgsm.py`. The material decides the paths (field notes §12), and
+    the patch was written to the wrong one.
+- **Built (`split_genitals.py`):**
+  - The 4,913 triangles `genital_texture.py` paints move into a new shape, `AnatomyGenitals`: the
+    UV centroid lies in the island corner and at least one vertex is Nahka's. A plain UV box would
+    also take about 2,000 of CBBE's own triangles.
+  - Their 2,495 vertex records are copied byte for byte, with atlas UVs kept, so overlays behave as
+    before.
+  - The new shape has its own skin instance (the same 74 bones in the same slots) and a copy of the
+    body's bone data.
+  - Its shader is the body's, renamed to `Materials/Anatomy/AnatomyGenitals.bgsm`.
+  - The body keeps every vertex, loses those triangles, and has its segments recounted.
+  - 78,884 slider diffs of 47 sliders are re-indexed onto the new shape.
+- **Proven:**
+  - The BodySlide build of the new set "Anatomy Body" equals the single-shape build: all 48,215
+    triangles match as positions.
+  - `compare_builds` passes.
+- **The material and textures (`genital_texture.py`, `bgsm.py`):**
+  - The player's skin is read from whatever the winning skin material names, loose or in an archive.
+  - Nahka's island is patched in. On the owner's skin the gains are 0.51/0.42/0.36, and the seam
+    after feathering is 2.1 against the skin's own 4.5.
+  - The output goes to `Textures/Anatomy/FemaleBody_d/n/s.dds`.
+  - `AnatomyGenitals.bgsm` is that skin material with only the three texture paths changed.
+- **Retired from Anatomy-dev:** the six BaseHumanFemale textures and the old "Anatomy Body ZeX"
+  BodySlide set.
+- **Deploy:** the new body (build b72181014994) is already in Data through its hardlink, but its
+  material and textures are NEW files. The owner must Deploy before playing, or the genitals
+  render with missing textures.

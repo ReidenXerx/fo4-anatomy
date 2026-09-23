@@ -52,13 +52,16 @@ PAD = 8                               # texels of padding around the island, at 
 RING = 3.0                            # crotch skin within this of the genitals sets the colour match
 FEATHER = 32                          # texels over which the seam correction fades out
 SIGMA = 10.0                          # Gaussian reach of one seam point's correction, in texels
-# (owner file, Nahka file, kind)
-MAPS = [('FemaleBody_d.dds', 'femalebody_d.dds', 'colour'),
-        ('FemaleBody_n.DDS', 'femalebody_n.dds', 'normal'),
-        ('FemaleBody_s.DDS', 'femalebody_s.dds', 'specular'),
-        ('femalebodydirty_d.dds', 'femalebody_d.dds', 'colour'),
-        ('FemaleBodydirty_n.DDS', 'femalebody_n.dds', 'normal'),
-        ('FemaleBodydirty_s.DDS', 'femalebody_s.dds', 'specular')]
+# Zero-touch (A-21): the genitals are their own shape with their own material. Its textures are the
+# player's skin, AS THE BODY'S MATERIAL NAMES IT, with Nahka's island patched in, written to OUR paths.
+# (Before A-21 the patch went over Textures/Actors/Character/BaseHumanFemale, but the owner's body
+# material, CBBE Holy Fix's, names Actors/Character/custombody/: that patch was never shown.)
+SKIN_MATERIAL = 'Materials/actors/Character/BaseHumanFemale/basehumanFemaleskin.bgsm'
+ANATOMY_OUT = OUT / 'Anatomy'
+# (material slot, our file, Nahka file, kind); the dirty variants are not ours (accepted, A-21)
+MAPS = [('diffuse', 'FemaleBody_d.dds', 'femalebody_d.dds', 'colour'),
+        ('normal', 'FemaleBody_n.dds', 'femalebody_n.dds', 'normal'),
+        ('smoothspec', 'FemaleBody_s.dds', 'femalebody_s.dds', 'specular')]
 
 
 # --------------------------------------------------------------------------
@@ -66,9 +69,10 @@ MAPS = [('FemaleBody_d.dds', 'femalebody_d.dds', 'colour'),
 # --------------------------------------------------------------------------
 
 class Dds:
-    def __init__(self, path):
+    def __init__(self, path, data=None):
+        """A file, or (a label, the bytes) for a texture read out of an archive (gamedata)."""
         self.path = pathlib.Path(path)
-        self.b = bytearray(self.path.read_bytes())
+        self.b = bytearray(data if data is not None else self.path.read_bytes())
         self.h, self.w = struct.unpack_from('<II', self.b, 12)
         self.mips = max(1, struct.unpack_from('<I', self.b, 28)[0])
         self.fourcc = bytes(self.b[84:88])
@@ -90,7 +94,7 @@ class Dds:
             off += bx * by * self.block
 
     def top(self):
-        return Image.open(self.path).convert('RGB')
+        return Image.open(io.BytesIO(bytes(self.b))).convert('RGB')
 
 
 def encode_blocks(img, pil_format):
@@ -187,8 +191,7 @@ def matched(nahka, fit, kind):
 # build one map
 # --------------------------------------------------------------------------
 
-def build(owner_name, nahka_name, kind, geometry):
-    src = Dds(SKIN / owner_name)
+def build(src, nahka_name, kind, geometry):
     mask, island, ring, facts = geometry(src.w)
     own = src.top()
     nah_full = Image.open(NAHKA / nahka_name).convert('RGB')
@@ -336,8 +339,19 @@ def verify(src, out, mask):
     return bad
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+def main(data=None):
+    """Zero-touch (A-21): read the skin the BODY'S MATERIAL names (loose or in an archive, the copy
+    the game would load), patch Nahka's island in, and write our textures plus our material:
+        ANATOMY_OUT/FemaleBody_d/n/s.dds   -> Data/Textures/Anatomy/
+        ANATOMY_OUT/AnatomyGenitals.bgsm   -> Data/Materials/Anatomy/  (the skin material, our paths)"""
+    import bgsm
+    import gamedata
+    game = gamedata.Game(data or ab.DEFAULT_DATA)
+    material = game.read(SKIN_MATERIAL)
+    slots, _ = bgsm.textures(material)
+    names = dict(zip(bgsm.NAMES, slots))
+    print(f'skin material: {game.describe(SKIN_MATERIAL)}; textures {[names[m[0]] for m in MAPS]}')
+    ANATOMY_OUT.mkdir(parents=True, exist_ok=True)
     cache = {}
 
     def geometry(size):
@@ -345,23 +359,29 @@ def main():
             cache[size] = islands(size)
         return cache[size]
     problems = []
-    for owner_name, nahka_name, kind in MAPS:
-        if not (SKIN / owner_name).exists():
-            print(f'{owner_name}: not deployed, skipped')
+    for slot, ours, nahka_name, kind in MAPS:
+        rel = 'Textures/' + names[slot]
+        if not names[slot] or game.find(rel) is None:
+            problems.append(f'{slot}: the skin material names {names[slot]!r}, which the game does not have')
             continue
-        src, out, report, mask = build(owner_name, nahka_name, kind, geometry)
+        src = Dds(rel, game.read(rel))
+        src, out, report, mask = build(src, nahka_name, kind, geometry)
         bad = verify(src, out, mask)
-        (OUT / owner_name).write_bytes(out)
-        print(f'{owner_name} ({src.w}x{src.h} {src.fourcc.decode()} {src.mips} mips, {kind}): {report}; '
-              f'blocks outside the patch that differ from the owner\'s: {bad}')
+        (ANATOMY_OUT / ours).write_bytes(out)
+        print(f'{ours} from {game.describe(rel)} ({src.w}x{src.h} {src.fourcc.decode()} {src.mips} mips, {kind}): '
+              f'{report}; blocks outside the patch that differ from the skin\'s: {bad}')
         if bad:
-            problems.append(owner_name)
+            problems.append(ours)
         if report['island_texels_other_samples']:
-            problems.append(f'{owner_name}: another triangle samples the island itself')
+            problems.append(f'{ours}: another triangle samples the island itself')
+    ours_material = bgsm.with_textures(material, {m[0]: f'Anatomy/{m[1]}' for m in MAPS})
+    (ANATOMY_OUT / 'AnatomyGenitals.bgsm').write_bytes(ours_material)
+    back, _ = bgsm.textures(ours_material)
+    print(f'AnatomyGenitals.bgsm: the skin material with textures {back[:3]}')
     if problems:
         print('\nFAIL - ' + '; '.join(problems))
         sys.exit(1)
-    print(f'\nPASS - wrote {OUT}; outside the genital patch every block of every mip is the owner\'s.')
+    print(f'\nPASS - wrote {ANATOMY_OUT}; outside the genital patch every block of every mip is the skin\'s.')
 
 
 if __name__ == '__main__':

@@ -144,6 +144,7 @@ class Nif:
             raise ValueError(f'{path}: not a Fallout 4 NIF (Bethesda stream != 130)')
         for _ in range(4):
             c.string8()
+        self.type_count_at = c.o                 # uint16 block-type count, then the type names
         types = [c.string32() for _ in range(c.take('H'))]
         self.type_names = types
         self.type_index_at = c.o                 # uint16 per block (high bit a flag), then uint32 sizes
@@ -422,6 +423,33 @@ class Nif:
                   + struct.pack('<II', len(raw), max(len(r) for r in raw))
                   + b''.join(struct.pack('<I', len(r)) + r for r in raw)
                   + bytes(self.b[self.strings_end:self.data_at]))
+        return header + b''.join(blocks) + bytes(self.b[last_end:])
+
+    def with_edits(self, replace=None, append=(), add_strings=()):
+        """New file bytes: blocks replaced ({index: bytes}), blocks APPENDED ([(type name, bytes)],
+        numbered from the current block count, so no existing reference moves), strings appended
+        (numbered after the existing ones), and block types added to the type table when new. The
+        bytes given must already carry the right references. The footer (root list) stays last."""
+        replace = replace or {}
+        types = list(self.type_names)
+        type_index = list(self.type_index)
+        for name, _ in append:
+            if name not in types:
+                types.append(name)
+            type_index.append(types.index(name))
+        blocks = [replace.get(i, bytes(self.b[o:o + s])) for i, (o, s) in enumerate(self.offsets)]
+        blocks += [blk for _, blk in append]
+        raw = [s.encode('latin1') for s in list(self.strings) + list(add_strings)]
+        header = (bytes(self.b[:self.nblocks_at]) + struct.pack('<I', len(blocks))
+                  + bytes(self.b[self.nblocks_at + 4:self.type_count_at])
+                  + struct.pack('<H', len(types))
+                  + b''.join(struct.pack('<I', len(t)) + t.encode('latin1') for t in types)
+                  + b''.join(struct.pack('<H', t) for t in type_index)
+                  + b''.join(struct.pack('<I', len(b)) for b in blocks)
+                  + struct.pack('<II', len(raw), max(len(r) for r in raw))
+                  + b''.join(struct.pack('<I', len(r)) + r for r in raw)
+                  + bytes(self.b[self.strings_end:self.data_at]))
+        last_end = self.offsets[-1][0] + self.offsets[-1][1]
         return header + b''.join(blocks) + bytes(self.b[last_end:])
 
     def extra_block(self, kind):

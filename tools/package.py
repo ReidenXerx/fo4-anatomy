@@ -34,9 +34,8 @@ import time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUILT = pathlib.Path(r'D:\F4Output\AnatomyLab\out\zero\Meshes\Actors\Character\CharacterAssets')
-TEXTURES = pathlib.Path(r'D:\F4Output\AnatomyLab\textures')
-TEXTURE_FILES = ['FemaleBody_d.dds', 'FemaleBody_n.DDS', 'FemaleBody_s.DDS',
-                 'femalebodydirty_d.dds', 'FemaleBodydirty_n.DDS', 'FemaleBodydirty_s.DDS']
+TEXTURES = pathlib.Path(r'D:\F4Output\AnatomyLab\textures\Anatomy')   # genital_texture.py (A-21): our paths
+TEXTURE_FILES = ['FemaleBody_d.dds', 'FemaleBody_n.dds', 'FemaleBody_s.dds']
 CONFIG = ROOT / 'build/config'
 PROJECT = ROOT / 'build/project'
 SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
@@ -50,7 +49,16 @@ OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\package')
 # what an older package put in Anatomy-dev and this one does not (A-21): the fork now merges our physics
 # lines with the player's own files and adds our bones to the skeleton at run time
 RETIRED = ['Meshes/Actors/Character/CharacterAssets/female/skeleton.nif',
-           'F4SE/Plugins/ocbp.ini', 'F4SE/Plugins/OCBPCollisionConfig.txt']
+           'F4SE/Plugins/ocbp.ini', 'F4SE/Plugins/OCBPCollisionConfig.txt',
+           # the genitals' own shape and material (A-21): the skin mod's textures are never replaced
+           # (and the old patch at BaseHumanFemale was never shown: the owner's body material names
+           # custombody/), and the BodySlide set is the split one, "Anatomy Body"
+           *[f'Textures/Actors/Character/BaseHumanFemale/{t}' for t in
+             ('FemaleBody_d.dds', 'FemaleBody_n.DDS', 'FemaleBody_s.DDS',
+              'femalebodydirty_d.dds', 'FemaleBodydirty_n.DDS', 'FemaleBodydirty_s.DDS')],
+           'Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp',
+           'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif',
+           'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.osd']
 
 
 def main():
@@ -68,11 +76,12 @@ def main():
         'F4SE/Plugins/Anatomy/ocbp.ini': CONFIG / 'Anatomy/ocbp.ini',
         'F4SE/Plugins/cbp.dll': OCBPC_DLL,
         'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt': CONFIG / 'Anatomy/OCBPCollisionConfig.txt',
-        'Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp': PROJECT / 'SliderSets/AnatomyBodyZeX.osp',
-        'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif': PROJECT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.nif',
-        'Tools/BodySlide/ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.osd': PROJECT / 'ShapeData/AnatomyBodyZeX/AnatomyBodyZeX.osd',
+        'Tools/BodySlide/SliderSets/Anatomy.osp': PROJECT / 'SliderSets/Anatomy.osp',
+        'Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif': PROJECT / 'ShapeData/Anatomy/Anatomy.nif',
+        'Tools/BodySlide/ShapeData/Anatomy/Anatomy.osd': PROJECT / 'ShapeData/Anatomy/Anatomy.osd',
         'Tools/BodySlide/SliderPresets/AnatomyZero.xml': PROJECT / 'SliderPresets/AnatomyZero.xml',
-        **{f'Textures/Actors/Character/BaseHumanFemale/{t}': TEXTURES / t for t in TEXTURE_FILES},
+        **{f'Textures/Anatomy/{t}': TEXTURES / t for t in TEXTURE_FILES},
+        'Materials/Anatomy/AnatomyGenitals.bgsm': TEXTURES / 'AnatomyGenitals.bgsm',
     }
     for rel, src in files.items():
         if not src.exists():

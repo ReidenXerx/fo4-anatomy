@@ -63,6 +63,7 @@ def setup():
         '<SliderGroups>\n'
         '    <Group name="AnatomyLab">\n        <Member name="Anatomy Body Physics"/>\n    </Group>\n'
         '    <Group name="AnatomyZeXLab">\n        <Member name="Anatomy Body ZeX"/>\n    </Group>\n'
+        '    <Group name="AnatomyFinalLab">\n        <Member name="Anatomy Body"/>\n    </Group>\n'
         '    <Group name="CBBELab">\n        <Member name="CBBE Body Physics"/>\n    </Group>\n'
         '</SliderGroups>\n', encoding='utf-8')
     (LAB / 'Automations').mkdir(exist_ok=True)
