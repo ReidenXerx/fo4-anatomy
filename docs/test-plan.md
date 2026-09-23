@@ -202,3 +202,25 @@ crotch skin; no change anywhere else on the body.
 - Same geometry and physics as b72181014994, rebuilt from the player's CBBE plus Nahka's patch.
 - The arousal script now removes our nipple layer under Silhouette's heavy-armour marker. Nothing
   changes until Silhouette ships its refit.
+
+### The mouth crash fix (fork 870adc4), cbp.dll written in place at 23:33: no Deploy needed
+
+What broke:
+- From 22:46 every save load crashed about 0.3 s in, with no crash log. Five times: 22:48, 22:56,
+  23:03, 23:06 and 23:09.
+- The Windows Application log shows Fallout4.exe+0x668A0D. That is inside the face merge the mouth
+  hooked.
+- An A/B by the fo4-mcp session with `[Mouth] enabled=0`: the same save loaded and stayed up.
+- Cause: DetourXS copied 14 of the merge's 17 prologue bytes (field notes, the face engine).
+
+What is live now (sha e57d45f5f8df): the mouth hooks the merge's call site and never touches its code.
+The discovery log keeps the last four runs (`anatomy_ocbpc.1.log` is the run before).
+
+Check:
+- `anatomy_ocbpc.log` says `[mouth] on: 2 chain(s), props 0, gap F 2.97 M 2.30; the merge's call
+  hooked, its code untouched (prologue still the engine's: 1)`.
+- The save loads and the game stays up. Crowded interiors (the Third Rail, Goodneighbor) are where
+  it died.
+- In an oral scene the mouth opens to the shaft, and it gives the face back 0.35 s after contact ends.
+- If the game ever closes by itself, look in the Windows Application log (event 1000) before
+  anything else.

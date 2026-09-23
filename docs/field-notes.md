@@ -448,6 +448,20 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
   - A tip 3 in front of the lips starts opening them.
   - No AAF block is needed: writing after the merge wins over every source.
   - The hook is installed only if the merge's prologue and its one call match what was read.
+  - **How it hooks (since fork 870adc4):** the engine's one call to the merge (+0x6860FA) is pointed
+    through F4SE's branch trampoline (`Write5Call`) at our wrapper, which calls the merge untouched.
+    The patch is read back, and the log says "the merge's call hooked, its code untouched".
+  - **Why not a detour of the merge's entry (the crash of 2026-09-23):**
+    - What happened: every save load died 0.3 s in, five times, with no crash log. Found in the
+      Windows Application log: Fallout4.exe+0x668A0D, c0000005.
+    - DetourXS sizes the copied prologue with `LDE(addr, 0)`, which decodes **x86**. There a REX
+      prefix is an instruction of its own, so it copied 14 of 17 bytes.
+    - The merge then resumed on the tail of `sub rsp,60h`: `sub esp,60h`, which clears RSP's upper
+      half. The first push faulted, with no stack left for any logger.
+    - Measured with the fork's own LDE lib: 14 bytes at type 0, 17 at type 64. DetourXS now asks for
+      64 on x64. OCBPC's own hook (+0x211CF80) is 14 bytes either way.
+    - Proven in game by an A/B (the fo4-mcp session): with `[Mouth] enabled=0` the same save loaded
+      and stayed up. With the call-site build, `[Mouth] enabled=1` logs the line above.
 - **The owner's oral look (Photo149-154):**
   - Mostly the animation's open mouth wraps the shaft fine (Photos 152, 153).
   - In Photo150 the lips stay CLOSED while the penis head is at her mouth, so it clips through.

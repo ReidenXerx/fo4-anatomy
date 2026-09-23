@@ -591,6 +591,10 @@ does we have such metric)".
 - **Safety:**
   - The hook is installed only if the merge's 17-byte prologue and its one call match what was read.
     Otherwise the discovery log says so and nothing is patched.
+  - Since fork 870adc4 (2026-09-23) the hook sits on the merge's one call site, through F4SE's branch
+    trampoline. The merge's own code is never modified. The first version detoured the merge's entry
+    with DetourXS, which copied 14 of the prologue's 17 bytes: every save load crashed, with no crash
+    log (field notes, the face engine).
   - The face data is used only when its vtable is the engine's.
   - The pointers published for the hook are rebuilt every frame, so an actor who leaves is never
     steered.
