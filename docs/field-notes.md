@@ -198,6 +198,14 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
     line of collider spheres: from the node, through the bound's centre, to its far side.
   - Offsets are written so that `UpdateColliderPositions` (node + skeletonRotᵀ × offset) reproduces
     the world points.
+- **Discovery log** (a33ef50): `Documents\My Games\Fallout4\F4SE\anatomy_ocbpc.log`. It notes,
+  once each:
+  - every prop that becomes a collider;
+  - every node on a nearby actor whose name looks genital or like a toy (penis, cock, dick, knot,
+    dildo, strap, toy, tentacle, baseball, vibr, genit, phallus), with its parent and world bound.
+
+  The scan runs every 2 s at most. This is how an unknown toy or creature part gets a name for the
+  config. OCBPC's own logging stays compiled out (`LOG_ON` undefined in log.cpp).
 - **Safe fallback:** OCBPC 0.3 ignores every new key, so a body weighted to `_Stretch` children
   behaves exactly as before under the old DLL.
 - **GPL-3.0:** distributing the DLL means offering this source.
@@ -353,8 +361,13 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
   - UAP's "Anus Spread" (103 entries) is a morph our body does not have.
 - **Equipment sets:** CockErect (879 uses: Atomic Muscle 0x803 / A-Body 0xF99), un/reEquip, ZaZ
   particles, Vioxsis strap-ons (0x173B).
-- **Props:** DR pack's `DR_sex_Dildo03/04_BaseballBatt` and others carry their toys as animation
-  objects on the hands' AnimObject nodes, which the fork's `[Props]` covers.
+- **Props:** DR pack's held toys ("DR Fist Dildo 01/02", "DR Fist BaseballBat (anal) 01") should
+  be animation objects on the hands' AnimObject nodes, which the fork's `[Props]` covers. Not yet
+  confirmed in game: the discovery log will say.
+- **DR pack's solo dildos are FURNITURE.** Positions like "DR Dildo vaginal01" carry
+  `location="Dildo07"` and the tags `Furn`/`Masturbation`. The toy is a world object she uses, not
+  something attached to an actor, so no per-actor collider scan can see it. Supporting them would
+  mean colliding with the furniture reference the actor uses.
 - **API:** `AAF:AAF_API api = Game.GetFormFromFile(0xF99, "AAF.esm") as AAF:AAF_API`.
   - `api.AAF_ActorBusy` is the keyword on actors in a scene (reading it is safe).
   - `AAF_BlockMFG_Mouth` and `AAF_BlockMFG_All` are keywords that stop AAF's face control per actor.
@@ -374,6 +387,10 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 - **The mouth opens through expression morphs.** FO4's facial morph table has 50 entries ("Jaw Open",
   "Lower Lip Down", "Pucker", "Lower Lip Funnel", …); `fo4-rapport/tools/make_mfg.py` lists them.
   AAF drives them from mfgSet XML; Rapport's `Expressions.cpp` applies AAF mfgSets with `lock="true"`.
+- **The owner's oral look (Photo149-154):**
+  - Mostly the animation's open mouth wraps the shaft fine (Photos 152, 153).
+  - In Photo150 the lips stay CLOSED while the penis head is at her mouth, so it clips through.
+    This is exactly what a contact-driven mouth fixes.
 - **The plan for a contact-driven mouth:**
   - An F4SE plugin measures the partner's penis, finger or toy against her mouth every frame, and
     sets Jaw Open and the lips to fit.
@@ -403,6 +420,16 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 - **Props:** see §5. The WEAPON nodes are left out, because a held rifle's capsule would squash her
   breasts.
 - **Open:** a fisting animation may pulse, because the knuckle ball and the wrist are 7 units apart.
+- **In the owner's look (Photo148):** a fisting scene works. The vulva opens around the forearm, the
+  lips part around the arm, and the nipples are erect.
+- **Creature skeletons deployed here:**
+  - Alien, Bloatfly, Molerat, RadRoach, Radscorpion, RadStag and YaoGuai (the DR creature pack)
+    have NO penis bones.
+  - UAP's Supermutant skeleton has `Penis1-4`, now colliders at 2.5.
+  - Dogs use the vanilla skeleton from the BA2. A creature penis is then an attached mesh with no
+    bone of its own to collide with. The discovery log finds such meshes.
+- **In the owner's look (Photo146-147):** a thick purple knotted object at her vulva did not open
+  it. The object is either a creature part or a furniture dildo; the discovery log decides which.
 
 ---
 
