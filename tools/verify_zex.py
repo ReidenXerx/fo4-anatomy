@@ -1,9 +1,10 @@
-"""Prove the stage-2 body (tools/zex_bones.py, decision A-6) is what it should be.
+"""Prove the stage-2 body (tools/zex_bones.py, decisions A-6, A-14) is what it should be.
 
   1. Same geometry: vertex count, positions and triangles equal the aligned body's.
   2. Same sliders: every slider diff in the saved .osd equals the aligned body's.
-  3. Bones: the 9 animated genital bones and the 5 _CBP_ twins are in the skin, bound where ZeX's
-     skeleton puts them (a twin at its animated bone's position); the 2017 cloth bones, weightless, are reported.
+  3. Bones: our genital bones (physics_design.REST, A-14) are in the skin, bound where the design
+     puts them; no ZeX genital bone is left; every bone that carries weight exists in the skeleton
+     women load (ours, tools/skeleton.py): a missing one leaves its vertices behind when she moves.
   4. The skin outside the mask is untouched: every protected vertex (mask value 1) carries exactly
      the weights it had before.
   5. The genital weights landed on the genitals: which vertices carry them, how strongly, and their
@@ -25,14 +26,12 @@ import lab
 import nif
 import osd
 
-ANIM = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02', 'Anus_01', 'Anus_02', 'Anus_03', 'Anus_04']
-TWIN = {'Vagina_00': 'Vagina_CBP_00', 'Vagina_L_01': 'Vagina_CBP_L_01', 'Vagina_L_02': 'Vagina_CBP_L_02',
-        'Vagina_R_01': 'Vagina_CBP_R_01', 'Vagina_R_02': 'Vagina_CBP_R_02'}
-ZEX_AT = {'Vagina_00': (0, 4.00, -55.50), 'Vagina_L_01': (0, 2.45, -55.71), 'Vagina_R_01': (0, 2.45, -55.71),
-          'Vagina_L_02': (-0.64, 1.09, -55.71), 'Vagina_R_02': (0.53, 1.07, -55.71),
-          'Anus_01': (0, -2.98, -54.26), 'Anus_02': (0, -2.53, -54.49), 'Anus_03': (0.10, -2.76, -54.44),
-          'Anus_04': (-0.10, -2.76, -54.44)}
-CLOTH = ['CLOTH_Bone_LefTtools', 'CLOTH_Bone_RightTools', 'CLOTH_Bone_Tape', 'CLOTH_Bone_Pouch', 'CLOTH_Bone_Googles_03']
+import physics_design as pd
+import skeleton
+
+ZEX_GENITAL = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02', 'Anus_01', 'Anus_02',
+               'Anus_03', 'Anus_04', 'Vagina_CBP_00', 'Vagina_CBP_L_01', 'Vagina_CBP_L_02', 'Vagina_CBP_R_01',
+               'Vagina_CBP_R_02']
 
 
 def mask_values(path):
@@ -77,22 +76,28 @@ def main():
     # 3. bones
     bones, xf = after_nif.skin(a)
     origin = {n: nif.bone_origin(xf[i]) for i, n in enumerate(bones)}
-    want = ANIM + list(TWIN.values()) + ['LBreast_skin', 'RBreast_skin']
+    want = list(pd.REST) + ['LBreast_skin', 'RBreast_skin']
     missing = [n for n in want if n not in bones]
-    leftover = [n for n in CLOTH if n in bones]
-    print(f'3. bones {len(bones)}; genital present {len(want) - len(missing)}/{len(want)}; missing {missing or "none"}; '
-          f'2017 cloth bones left {leftover or "none"}')
-    for n in ANIM:
+    zex_left = [n for n in ZEX_GENITAL if n in bones]
+    print(f'3. bones {len(bones)}; ours present {len(want) - len(missing)}/{len(want)}; missing {missing or "none"}; '
+          f'ZeX genital bones left {zex_left or "none"}')
+    for n in pd.REST:
         if n in origin:
-            d = math.dist(origin[n], ZEX_AT[n])
-            t = TWIN.get(n)
-            dt = math.dist(origin[t], origin[n]) if t in origin else None
-            print(f'   {n:12} bound at ({origin[n][0]:6.2f},{origin[n][1]:6.2f},{origin[n][2]:7.2f}), {d:.3f} from ZeX'
-                  + (f'; twin {t} {dt:.3f} away' if dt is not None else ''))
-            if d > 0.05 or (dt is not None and dt > 0.01):
-                problems.append(f'{n} (or its twin) is not bound where ZeX puts it')
+            d = math.dist(origin[n], pd.REST[n])
+            print(f'   {n:15} bound at ({origin[n][0]:6.2f},{origin[n][1]:6.2f},{origin[n][2]:7.2f}), {d:.4f} from the design')
+            if d > 0.01:
+                problems.append(f'{n} is not bound where the design puts it')
     if missing:
         problems.append(f'genital bones missing: {missing}')
+    if zex_left:
+        problems.append(f'ZeX genital bones in the skin (women\'s skeleton has none): {zex_left}')
+    weighted = sorted({bones[s] for i in range(a.count) for s, w in a.skin_weights(i) if w > 0})
+    women = {n['name'] for n in nif.Nif(skeleton.OUT).nodes.values()}
+    stranded = [n for n in weighted if n not in women]
+    print(f'   weighted bones {len(weighted)}; missing from the women\'s skeleton ({skeleton.OUT.name} built by '
+          f'tools/skeleton.py): {stranded or "none"}')
+    if stranded:
+        problems.append(f'weighted bones the women\'s skeleton lacks (their vertices would stay behind): {stranded}')
 
     # 4. untouched outside the mask -- apart from the breast move, which must be exact
     import zex_bones
@@ -131,12 +136,8 @@ def main():
     for n in want:
         ws = per.get(n, [])
         if not ws:
-            import zex_bones as zbw
-            if n in ANIM and not zbw.ANIM_WEIGHTS:
-                print(f'   {n:16} no vertex (by design: animated genital bones carry no weight, A-12)')
-            else:
-                print(f'   {n:16} NO vertex')
-                problems.append(f'{n} carries no weight')
+            print(f'   {n:16} NO vertex')
+            problems.append(f'{n} carries no weight')
             continue
         c = tuple(sum(pos[i][k] * w for w, i in ws) / sum(w for w, _ in ws) for k in range(3))
         far = math.dist(c, origin.get(n, c))
@@ -151,8 +152,8 @@ def main():
     if problems:
         print('\nFAIL - ' + '\n       '.join(problems))
         sys.exit(1)
-    print('\nPASS - geometry and sliders unchanged, 14 genital bones bound where ZeX puts them, '
-          'CBBE skin untouched outside the mask.')
+    print(f'\nPASS - geometry and sliders unchanged, {len(pd.REST)} genital bones of our own bound where the design '
+          f'puts them and present in the women\'s skeleton, CBBE skin untouched outside the mask.')
 
 
 if __name__ == '__main__':

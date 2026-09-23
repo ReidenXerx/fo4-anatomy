@@ -2,24 +2,24 @@
 
 Inputs (read only): the staging copies of ocbp.ini (MadKita's Actual Jiggle) and
 OCBPCollisionConfig.txt (from Jiggle Physics); the plugin is OCBPC 0.3. Nothing they tune is
-dropped; the output (build/config/, never committed: it carries their work, A-2) differs by:
+changed or dropped; the output (build/config/, never committed: it carries their work, A-2) only
+ADDS our bones:
 
   ocbp.ini
-    - [Attach]/[Attach.A] lines naming a bone the ZeX skeleton does not have are commented out,
-      with the reason. Measured: 12 of 17 (3BBB bone names); they could never move anything.
-    - Our bones: the vagina _CBP_ twins (A-6: animations keep the animated bones) and the anus
-      bones (ZeX has no anus twins; OCBPC SETS a simulated bone's transform, so animations no
-      longer move them), each with a spring section of its own (values and reasons at SPRING).
+    - [Attach]: our genital bones (physics_design.REST, A-14), each with a spring section of its own
+      (values and reasons at SPRING). Every line MadKita ships stays as it is. (Before A-14 this
+      commented out 18 lines whose 3BBB bones ZeX's skeleton lacks; but women load a 3BBB-style
+      skeleton that HAS them, so that took their breast, butt and thigh physics away.)
   OCBPCollisionConfig.txt
-    - Affected: the lower labia twins (Vagina_CBP_L_02 / _R_02) and the four anus bones.
-      Colliders: the penis bones from Penis_01 out, plus the hands and fingers already listed.
-      Every actor's colliders count, whatever femaleOnly says (scan.cpp:204-218: an actor that is
-      not tracked is still entered), and an actor's own colliders act on its own affected bones.
-    - Sphere offsets are in the actor's frame; ours are x-only (reasons at AFFECTED).
-    - Penis_00 is left out: every skeleton has the penis bones, and a female's own Penis_00
-      rests 2 units from her vulva, where it would hold her open. Her Penis_01-05 rest 7+ units
-      in front of her pubis (clear of her own spheres), but they are still colliders for OTHER
-      actors: in a female/female scene they can push the partner. No key filters colliders by sex.
+    - Affected: the inner and outer lips and the four anus bones. Colliders: the penis bones from
+      Penis_01 out, plus the hands, fingers and forearms already listed. Every actor's colliders
+      count, whatever femaleOnly says (scan.cpp:204-218: an actor that is not tracked is still
+      entered), and an actor's own colliders act on its own affected bones.
+    - Each of our bones is its sphere's centre (offsets 0; physics_design.py says why).
+    - Penis_00 is left out: a female's own Penis_00 would sit near her vulva if her skeleton had
+      one (the women's skeleton has none; ZeX's, which men load, does). Penis_01-05 are colliders
+      for OTHER actors too: in a female/female scene a partner's could push. No key filters
+      colliders by sex.
 
     python tools/physics_config.py
 """
@@ -32,11 +32,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 PLUGINS = zb.ab.DEFAULT_DATA / 'F4SE/Plugins'
 OUT = ROOT / 'build/config'
 
-ATTACH = [('Vagina_CBP_00', 'Clitoris'),
-          ('Vagina_CBP_L_01', 'LabiaOuter'), ('Vagina_CBP_R_01', 'LabiaOuter'),
-          ('Vagina_CBP_L_02', 'Labia'), ('Vagina_CBP_R_02', 'Labia')]
-# No anus bones (decision A-11): OCBPC would SET them and discard their animation, and collisions on
-# them, 1.0-1.4 units behind Nahka's ring, dragged the pocket into a spike in the owner's look.
+ATTACH = [('AnatVulva', 'Vulva'),
+          ('AnatLipOuter_L', 'LabiaOuter'), ('AnatLipOuter_R', 'LabiaOuter'),
+          ('AnatLip_L', 'Labia'), ('AnatLip_R', 'Labia'),
+          ('AnatAnus_F', 'Anus'), ('AnatAnus_B', 'Anus'), ('AnatAnus_L', 'Anus'), ('AnatAnus_R', 'Anus')]
 
 # Tuned with tools/ocbpc_sim.py, a port of OCBPC's own update (decision A-9). What the source says,
 # and what follows from it:
@@ -61,12 +60,11 @@ SOFT = dict(SPRING, stiffness=60.0, damping=3.0, linearX=0.5, linearY=0.5, linea
 SECTIONS = {
     'LabiaOuter': SOFT,
     'Labia': dict(SPRING, **QUIET),
-    'Clitoris': dict(SPRING, **QUIET),
+    'Vulva': dict(SPRING, **QUIET),
+    'Anus': dict(SPRING, **QUIET),
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
-# fitted to, so they live in ONE place, physics_design.py, with the reasons: x-only offsets in the
-# actor's frame, lip sphere + penis sphere = 3.2 to close the gaps between penis bones, and why the
-# anus's side spheres sit a unit outside the ring.
+# fitted to, so they live in ONE place, physics_design.py, with the reasons.
 from physics_design import AFFECTED, COLLIDERS  # noqa: E402
 
 
@@ -84,33 +82,29 @@ def sections(text):
     return out
 
 
-def ocbp(text, skeleton):
+def ocbp(text, skeletons):
+    """MadKita's ini with our bones attached. Nothing of theirs is changed; the lines naming a bone
+    that no skeleton in the game has are only counted (OCBPC skips a bone it cannot find)."""
     parts = sections(text)
     dead = []
     new = []
     for name, lines in parts:
         if name in ('Attach', 'Attach.A'):
-            kept = []
             for line in lines:
                 m = re.match(r'^\s*([A-Za-z0-9_]+)\s*=', line)
-                if m and not line.lstrip().startswith(';') and m.group(1) not in skeleton:
-                    kept.append(f'; not in the ZeX skeleton, so nothing to move: {line.strip()}')
+                if m and not line.lstrip().startswith(';') and not any(m.group(1) in sk for sk in skeletons):
                     dead.append(m.group(1))
-                else:
-                    kept.append(line)
             if name == 'Attach':
-                kept += ['; --- anatomy (fo4-anatomy A-7, A-11): vagina physics on the _CBP_ twins; the anus has none (A-11)'] + \
-                        [f'{b}={s}' for b, s in ATTACH]
-            new.append((name, kept))
-        else:
-            new.append((name, lines))
+                lines = lines + ["; --- anatomy (fo4-anatomy A-7, A-14): our own genital bones, in the women's skeleton"] + \
+                                [f'{b}={s}' for b, s in ATTACH]
+        new.append((name, lines))
     body = []
     for name, lines in new:
         body += lines
     for sec, vals in SECTIONS.items():
         body += ['', f'[{sec}]'] + [f'{k}={v}' for k, v in vals.items()]
-    header = ['; Generated by fo4-anatomy tools/physics_config.py from the deployed ocbp.ini.',
-              f'; {len(dead)} attach line(s) commented out (bones missing from ZeX); anatomy bones appended.']
+    header = ['; Generated by fo4-anatomy tools/physics_config.py from the deployed ocbp.ini: every line of it kept,',
+              f'; {len(ATTACH)} anatomy bones appended in {len(SECTIONS)} sections.']
     return '\n'.join(header + body) + '\n', dead
 
 
@@ -157,17 +151,21 @@ def source(name):
 
 
 def main():
-    skeleton = set(zb.skeleton_world(zb.SKELETON))
+    import skeleton
+    if not skeleton.OUT.exists():
+        raise SystemExit(f'{skeleton.OUT} is missing: run tools/skeleton.py first')
+    women = set(zb.skeleton_world(skeleton.OUT))            # ours: the women's, with our bones
+    men = set(zb.skeleton_world(zb.SKELETON))               # ZeX's: the partner's penis bones
     OUT.mkdir(parents=True, exist_ok=True)
-    ini, dead = ocbp(source('ocbp.ini'), skeleton)
+    ini, dead = ocbp(source('ocbp.ini'), (women, men))
     (OUT / 'ocbp.ini').write_text(ini, encoding='utf-8')
     (OUT / 'OCBPCollisionConfig.txt').write_text(collisions(source('OCBPCollisionConfig.txt')), encoding='utf-8')
-    missing = [b for b, _ in ATTACH if b not in skeleton] + [n for n in list(AFFECTED) + list(COLLIDERS) if n not in skeleton]
-    print(f'ocbp.ini: {len(dead)} dead attach lines commented out ({sorted(set(dead))}); '
+    missing = [b for b, _ in ATTACH if b not in women] + [n for n in AFFECTED if n not in women] +               [n for n in COLLIDERS if n not in men]
+    print(f'ocbp.ini: every source line kept ({len(dead)} name a bone no skeleton has: {sorted(set(dead)) or "none"}); '
           f'{len(ATTACH)} anatomy bones attached in {len(SECTIONS)} new sections')
     print(f'OCBPCollisionConfig.txt: +{len(AFFECTED)} affected, +{len(COLLIDERS)} colliders '
           f'({sum(len(s) for s in AFFECTED.values()) + sum(len(s) for s in COLLIDERS.values())} spheres)')
-    print(f'anatomy bones missing from the skeleton: {missing or "none"}')
+    print(f'anatomy bones missing from the skeleton that carries them: {missing or "none"}')
     if missing:
         raise SystemExit(1)
 

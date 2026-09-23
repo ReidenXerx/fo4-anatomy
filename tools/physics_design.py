@@ -1,55 +1,43 @@
-"""The physical design of the openings, shared by the config, the weights and the checks (A-9).
+"""The physical design of the genitals, shared by the skeleton, the config, the weights and the checks.
 
-One place for what a collision will do: the spheres on her bones and on the partner's penis bones
-(written into OCBPCollisionConfig.txt by physics_config.py), the shaft each opening expects, and so
-the push each bone will get (used by zex_bones.py to fit weights, and by fit_check.py to judge them).
+One place for our bones (where they sit, what they do), the collision spheres on them and on the
+partner's penis bones (written into OCBPCollisionConfig.txt by physics_config.py), the shaft each
+opening expects, and so the push each bone will get (used by zex_bones.py to fit weights, and by
+fit_check.py to judge them).
+
+OUR OWN BONES (decision A-14). Women in the owner's game load Discrete Female Skeleton's
+female/skeleton.nif (from Skeletal Adjustments for CBBE) and female/skeleton.hkx (from More Flexible
+Ragdoll), and NEITHER has a single genital bone: every ZeX bone the body was weighted to was missing,
+so those vertices hung at their standing-pose place while her pelvis moved (the fin, the rod and the
+anus spike, 2026-09-23), and OCBPC had nothing to simulate. So the body now uses bones of its own,
+added to a copy of that skeleton (tools/skeleton.py) under Pelvis_skin, a node no animation keys: the
+ragdoll .hkx does not contain it, and it cannot contain names it has never seen. They follow the
+pelvis rigidly; only OCBPC moves them.
 
 Where the numbers come from:
-  - Bone rest positions: the ZeX skeleton in skin space (zex_bones.py step 1 reproduces them; the
-    same values are pinned in verify_zex.py).
+  - Positions are skin space (the body's own coordinates); skeleton space = skin - SKIN_OFFSET
+    (zex_bones.py step 2 measures the offset from the body's bind data and must agree).
   - The openings: Nahka's own sliders. VaginaPenetrate spreads the vulva around (0, 1.55, -55.58)
     by up to 0.92 per side; AnusPenetrate spreads a 0.45-radius ring around (0, -1.58, -54.07) by up
-    to 1.04 (the >60% movers of each; tools/penetrate_morphs in the scratch notes). Nahka drew them
-    for a shaft of about 1.1 (vulva) and 1.35 (anus) radius: the inner lips end ~1.1 from the
-    midline, the ring ~1.35 from its centre.
+    to 1.04 (the >60% movers of each). Nahka drew them for a shaft of about 1.1 (vulva) and 1.35
+    (anus) radius: the inner lips end ~1.1 from the midline, the ring ~1.35 from its centre.
   - The partner: BodyTalk's male body (the owner's MaleBody.nif) is 1.5-1.66 units in radius over
-    Penis_01-05 (measured on the mesh), and its penis bones are 2.7-3.1 units apart.
+    Penis_01-05 (measured on the mesh), and its penis bones are 2.7-3.1 units apart. Men load ZeX's
+    skeleton, which has those bones.
   - The axes: both canals run up and forward, about (0, 0.48, 0.88) (slices of the new geometry).
 
-Tried and dropped: the upper-lip twins (CBP_L_01 / R_01) as collision bones too. The fit then
-reproduced 78% of the vulva's opening instead of 51% and cleared more of the entrance, but those
-bones sit 0.9 AHEAD of the shaft on the midline, so it drives them forward (2.1 units), and canal-mouth
-vertices fitted to them were pulled forward and out of the shaft while their neighbours were not:
-edges stretched 35x at the mouth (tools/fit_check.py). Two lateral bones stretch no more than
-Nahka's own slider does.
+Each bone sits AT its sphere's centre (offset 0). Sphere offsets are in the actor's heading frame
+(OCBPC CollisionHub.cpp:124, Thing.cpp:326), so any offset other than x drifts off the bone as the
+pelvis pitches; with our own bones there is no need for one.
 
-Measured, and it shapes the anus: ZeX puts the four anus bones 1.0-1.4 units BEHIND Nahka's ring.
-A shaft entering her ring pushes all four backwards, so the ring's back and sides can open and its
-front, 1.2 units from the vulva, has no bone behind it to open it. The weight fit states that
-residual rather than hiding it.
+Tried and dropped (with ZeX's bones, still true of the geometry): the upper-lip bones as collision
+bones for the opening. Those sat 0.9 AHEAD of the shaft on the midline, so the shaft drove them
+forward, and canal-mouth vertices fitted to them stretched 35x (tools/fit_check.py).
 """
 import math
 
-REST = {'Vagina_CBP_L_02': (-0.64, 1.09, -55.71), 'Vagina_CBP_R_02': (0.53, 1.07, -55.71),
-        'Vagina_CBP_L_01': (0.0, 2.45, -55.71), 'Vagina_CBP_R_01': (0.0, 2.45, -55.71),
-        'Anus_01': (0.0, -2.98, -54.26), 'Anus_02': (0.0, -2.53, -54.49),
-        'Anus_03': (0.10, -2.76, -54.44), 'Anus_04': (-0.10, -2.76, -54.44)}
-
-# "x,y,z,r" per sphere; offsets are in the ACTOR's frame (heading only; CollisionHub.cpp:124 and
-# Thing.cpp:326), so only x (left/right) offsets are used: they survive the pelvis pitching.
-AFFECTED = {'Vagina_CBP_L_02': [(-0.6, 0.0, 0.0, 1.2)], 'Vagina_CBP_R_02': [(0.6, 0.0, 0.0, 1.2)],
-            # the outer lips (A-13): a small sphere on each lip crest, so a hand or the shaft squishes
-            # them outward; their bones sit on the midline, so the x offset puts the sphere on the crest
-            'Vagina_CBP_L_01': [(-1.4, 0.0, 0.0, 0.8)], 'Vagina_CBP_R_01': [(1.4, 0.0, 0.0, 0.8)],
-            }
-# The anus carries NO physics (decision A-11): in the owner's own look (2026-09-23, Photo118-120) its
-# bones, pushed off to OCBPC's cap by a shaft passing beside them, dragged the anal pocket out into a
-# ~5-unit spike toward the partner. The simulator had predicted the pinning (hold 4.24 = the cap).
-COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.0)],
-             'Penis_03': [(0.0, 0.0, 0.0, 2.0)], 'Penis_04': [(0.0, 0.0, 0.0, 2.0)],
-             'Penis_05': [(0.0, 0.0, 0.0, 1.8)]}
-SHAFT_RADIUS = 1.55          # what the partner's visible shaft needs cleared
-PENIS_SPACING = 3.0
+SKIN_OFFSET = (0.0, 0.882, -120.844)    # skin = skeleton + this (zex_bones.py step 2 re-measures it)
+PARENT = 'Pelvis_skin'                  # in the women's skeleton; no .hkx keys it (tools/skeleton.py)
 
 
 def unit(v):
@@ -57,11 +45,43 @@ def unit(v):
     return tuple(c / n for c in v)
 
 
+def _along(p, d, s):
+    return tuple(p[i] + s * d[i] for i in range(3))
+
+
+VAGINA_CENTRE, VAGINA_AXIS = (0.0, 1.55, -55.58), unit((0.0, 0.48, 0.88))
+ANUS_CENTRE, ANUS_AXIS = (0.0, -1.58, -54.07), unit((0.0, 0.45, 0.89))
+ANUS_FRONT = (0.0, ANUS_AXIS[2], -ANUS_AXIS[1])    # in the ring's plane, toward the vulva (3.5 away)
+
+REST = {
+    # the whole vulva's small sway (JaneBod's Vagina_00 pattern, halved); where ZeX kept Vagina_CBP_00
+    'AnatVulva': (0.0, 4.0, -55.5),
+    # outer lips (labia majora, A-13): on each crest; they wobble and a hand or the shaft squishes them
+    'AnatLipOuter_L': (-1.4, 2.45, -55.71), 'AnatLipOuter_R': (1.4, 2.45, -55.71),
+    # inner lips (labia minora, A-9): beside the entrance; the shaft pushes them apart
+    'AnatLip_L': (-1.2, 1.08, -55.71), 'AnatLip_R': (1.2, 1.08, -55.71),
+    # the anus: four bones around Nahka's ring, in its plane. The front one is small and close so the
+    # vaginal shaft clears it (2.77 from that axis > 2.0 + 0.3); the others a unit out.
+    'AnatAnus_F': _along(ANUS_CENTRE, ANUS_FRONT, 0.7), 'AnatAnus_B': _along(ANUS_CENTRE, ANUS_FRONT, -1.0),
+    'AnatAnus_L': _along(ANUS_CENTRE, (1.0, 0.0, 0.0), -1.0), 'AnatAnus_R': _along(ANUS_CENTRE, (1.0, 0.0, 0.0), 1.0),
+}
+
+# "x,y,z,r" per sphere (offsets 0: each bone is its sphere's centre). AnatVulva has none: it only sways.
+AFFECTED = {'AnatLip_L': [(0.0, 0.0, 0.0, 1.2)], 'AnatLip_R': [(0.0, 0.0, 0.0, 1.2)],
+            'AnatLipOuter_L': [(0.0, 0.0, 0.0, 0.8)], 'AnatLipOuter_R': [(0.0, 0.0, 0.0, 0.8)],
+            'AnatAnus_F': [(0.0, 0.0, 0.0, 0.3)], 'AnatAnus_B': [(0.0, 0.0, 0.0, 0.6)],
+            'AnatAnus_L': [(0.0, 0.0, 0.0, 0.6)], 'AnatAnus_R': [(0.0, 0.0, 0.0, 0.6)]}
+COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.0)],
+             'Penis_03': [(0.0, 0.0, 0.0, 2.0)], 'Penis_04': [(0.0, 0.0, 0.0, 2.0)],
+             'Penis_05': [(0.0, 0.0, 0.0, 1.8)]}
+SHAFT_RADIUS = 1.55          # what the partner's visible shaft needs cleared
+PENIS_SPACING = 3.0
+
 OPENINGS = {
-    'vagina': dict(morph='VaginaPenetrate', centre=(0.0, 1.55, -55.58), axis=unit((0.0, 0.48, 0.88)),
-                   drawn_for=1.1, bones=('Vagina_CBP_L_02', 'Vagina_CBP_R_02'), physics=True),
-    'anus': dict(morph='AnusPenetrate', centre=(0.0, -1.58, -54.07), axis=unit((0.0, 0.45, 0.89)),
-                 drawn_for=1.35, bones=('Anus_01', 'Anus_02', 'Anus_03', 'Anus_04'), physics=False),
+    'vagina': dict(morph='VaginaPenetrate', centre=VAGINA_CENTRE, axis=VAGINA_AXIS, drawn_for=1.1,
+                   bones=('AnatLip_L', 'AnatLip_R'), physics=True),
+    'anus': dict(morph='AnusPenetrate', centre=ANUS_CENTRE, axis=ANUS_AXIS, drawn_for=1.35,
+                 bones=('AnatAnus_F', 'AnatAnus_B', 'AnatAnus_L', 'AnatAnus_R'), physics=True),
 }
 
 

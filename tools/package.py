@@ -1,6 +1,9 @@
 """A Vortex-installable test archive of the anatomy body (for the owner's own game; not a release, A-2).
 
     Meshes/Actors/Character/CharacterAssets/FemaleBody.nif, .tri   the zeroed build (Silhouette S-5)
+    Meshes/Actors/Character/CharacterAssets/female/skeleton.nif    the women's skeleton with our genital
+                                                                    bones (tools/skeleton.py, A-14); must
+                                                                    win over Skeletal Adjustments for CBBE
     F4SE/Plugins/ocbp.ini, OCBPCollisionConfig.txt                  tools/physics_config.py output
     Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp                   the project, to rebuild with any preset
     Tools/BodySlide/ShapeData/AnatomyBodyZeX/...
@@ -29,6 +32,7 @@ TEXTURE_FILES = ['FemaleBody_d.dds', 'FemaleBody_n.DDS', 'FemaleBody_s.DDS',
                  'femalebodydirty_d.dds', 'FemaleBodydirty_n.DDS', 'FemaleBodydirty_s.DDS']
 CONFIG = ROOT / 'build/config'
 PROJECT = ROOT / 'build/project'
+SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
 OUT = pathlib.Path(r'D:\F4Output\AnatomyLab\package')
 
 
@@ -40,6 +44,7 @@ def main():
     files = {
         'Meshes/Actors/Character/CharacterAssets/FemaleBody.nif': BUILT / 'FemaleBody.nif',
         'Meshes/Actors/Character/CharacterAssets/FemaleBody.tri': BUILT / 'FemaleBody.tri',
+        'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif': SKELETON,
         'F4SE/Plugins/ocbp.ini': CONFIG / 'ocbp.ini',
         'F4SE/Plugins/OCBPCollisionConfig.txt': CONFIG / 'OCBPCollisionConfig.txt',
         'Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp': PROJECT / 'SliderSets/AnatomyBodyZeX.osp',
@@ -50,7 +55,7 @@ def main():
     }
     for rel, src in files.items():
         if not src.exists():
-            raise SystemExit(f'missing {src}: run align_body, zex_bones, physics_config and the zero build first')
+            raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config and the zero build first')
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)

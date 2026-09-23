@@ -352,6 +352,60 @@ class Nif:
                   + bytes(self.b[self.strings_end:self.data_at]))
         return header + b''.join(blocks) + footer
 
+    def with_nodes(self, parent, nodes):
+        """New file bytes with NiNodes added as children of node block `parent` (a skeleton edit).
+
+        nodes: [dict(name, t, r)], the LOCAL transform relative to the parent (translation 3,
+        rotation 9 row-major); scale 1. Each node is a NiNode APPENDED after the last block, so no
+        existing reference moves; it has no extra data, no controller, no collision object and no
+        children. The parent's child list grows, the header gains the block count, type indices,
+        sizes and names, and the footer (root list) stays last. Every other byte is copied."""
+        nb = len(self.offsets)
+        if parent not in self.nodes:
+            raise ValueError(f'block {parent} is not a node')
+        tmpl = next(i for i in self.nodes if self.types[i] == 'NiNode' and not self.nodes[i]['kids']
+                    and self.offsets[i][1] == 76)
+        node_type = self.type_index[tmpl]
+        new_strings = list(self.strings)
+        new_blocks = []
+        for d in nodes:
+            if d['name'] in new_strings:
+                raise ValueError(f'{d["name"]} is already a string in the file')
+            new_strings.append(d['name'])
+            to, _ = self.offsets[tmpl]
+            blk = bytearray(self.b[to:to + 76])
+            struct.pack_into('<i', blk, 0, len(new_strings) - 1)              # name
+            struct.pack_into('<I', blk, 4, 0)                                 # no extra data
+            struct.pack_into('<i', blk, 8, -1)                                # no controller
+            struct.pack_into('<3f', blk, 16, *d['t'])                         # flags (12) from the template
+            struct.pack_into('<9f', blk, 28, *d['r'])
+            struct.pack_into('<f', blk, 64, 1.0)
+            struct.pack_into('<i', blk, 68, -1)                               # no collision object
+            struct.pack_into('<I', blk, 72, 0)                                # no children
+            new_blocks.append(bytes(blk))
+        new_refs = list(range(nb, nb + len(nodes)))
+        po, ps = self.offsets[parent]
+        pc = Cursor(self.b, po)
+        self._av(pc)
+        kids_at = pc.o
+        kids = pc.take('I')
+        parent_blk = (bytes(self.b[po:kids_at]) + struct.pack('<I', kids + len(nodes))
+                      + bytes(self.b[kids_at + 4:kids_at + 4 + 4 * kids])
+                      + b''.join(struct.pack('<i', r) for r in new_refs)
+                      + bytes(self.b[kids_at + 4 + 4 * kids:po + ps]))
+        blocks = [parent_blk if i == parent else bytes(self.b[o:o + s]) for i, (o, s) in enumerate(self.offsets)]
+        blocks += new_blocks
+        last_end = self.offsets[-1][0] + self.offsets[-1][1]
+        raw = [s.encode('latin1') for s in new_strings]
+        header = (bytes(self.b[:self.nblocks_at]) + struct.pack('<I', nb + len(nodes))
+                  + bytes(self.b[self.nblocks_at + 4:self.type_index_at])
+                  + b''.join(struct.pack('<H', t) for t in self.type_index + [node_type] * len(nodes))
+                  + b''.join(struct.pack('<I', len(b)) for b in blocks)
+                  + struct.pack('<II', len(raw), max(len(r) for r in raw))
+                  + b''.join(struct.pack('<I', len(r)) + r for r in raw)
+                  + bytes(self.b[self.strings_end:self.data_at]))
+        return header + b''.join(blocks) + bytes(self.b[last_end:])
+
     def with_blocks(self, replace, add_strings=()):
         """New file bytes with whole blocks replaced ({index: bytes}) and strings appended.
 

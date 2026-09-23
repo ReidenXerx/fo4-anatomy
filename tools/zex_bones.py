@@ -1,28 +1,29 @@
-"""Stage 2 (decision A-6): ZeX's genital bones and JaneBod Extended's weight pattern, written by us.
+"""Stage 2: the body's genital bones and weights, written by us (decisions A-6, A-9, A-13, A-14).
 
 Outfit Studio 5.8.2's headless automation computes a weight copy and then silently drops it:
 CopyBoneWeights leaves its result in an undo state that only a GUI mesh applies, and SaveProject
 then deletes every bone that has no weight (0 of 14 bones arrived, measured twice). So the bones and
 weights are written here, and every step is proven against something already in the file.
 
-  bones    Nine animated ZeX genital bones (Vagina_00, Vagina_L/R_01-02, Anus_01-04) plus the five
-           vagina _CBP_ twins OCBP physics moves. Node transforms come from the installed ZeX
-           skeleton, composed root to bone. The convention is proven by recomputing the 63 bones
-           already in the file. Skin-to-bone transforms use the file's own skin offset, proven by
-           reproducing the file's stored BoneData.
+  bones    Our own genital bones (physics_design.REST), which live in the copy of the women's
+           skeleton tools/skeleton.py builds (A-14: the skeleton women load has no genital bone
+           at all, so ZeX's names left weighted vertices behind whenever the pelvis moved). Node
+           transforms come from that skeleton, composed root to bone; the convention is proven by
+           recomputing the bones already in the file from ZeX's skeleton (the body is bound to
+           it), and the pelvis the new bones hang from must be the same in both. Skin-to-bone
+           transforms use the file's own skin offset, proven by reproducing its stored BoneData.
   weights  JaneBod's genital weights, copied by proximity (inverse distance, the K nearest within
-           R units) from the reference moved into our frame (tools/references.py). They are
-           confined by the mask (tools/mask.py): free vertices take the full pattern, the blend
-           band a fraction, protected vertices nothing. A vagina weight is split between the
-           animated bone and its twin (TWIN_SHARE); the rest of the vertex's weights make room
-           proportionally; at most 4 influences, as the vertex format allows.
-           The bones collisions push (the lower-lip twins, the anus) also carry a layer fitted to
-           Nahka's own openings (decision A-9, below at "Collision-grade weights"); the animated
-           lower lips then keep JaneBod's weight whole instead of sharing it with their twins.
+           R units) from the reference moved into our frame (tools/references.py), half of each
+           onto the bone that plays that part here (ROLE); confined by the mask (tools/mask.py):
+           free vertices take the full pattern, the blend band a fraction, protected vertices
+           nothing. The bones collisions push (the inner lips, the anus) carry a layer fitted to
+           Nahka's own openings instead (A-9, below at "Collision-grade weights"), the outer lips a
+           soft layer (A-13). The rest of the vertex's weights make room proportionally; at most 4
+           influences, as the vertex format allows.
 
 Output: build/project/ShapeData/AnatomyBodyZeX (+ .osd) and SliderSets/AnatomyBodyZeX.osp.
 
-    python tools/zex_bones.py
+    python tools/skeleton.py && python tools/zex_bones.py
 """
 import collections
 import json
@@ -43,18 +44,21 @@ STAGE1 = ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.nif'
 OUT_FOLDER = 'AnatomyBodyZeX'
 SET_NAME = 'Anatomy Body ZeX'
 
-ANIM = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02',
-        'Anus_01', 'Anus_02', 'Anus_03', 'Anus_04']
-TWIN = {'Vagina_00': 'Vagina_CBP_00', 'Vagina_L_01': 'Vagina_CBP_L_01', 'Vagina_L_02': 'Vagina_CBP_L_02',
-        'Vagina_R_01': 'Vagina_CBP_R_01', 'Vagina_R_02': 'Vagina_CBP_R_02'}
-TWIN_SHARE = 0.5            # of each vagina weight, to the physics twin (tuned in game)
-# The ANIMATED genital bones carry NO weight (decision A-12). In the owner's own look (2026-09-23,
-# Photo118-130) a thin rod of the genital mesh reached 10-20 units out in doggy and standing poses:
-# longer than any physics bone can move (OCBPC's cap) and than any limb drags the crotch (pose_check.py:
-# a 90-degree thigh tears ours and plain CBBE alike by ~3 units). Only an animation keying the animated
-# genital bones far from where this skeleton rests them moves vertices without a bound. With no weight
-# there, animations cannot move the genitals at all; physics (the _CBP_ twins) is the mechanism (A-1).
-ANIM_WEIGHTS = False
+import physics_design as pd  # noqa: E402  (our bones and the openings)
+
+# JaneBod's genital bones (in the reference) and the part each plays here. JaneBod's pattern is for
+# ANIMATIONS, which swing a bone several units; physics sways ours a fraction of that, so half of it
+# (ROLE_SHARE, as the _CBP_ twins had) is enough for the vulva and the outer lips to move as one piece.
+# JaneBod's inner lips and anus are not carried over: the fitted layers below replace them.
+JBE_GENITAL = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02',
+               'Anus_01', 'Anus_02', 'Anus_03', 'Anus_04']
+ROLE = {'Vagina_00': 'AnatVulva', 'Vagina_L_01': 'AnatLipOuter_L', 'Vagina_R_01': 'AnatLipOuter_R'}
+ROLE_SHARE = 0.5
+# JaneBod's painting is lopsided (measured on ours: 1,501 vertices on the left outer lip, 1,020 on the
+# right, the difference all in the light tail), so each vertex takes the mean of the pattern at its
+# own place and, on the other side's bone, at its mirror image: both lips sway alike.
+MIRROR = {'Vagina_00': 'Vagina_00', 'Vagina_L_01': 'Vagina_R_01', 'Vagina_R_01': 'Vagina_L_01'}
+OUR_SKELETON = pathlib.Path(__file__).resolve().parent.parent / 'build/skeleton/female/skeleton.nif'
 
 # Breast physics (owner, 2026-09-23: "something wrong with physics config and breasts ... fix").
 # CBBE Body Physics hangs the breasts on CLOTH_Bone_Googles_00/01, Havok-cloth nodes that are in no
@@ -65,29 +69,24 @@ ANIM_WEIGHTS = False
 BREAST_MOVE = {'CLOTH_Bone_Googles_00': 'LBreast_skin', 'CLOTH_Bone_Googles_01': 'RBreast_skin'}
 K, RADIUS = 4, 1.0          # the two genital meshes coincide within 0.77 units (research.md)
 
-# Collision-grade weights (decision A-9, superseding A-6 for the lower-lip twins and the anus).
-# JaneBod's pattern is for ANIMATIONS, which swing a bone several units: at most 0.17 on a lip twin
-# after the split, 0.07 on the anus (measured). A collision moves a bone only as far as it takes to
-# clear the shaft (1.4-2.2 units, tools/ocbpc_sim.py), so those weights opened the lips ~0.2 units:
-# nothing to see. So these bones carry a layer FITTED to the openings Nahka drew:
+# Collision-grade weights (decision A-9). JaneBod's pattern swings with animations: at most 0.17 on a
+# lip after the split, 0.07 on the anus (measured). A collision moves a bone only as far as it takes
+# to clear the shaft (1.4-2.2 units, tools/ocbpc_sim.py), so weights like those would open the lips
+# ~0.2 units: nothing to see. So the bones collisions push carry a layer FITTED to the openings Nahka
+# drew:
 #   for every vertex her VaginaPenetrate / AnusPenetrate moves, scaled from the shaft she drew for
 #   to the partner's (physics_design.OPENINGS), find the non-negative weights whose bone pushes
 #   (physics_design.expected_push: where each sphere is driven by a shaft in that opening) best
 #   reproduce her displacement. Exact least squares over every subset of the opening's bones
 #   (at most 4, so 15 subsets), the best non-negative one kept.
-# What the bones cannot reproduce is reported as the fit residual, not hidden: ZeX's anus bones sit
-# behind Nahka's ring, so a shaft pushes all four backwards and her ring's front has no bone to
-# open it (physics_design.py). Scaled by (1 - mask) like everything here: protected skin never moves.
-# JaneBod's light anus pattern stays underneath: Anus_01 and Anus_02 are pushed almost the same way,
-# so the fit only ever picks one of them, and a bone left weightless is dropped by the tools.
-LIP_TWINS = ('Vagina_CBP_L_02', 'Vagina_CBP_R_02')
-ANUS = ('Anus_01', 'Anus_02', 'Anus_03', 'Anus_04')
+# What the bones cannot reproduce is reported as the fit residual, not hidden. Scaled by (1 - mask)
+# like everything here: protected skin never moves.
 LAYER_CAP = 0.9                             # the layer never takes more than this of a vertex
 # The outer lips (labia majora) jiggle and react (A-13, owner poll 2026-09-23): a soft layer on the
-# upper-lip twins, left of the midline to L, right to R, from the inner lips' edge out to the groin
+# outer-lip bones, left of the midline to L, right to R, from the inner lips' edge out to the groin
 # crease and from the perineum to the mons, full on the crests, fading to nothing at each border.
-# The inner zone (|x| < 0.4) stays the lower-lip twins' alone: the fitted layer opens it.
-OUTER_TWINS = ('Vagina_CBP_L_01', 'Vagina_CBP_R_01')
+# The inner zone (|x| < 0.4) stays the inner-lip bones' alone: the fitted layer opens it.
+OUTER_TWINS = ('AnatLipOuter_L', 'AnatLipOuter_R')
 OUTER_W = 0.45
 
 
@@ -133,7 +132,6 @@ def solve(cols, target):
 
 def side(bone):
     """-1 for a bone on her left, +1 on her right, 0 on the midline (from its sphere's x)."""
-    import physics_design as pd
     x = pd.sphere_centre(bone)[0]
     return 0 if abs(x) < 0.05 else (1 if x > 0 else -1)
 
@@ -209,11 +207,10 @@ def smooth(layers, positions, triangles, rounds=SMOOTH_ROUNDS):
 
 def opening_layers(osd_data, positions):
     """{vertex: ({bone: weight}, residual, wanted, opening)} for both openings, from Nahka's sliders."""
-    import physics_design as pd
     out = {}
     for name, o in pd.OPENINGS.items():
         if not o.get('physics'):
-            continue                                      # the anus: JaneBod's weights only (A-11)
+            continue
         morph = osd_data.get(ab.TARGET + o['morph'], {})
         scale = pd.SHAFT_RADIUS / o['drawn_for']
         pushes = {}
@@ -264,39 +261,21 @@ def compose(parent, child):
 
 
 def pick_four(mine, genital):
-    """At most 4 influences, the vertex format's limit. A plain top-4 cut starved the physics twins
-    (ties went to the animated bone: Vagina_CBP_L_01 kept 190 vertices against Vagina_L_01's 908),
-    and cutting a vertex's own influences blows the genital share up on renormalising. So:
+    """At most 4 influences, the vertex format's limit. Cutting a vertex's own influences blows the
+    genital share up on renormalising, so:
       1. the vertex's own largest influence (its anchor, usually Pelvis_skin) always stays;
-      2. the remaining slots go by weight, and an animated bone brings its twin along whenever a
-         slot is free, so a genital pair is split only when a single slot is left;
+      2. the remaining slots go by weight;
       3. what was dropped is spread back by renormalising."""
     chosen = []
     if mine:
-        anchor = max(mine.items(), key=lambda bw: bw[1])
-        chosen.append(anchor)
-    partner = {**TWIN, **{v: k for k, v in TWIN.items()}}
+        chosen.append(max(mine.items(), key=lambda bw: bw[1]))
     rest = sorted([bw for bw in mine.items() if not chosen or bw[0] != chosen[0][0]] + list(genital.items()),
                   key=lambda bw: -bw[1])
-    taken = {b for b, _ in chosen}
     for b, w in rest:
         if len(chosen) >= 4:
             break
-        if b in taken:
-            continue
-        p = partner.get(b)
-        if p and p in genital and p not in taken and len(chosen) == 3:
-            # one slot for a pair: the owner asked for physics first (A-1), so the twin gets it
-            # (measured before this rule: 718 of 908 L_01 vertices kept the animated half alone)
-            twin = b if b in TWIN.values() else p
-            chosen.append((twin, genital[twin]))
-            taken.update((b, p))
-            continue
-        chosen.append((b, w))
-        taken.add(b)
-        if p and p in genital and p not in taken and len(chosen) < 4:
-            chosen.append((p, genital[p]))
-            taken.add(p)
+        if b not in {c for c, _ in chosen}:
+            chosen.append((b, w))
     norm = sum(w for _, w in chosen)
     return [(b, w / norm) for b, w in chosen]
 
@@ -343,6 +322,20 @@ def main():
           f'rotation {worst_r:.5f}')
     if worst_t > 0.01 or worst_r > 1e-3:
         raise SystemExit('the skeleton does not reproduce the file\'s bone nodes: convention wrong')
+    # our bones live in the women's skeleton (tools/skeleton.py); they hang from its pelvis, which must
+    # be the pelvis this body is bound to
+    if not OUR_SKELETON.exists():
+        raise SystemExit(f'{OUR_SKELETON} is missing: run tools/skeleton.py first')
+    ours = skeleton_world(OUR_SKELETON)
+    pr_ours, pt_ours, _ = ours[pd.PARENT]
+    pr_zex, pt_zex, _ = world[pd.PARENT]
+    parent_gap = max(max(abs(a - b) for a, b in zip(pt_ours, pt_zex)),
+                     max(abs(a - b) for a, b in zip(flat(pr_ours), flat(pr_zex))))
+    absent = [b for b in pd.REST if b not in ours]
+    print(f'   women\'s skeleton (ours): {pd.PARENT} differs from the bound one by {parent_gap:.2e}; '
+          f'our bones present {len(pd.REST) - len(absent)}/{len(pd.REST)}')
+    if parent_gap > 1e-4 or absent:
+        raise SystemExit(f'our skeleton cannot carry this body: {pd.PARENT} moved {parent_gap}, bones absent {absent}')
 
     # ---- 2. the skin offset: skin-to-bone = inverse(node) after moving skin space by -offset
     # Only bones the skeleton knows: the cloth bones (CLOTH_Bone_*) are not in ZeX, and their nodes
@@ -379,6 +372,9 @@ def main():
           f'bones bound to a different pose: {[(b, round(e, 2)) for e, b in off_bones]}')
     if spread > 0.01 or max(errors[b] for b in core) > 0.01:
         raise SystemExit('cannot reproduce the pelvis-area skin transforms: offset or convention wrong')
+    if max(abs(off[i] - pd.SKIN_OFFSET[i]) for i in range(3)) > 0.005:
+        raise SystemExit(f'the skin offset {off} is not physics_design.SKIN_OFFSET {pd.SKIN_OFFSET}: '
+                         f'our bones would sit elsewhere than designed')
 
     # ---- 3. weights: JaneBod's pattern, by proximity, inside the mask
     ref = nif.Nif(REFERENCE)
@@ -387,16 +383,24 @@ def main():
     rpos = rs.positions()
     rgen = {}
     for v in range(rs.count):
-        g = {rbones[s]: w for s, w in rs.skin_weights(v) if rbones[s] in ANIM}
+        g = {rbones[s]: w for s, w in rs.skin_weights(v) if rbones[s] in JBE_GENITAL}
         if g:
             rgen[v] = g
     grid = ab.Grid(rpos, list(range(rs.count)))
+
+    def jbe_at(p):
+        """JaneBod's genital weights at a point: inverse distance over the K nearest within RADIUS."""
+        g = collections.defaultdict(float)
+        near = grid.nearest(p, K, limit=RADIUS)
+        for v, w in (ab.idw(p, rpos, near) if near else []):
+            for b, x in rgen.get(v, {}).items():
+                g[b] += w * x
+        return g
     mask = {int(v.get('i')): float(v.get('m')) for v in ET.parse(MASK).getroot().iter('V')}
     import osd as osd_mod
     pos_all = shape.positions()
     layers = opening_layers(osd_mod.read(ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.osd'), pos_all)
     smoothed = smooth(layers, pos_all, shape.triangles())
-    import physics_design as pd
     for name in [n for n, o in pd.OPENINGS.items() if o.get('physics')]:
         mine = {j: v for j, v in layers.items() if v[3] == name and mask.get(j, 0.0) < 1.0}
         wanted = sum(math.sqrt(sum(c * c for c in v[2])) for v in mine.values())
@@ -410,23 +414,13 @@ def main():
         m = mask.get(j, 0.0)
         if m >= 1.0:
             continue
-        near = grid.nearest(pos[j], K, limit=RADIUS)
-        g = collections.defaultdict(float)
-        for v, w in (ab.idw(pos[j], rpos, near) if near else []):
-            for b, x in rgen.get(v, {}).items():
-                g[b] += w * x
+        here, there = jbe_at(pos[j]), jbe_at((-pos[j][0], pos[j][1], pos[j][2]))
         s = 1.0 - m
         genital = {}
-        for b, x in g.items():
-            if TWIN.get(b) in LIP_TWINS:
-                if ANIM_WEIGHTS:
-                    genital[b] = s * x                    # the animated lip keeps JaneBod's weight whole
-            elif b in TWIN:
-                if ANIM_WEIGHTS:
-                    genital[b] = s * x * (1 - TWIN_SHARE)
-                genital[TWIN[b]] = s * x * TWIN_SHARE
-            elif ANIM_WEIGHTS:
-                genital[b] = s * x                        # the anus's animated bones (A-11: JaneBod's light pattern)
+        for b in ROLE:
+            x = 0.5 * (here.get(b, 0.0) + there.get(MIRROR[b], 0.0))
+            if x > 0.0:
+                genital[ROLE[b]] = s * x * ROLE_SHARE
         layer = dict(smoothed.get(j, {}))
         for b, x in outer_lip_weights(pos[j]).items():
             layer[b] = layer.get(b, 0.0) + x
@@ -458,10 +452,10 @@ def main():
     print(f'   breast weights moved off the Havok cloth bones: {dict(moved)}')
 
     # ---- 4. the bones, with bone-space bounding spheres of what they now carry
-    new_names = ANIM + [TWIN[b] for b in ANIM if b in TWIN] + list(BREAST_MOVE.values())
+    new_names = list(pd.REST) + list(BREAST_MOVE.values())
     defs = []
     for name in new_names:
-        wr, wt, ws = world[name]
+        wr, wt, ws = ours[name] if name in pd.REST else world[name]
         sr, st = skin_to_bone(wr, wt)
         carried = [apply(sr, pos[j]) for j, ws_ in list(new_weights.items()) + list(breast.items())
                    for b, w in ws_ if b == name and w > 0]

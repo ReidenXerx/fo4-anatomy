@@ -185,6 +185,8 @@ about six times wider, that inside shows more.
 
 ## A-11 — No physics on the anus; lips capped at 2.5 (the owner's own look, 2026-09-23)
 
+(Superseded by A-14: the spike was a missing bone, not physics. Kept as the record of the reasoning.)
+
 Supersedes A-9 for the anus. The owner looked in game and took screenshots (Photo116-124).
 - **What they showed:** in "[UAP] BP70" doggy, a thin dark spike of the anal pocket, about 5
   units long, reached from the buttock cleft toward the partner's torso ("stretched and stuck in
@@ -205,6 +207,9 @@ Supersedes A-9 for the anus. The owner looked in game and took screenshots (Phot
   or a morph-driven opening (A-1 allows morphs as a layer). Decide from the owner's anal look.
 
 ## A-12 — The animated genital bones carry no weight (the owner's own look, 2026-09-23)
+
+(Superseded by A-14: no animation could key those bones on a woman; they were missing from her
+skeleton. Kept as the record of the reasoning.)
 
 Supersedes A-6 and A-9 for the animated bones (Vagina_00, Vagina_L/R_01-02, Anus_01-04). The
 _CBP_ twins keep their weights.
@@ -248,3 +253,83 @@ look, vary per woman. This entry is the first; the look and the variety come thr
   slider; steeper 55% → 46%). Contact stretch is unchanged, and there are no seam cracks. With both
   bones pinned at the cap in any direction, the 99th percentile of edge growth is 1.3-2.0 and the
   worst edge is 4.7 (apart), below Nahka's slider (13). Only an unlikely diagonal extreme reaches 7.
+
+## A-14 — Our own genital bones, in the skeleton women actually load (2026-09-23)
+
+Supersedes the causes given in A-11 and A-12, and the bones of A-6, A-9 and A-13 (their designs
+carry over to the new bones). The owner approved the direction: "disallow any animation touch
+vagina and anus and manage it by ourself with physics only".
+- **The cause of the fin, the rod and the anus spike (measured):** DiscreteFemaleSkeleton.esp is
+  active, so women load `CharacterAssets/female/skeleton.nif` and `female/skeleton.hkx`, not ZeX's
+  shared pair. The .nif is deployed from Skeletal Adjustments for CBBE: 3BBB-style, 208 nodes, and
+  not one genital bone. The .hkx comes from More Flexible Ragdoll and has none either. Every one of
+  the 14 ZeX genital bones the body was weighted to was missing on a woman. Such vertices stay where
+  the body file binds them, relative to her root, while her pelvis moves. That is the classic
+  missing-bone stretch: invisible standing, a fin or rod in any pose that moves the pelvis, reaching
+  toward where the crotch would be standing. The diagnostic body with no genital weight (build
+  0f68d592, Photo141-144) had none of it.
+- **Reproduced offline, then gone:** `tools/pose_check.py` now poses the women's skeleton, and
+  gives a missing bone's share of a vertex its bind place, as the game does. It also moves the
+  whole body against the root, as every scene does. Crotch edges stretched more than 3×:
+
+  | Pose                     | old fin build 118d00cb | this build |
+  | ------------------------ | ---------------------- | ---------- |
+  | kneeling (COM down 15)   | 2,613 (worst ×38.8)    | 0 (×1.5)   |
+  | lying back (COM 90°, 30) | 3,824 (worst ×77.4)    | 0 (×1.6)   |
+
+  Limb bends are unchanged, and the same as plain CBBE's (a 90° thigh: ×9.8).
+- **What else follows:**
+  - OCBPC never had a genital bone to move on a woman. Every in-game "physics" observation before
+    this build was of no physics at all.
+  - A-11 blamed OCBPC's cap; A-12 blamed animations keying the animated bones. Neither could
+    happen: ZeX's .hkx never had the _CBP_ twins, and hers has no genital bone at all.
+  - `pose_check` passed because it posed ZeX's skeleton, which has the bones.
+  - `physics_config` had commented out 18 of MadKita's attach lines (LBreast_01-03_skin,
+    LButt_01_skin, LLeg_Thigh_01_F/R_skin) as "not in the ZeX skeleton". The women's skeleton has
+    all of them, so that took their 3BBB physics away. Every source line is kept now.
+- **The lesson:** any claim made "against the skeleton" must use the skeleton that ACTOR loads.
+  Read plugins.txt for DiscreteFemaleSkeleton.esp before trusting a path.
+- **The bones (`physics_design.REST`, skin space):**
+  - AnatVulva (0, 4.0, -55.5): the vulva's small sway (JaneBod's Vagina_00 pattern × 0.5).
+  - AnatLipOuter_L/R (∓1.4, 2.45, -55.71): the outer lips. They carry JaneBod's L/R_01 × 0.5 plus
+    A-13's soft layer. Springs are A-13's, with a 0.8 sphere.
+  - AnatLip_L/R (∓1.2, 1.08, -55.71): the inner lips. Their A-9 layer is fitted to VaginaPenetrate,
+    with a 1.2 sphere.
+  - AnatAnus_F/B/L/R: around Nahka's ring, in its plane. F is 0.7 toward the vulva with a 0.3
+    sphere, so the vaginal shaft clears it by 0.47. B, L and R sit 1.0 out with 0.6 spheres. They
+    carry a layer fitted to AnusPenetrate, on a new `Anus` spring section like `Labia`.
+  - Each bone is its sphere's centre, so no offset can drift as the pelvis pitches.
+  - JaneBod's pattern is averaged with its mirror image, because her painting is lopsided: 1,501
+    against 1,020 vertices on the outer lips before, 1,540 against 1,501 after.
+- **Where they live:** `tools/skeleton.py` copies the women's .nif from its owning mod's staging
+  folder and appends the 9 NiNodes as children of Pelvis_skin, with identity rotation. Pelvis_skin
+  sits exactly on the pelvis and no .hkx names it, so the bones follow the pelvis rigidly and only
+  OCBPC moves them. Proven:
+  - only Pelvis_skin's block changed, and no original node moved;
+  - the bones are within 1.5e-6 of the design;
+  - no .hkx in the game names them (the ragdoll pair and ZeX's).
+  - `zex_bones` refuses a skeleton whose Pelvis_skin differs from the one the body is bound to
+    (0.0).
+  - `verify_zex` refuses a weighted bone the women's skeleton lacks.
+  - `restage` step 7 says NOT READY until Data's women's skeleton carries every weighted bone.
+- **Measured (`fit_check`, `ocbpc_sim`), against Nahka's own sliders scaled to the partner:**
+  - vagina, as drawn: 56% of the entrance still inside the shaft, the same as her slider × 1.41.
+    Edge stretch p99 3.9 / max 7.1, against her slider's 5.2 / 13.0.
+  - anus, as drawn: 71% against her slider's 68% × 1.15. Stretch 5.2 / 7.9, against 7.7 / 14.8.
+    The fit reproduces 94% of AnusPenetrate; ZeX's bones behind the ring reproduced almost none.
+  - Cross-contact: a vaginal shaft never reaches the anus bones (0.08 when 1.2 off). An anal shaft
+    reaches the inner lips only when 0.6 ahead (0.32). If anal animations aim 1.2 behind her ring
+    (ZeX's anus), the ring's back is driven toward the shaft (3.1).
+  - Walking: 0.30 / running 0.63 at the outer lips. No seam cracks.
+- **Deployment:** the skeleton is a NEW file in Anatomy-dev, so it needs the owner's Deploy and a
+  conflict rule: Anatomy-dev wins `female/skeleton.nif` over Skeletal Adjustments for CBBE. Build
+  e157909873fb.
+- **Dependencies this creates:**
+  - The body now needs our skeleton. If DFS is ever switched off, women fall back to ZeX's shared
+    .nif, which lacks our bones: `tools/skeleton.py --deployed` reads plugins.txt and says so.
+  - A release needs either permission to ship a derivative of Skeletal Adjustments' skeleton, or a
+    small F4SE plugin that adds the 9 nodes at load (A-2).
+- **Open, for the owner's look:**
+  - BP70's AAF morph sets also apply VaginaPenetrate 1.0 during penetration, on top of physics
+    fitted to that same morph. The opening may come out doubled.
+  - The anal aim: does the shaft enter Nahka's ring?

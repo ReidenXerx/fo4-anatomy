@@ -104,3 +104,24 @@ crotch skin; no change anywhere else on the body.
 - Cowgirl (121, 123): the shaft enters the vulva with no spike.
 - Build 59748b34 (A-11) is packaged and waits for the game to close (`tools/restage.py`, in place,
   no Deploy needed).
+
+### Later looks (2026-09-23 17:00-18:15), and what they turned out to mean
+- Builds df85d105 / 118d00cb (A-12, A-13) still showed the rod (Photo125-137). The diagnostic body
+  0f68d592, with no genital weight at all and no twin physics, showed none (Photo141-144). The
+  owner's words: "vagina itself and lips looks gorgeous".
+- The cause was found offline at 18:30 (A-14): the women's skeleton has no genital bones, so
+  every look before this had no genital physics at all.
+
+### Build e157909873fb (A-14), staged 18:45: needs the owner's Deploy BEFORE the game starts
+- New file in Anatomy-dev: `Meshes/Actors/Character/CharacterAssets/female/skeleton.nif`. The
+  conflict rule: Anatomy-dev wins over Skeletal Adjustments for CBBE. Then confirm with
+  `python tools/skeleton.py --deployed`, which must print 0 missing.
+- Rewritten in place: FemaleBody.nif/.tri (our 9 bones), ocbp.ini (MadKita's 18 lines back, plus
+  Vulva/LabiaOuter/Labia/Anus), OCBPCollisionConfig.txt (8 affected spheres).
+- What to look at:
+  - Vaginal (missionary, doggy, cowgirl): no fin or rod anywhere. The inner lips part around the
+    shaft; the outer lips squish a little.
+  - Whether the opening is doubled (BP70's VaginaPenetrate morph plus physics).
+  - One anal position: the ring opens around the shaft, and the shaft enters the ring rather
+    than behind it.
+  - Walking or running nude: a small lip wobble (0.3 / 0.6 units).

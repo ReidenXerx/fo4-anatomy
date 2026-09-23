@@ -32,19 +32,24 @@ def rot(axis, deg):
 
 
 def posed_world(pose):
-    """Skeleton world transforms with extra local rotations {bone: (axis, degrees)} applied."""
-    sk = nif.Nif(zb.SKELETON)
+    """Skeleton world transforms with extra local rotations {bone: (axis, degrees[, move])} applied
+    (move: added to the local translation), on the skeleton WOMEN load (ours, tools/skeleton.py;
+    A-14). Posing ZeX's instead hid the missing-bone stretch: ZeX has the bones hers lacked."""
+    import skeleton
+    sk = nif.Nif(skeleton.OUT)
     parent = {}
     for i, n in sk.nodes.items():
         for kid in n['kids']:
             parent[kid] = i
     local = {}
     for i, n in sk.nodes.items():
-        r = zb.rows(n['r'])
+        r, t = zb.rows(n['r']), list(n['t'])
         if n['name'] in pose:
-            axis, deg = pose[n['name']]
+            axis, deg, *move = pose[n['name']]
             r = zb.mul(r, rot(axis, deg))
-        local[i] = (r, list(n['t']), n['s'])
+            if move:
+                t = [t[k] + move[0][k] for k in range(3)]
+        local[i] = (r, t, n['s'])
     world = {}
 
     def w(i):
@@ -54,8 +59,13 @@ def posed_world(pose):
     return {sk.nodes[i]['name']: w(i) for i in sk.nodes if sk.nodes[i]['name']}
 
 
+MISSING = set()
+
+
 def skin_all(shape, bones, skin_xf, world):
-    """Linear blend skinning: v' = sum w * World_b * (skin-to-bone_b * v)."""
+    """Linear blend skinning: v' = sum w * World_b * (skin-to-bone_b * v). A bone the skeleton lacks
+    keeps the body file's own node, at its bind place under the actor's root: its share of the
+    vertex stays where the vertex rests, whatever the pelvis does (the A-14 stretch). Named in MISSING."""
     pos = shape.positions()
     out = []
     for j in range(shape.count):
@@ -63,7 +73,11 @@ def skin_all(shape, bones, skin_xf, world):
         for sl, w in shape.skin_weights(j):
             name = bones[sl]
             if name not in world:
-                continue                                  # cloth bones: not in the skeleton
+                if w > 0 and not name.startswith('CLOTH_'):   # Havok cloth makes its own bones
+                    MISSING.add(name)
+                    for i in range(3):
+                        acc[i] += w * pos[j][i]
+                continue
             r, t, s = skin_xf[sl]
             rr = zb.rows(r)
             vb = [sum(rr[i][k] * pos[j][k] for k in range(3)) * s + t[i] for i in range(3)]
@@ -84,6 +98,10 @@ POSES = {
     'thighs twist 45': {'LLeg_Thigh': ((0, 0, 1), 45), 'RLeg_Thigh': ((0, 0, 1), -45)},
     'spine bent 60': {'SPINE1': ((1, 0, 0), 60)},
     'spine bent -60': {'SPINE1': ((1, 0, 0), -60)},
+    # the body moving against the actor's root, as every sex scene does: this is what strands a
+    # share weighted to a bone the skeleton lacks (the fin, A-14)
+    'kneeling (COM down 15)': {'COM': ((1, 0, 0), 0, (0, 0, -15))},
+    'lying back (COM pitched 90, down 30)': {'COM': ((1, 0, 0), 90, (0, 0, -30))},
 }
 
 
@@ -107,6 +125,8 @@ def main():
     drift = max(math.dist(base[j], rest[j]) for j in region)
     print(f'{args.body.name}: {len(region)} crotch vertices, {len(edges)} edges; rest-pose skinning drift {drift:.4f} '
           f'(must be ~0: the bind data and skeleton agree)')
+    print(f'weighted bones the women\'s skeleton lacks (their share stays behind when she moves): '
+          f'{sorted(MISSING) or "none"}')
     for name, pose in POSES.items():
         if not pose:
             continue

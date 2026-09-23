@@ -8,6 +8,8 @@
        rewritten through its hardlink, so the deployed copy in Data changes with it; a file new
        to the mod is copied and reported (it needs the owner's Deploy)
     6. prove Data holds the new bytes; print the build id (FemaleBody.nif sha1, 12 chars)
+    7. check the skeleton women load in Data carries every bone the body is weighted to (A-14): a new
+       skeleton needs the owner's Deploy first, and the game must not start before it
 
 Anatomy-dev is OUR mod, created at the owner's request and deployed by them (A-8); no other mod's
 file is touched.
@@ -80,6 +82,13 @@ def main():
         raise SystemExit(f'Data does not see the new bytes for {stale}: a hardlink is broken')
     body = 'Meshes/Actors/Character/CharacterAssets/FemaleBody.nif'
     print(f'build id {sha(DATA / body)} (Data {body}) = staged {sha(MOD / body)}')
+    # 7. the body must not reach the game ahead of its bones: a weighted bone the women's skeleton
+    #    lacks leaves its vertices at their standing-pose place whenever she moves (A-14)
+    import skeleton
+    if skeleton.deployed():
+        print('!! NOT READY TO PLAY: the skeleton women load lacks bones the body is weighted to. '
+              'Deploy Anatomy-dev in Vortex first (it must win female/skeleton.nif over Skeletal Adjustments '
+              'for CBBE), then run: python tools/skeleton.py --deployed')
 
 
 if __name__ == '__main__':
