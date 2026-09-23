@@ -273,6 +273,13 @@ simulator `tools/ocbpc_sim.py` ports `Thing::Update` and `Collision::IsItCollidi
 - **The vagina opening:** gain 1.35 on the fit (A-15). A penis opens the entrance to a median
   radius of 1.55 (the shaft), with 30% of the entrance still inside it. Stretch is p99 5.0 / max 9.3,
   below Nahka's own slider (5.2 / 13.0). At gain 1.5 the p99 passes hers.
+- **The owner's look from INSIDE the shaft (Photo155-156, the camera placed in the penis on
+  purpose):**
+  - The vulva is fully open: the outer lips in a smooth diamond, the inner lips parted, a rounded
+    entrance, and smooth canal walls.
+  - The shaft's own wall, cut by the camera's near plane, runs right along the entrance edge. So
+    the entrance hugs the shaft: no clipping, no gap. That confirms the gain-1.35 target in game.
+  - This is a useful camera trick for judging an opening.
 - **The anus opening:** 71% inside (her slider: 68%), stretch 5.2 / 7.9.
 - **Cross-contact:**
   - A vaginal shaft reaches the anus bones only 1.2 off-centre, and then by 0.08.
