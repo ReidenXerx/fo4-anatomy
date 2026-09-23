@@ -267,6 +267,11 @@ Function Show(Int k)
 	If stepped == _shown[k]
 		Return
 	EndIf
+	; LooksMenu runs BodyGen only for an actor with NO stored morphs, so a layer of ours on a woman
+	; whose body is not generated yet would keep her bodiless (the Silhouette session, 2026-09-23)
+	If _shown[k] <= 0.0 && stepped > 0.0 && !HasBody(a)
+		Return                                   ; not yet: retried next tick, still unshown
+	EndIf
 	_shown[k] = stepped
 	If stepped <= 0.0
 		BodyGen.RemoveMorphsByKeyword(a, True, _layer)
@@ -278,6 +283,19 @@ Function Show(Int k)
 		EndWhile
 	EndIf
 	BodyGen.UpdateMorphs(a)
+EndFunction
+
+; She has a body: some morph of hers holds an UNKEYED value, the layer BodyGen and Silhouette write.
+Bool Function HasBody(Actor a)
+	String[] names = BodyGen.GetMorphs(a, True)
+	Int j = 0
+	While names != None && j < names.Length
+		If BodyGen.GetMorph(a, True, names[j], None) != 0.0
+			Return True
+		EndIf
+		j += 1
+	EndWhile
+	Return False
 EndFunction
 
 ; Her value of a morph from every layer but ours: what LooksMenu would show without us.
