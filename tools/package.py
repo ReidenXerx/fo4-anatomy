@@ -80,6 +80,7 @@ def main():
         'Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif': PROJECT / 'ShapeData/Anatomy/Anatomy.nif',
         'Tools/BodySlide/ShapeData/Anatomy/Anatomy.osd': PROJECT / 'ShapeData/Anatomy/Anatomy.osd',
         'Tools/BodySlide/SliderPresets/AnatomyZero.xml': PROJECT / 'SliderPresets/AnatomyZero.xml',
+        'Tools/BodySlide/SliderCategories/Anatomy.xml': PROJECT / 'SliderCategories/Anatomy.xml',
         **{f'Textures/Anatomy/{t}': TEXTURES / t for t in TEXTURE_FILES},
         'Materials/Anatomy/AnatomyGenitals.bgsm': TEXTURES / 'AnatomyGenitals.bgsm',
     }

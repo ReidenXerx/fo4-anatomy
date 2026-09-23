@@ -14,7 +14,7 @@ and Nahka's genitals as shipped with us (data/: her patch against CBBE, and her 
 Every stage proves itself or stops (align, weights, verification, the split, the textures). What it
 writes are paths no other mod ships, so nothing needs resolving in a mod manager:
     Tools/BodySlide/SliderSets/Anatomy.osp, Tools/BodySlide/ShapeData/Anatomy/*,
-    Tools/BodySlide/SliderGroups/Anatomy.xml,
+    Tools/BodySlide/SliderGroups/Anatomy.xml, Tools/BodySlide/SliderCategories/Anatomy.xml,
     Textures/Anatomy/FemaleBody_d/n/s.dds, Materials/Anatomy/AnatomyGenitals.bgsm
 Then: open BodySlide, choose "Anatomy Body" and your preset, and Build.
 """
@@ -42,6 +42,7 @@ OUTPUTS = {                                         # published path -> produced
     'Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif': None,
     'Tools/BodySlide/ShapeData/Anatomy/Anatomy.osd': None,
     'Tools/BodySlide/SliderGroups/Anatomy.xml': None,
+    'Tools/BodySlide/SliderCategories/Anatomy.xml': None,
     'Textures/Anatomy/FemaleBody_d.dds': None,
     'Textures/Anatomy/FemaleBody_n.dds': None,
     'Textures/Anatomy/FemaleBody_s.dds': None,
@@ -188,6 +189,7 @@ def main():
             'Textures/Anatomy/FemaleBody_n.dds': gt.ANATOMY_OUT / 'FemaleBody_n.dds',
             'Textures/Anatomy/FemaleBody_s.dds': gt.ANATOMY_OUT / 'FemaleBody_s.dds',
             'Materials/Anatomy/AnatomyGenitals.bgsm': gt.ANATOMY_OUT / 'AnatomyGenitals.bgsm',
+            'Tools/BodySlide/SliderCategories/Anatomy.xml': ab.OUT / 'SliderCategories/Anatomy.xml',
         }
         groups = work / 'Anatomy.xml'
         groups.write_text(GROUPS, encoding='utf-8')

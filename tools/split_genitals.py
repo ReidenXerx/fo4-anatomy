@@ -281,6 +281,8 @@ def main():
         problems.append(f'{len(lines)} Data lines for {len(sliders)} sliders')
     if problems:
         raise SystemExit('FAIL - ' + '; '.join(problems))
+    import opening                                   # the opening a little longer toward the mons
+    opening.add(PROJECT)
     print('PASS - the same triangles in two shapes, every moved record and slider diff intact')
 
 

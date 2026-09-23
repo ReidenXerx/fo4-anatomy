@@ -103,7 +103,7 @@ def build_dll():
 
 
 BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', 'mask', 'split_genitals',
-                   'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm')
+                   'opening', 'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm')
 
 
 def build_exe():
