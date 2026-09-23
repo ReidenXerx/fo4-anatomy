@@ -126,3 +126,13 @@ crotch skin; no change anywhere else on the body.
   - One anal position: the ring opens around the shaft, and the shaft enters the ring rather
     than behind it.
   - Walking or running nude: a small lip wobble (0.3 / 0.6 units).
+- The deploy (19:00-19:04): the first Deploy gave `female\skeleton.nif` to Skeletal Adjustments
+  (vortex.deployment.json said so), and the game was started by mistake and closed at once. The
+  second, after the conflict rule, put ours in Data; `skeleton.py --deployed` reported 0 missing.
+
+### The owner's look at A-14 (19:05-19:12): it works
+- "man it works! ... only 1 thing we need to widen vagina slightly more". Photo145 (standing,
+  bent over, from below): intact, with no fin or rod. The pale straight slivers are the near plane
+  cutting the partner.
+- A-15: build bbbc36acde38 opens the entrance to the shaft (gain 1.35), restaged in place.
+- Still to look at: the wider entrance in a vaginal scene, one anal scene, and walking nude.

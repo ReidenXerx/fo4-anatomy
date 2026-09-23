@@ -212,7 +212,7 @@ def opening_layers(osd_data, positions):
         if not o.get('physics'):
             continue
         morph = osd_data.get(ab.TARGET + o['morph'], {})
-        scale = pd.SHAFT_RADIUS / o['drawn_for']
+        scale = pd.SHAFT_RADIUS / o['drawn_for'] * o.get('gain', 1.0)
         pushes = {}
         for b in o['bones']:
             u, dist = pd.expected_push(b, name)

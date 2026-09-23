@@ -77,9 +77,14 @@ COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.
 SHAFT_RADIUS = 1.55          # what the partner's visible shaft needs cleared
 PENIS_SPACING = 3.0
 
+# gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
+# A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
+# (tools/fit_check.py's judge, entrance ring): x1.35 puts the entrance's median radius at the shaft's
+# 1.55 (from 1.33) with 30% of the entrance still inside it (from 56%), and stretches less than Nahka's
+# own slider (p99 5.0 / max 9.3 against 5.2 / 13.0); x1.5 would pass her p99.
 OPENINGS = {
     'vagina': dict(morph='VaginaPenetrate', centre=VAGINA_CENTRE, axis=VAGINA_AXIS, drawn_for=1.1,
-                   bones=('AnatLip_L', 'AnatLip_R'), physics=True),
+                   bones=('AnatLip_L', 'AnatLip_R'), physics=True, gain=1.35),
     'anus': dict(morph='AnusPenetrate', centre=ANUS_CENTRE, axis=ANUS_AXIS, drawn_for=1.35,
                  bones=('AnatAnus_F', 'AnatAnus_B', 'AnatAnus_L', 'AnatAnus_R'), physics=True),
 }

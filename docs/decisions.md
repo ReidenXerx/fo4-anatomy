@@ -342,3 +342,25 @@ vagina and anus and manage it by ourself with physics only".
   as runtime states (`silhouette_gen.py` STATE_MORPHS, `Player.psc`), and renaming it would
   reach into the fork's code.
 - **Open, for the owner's look:** the anal aim. Does the shaft enter Nahka's ring?
+
+## A-15 — It works; the entrance opens to the shaft (the owner's first look at A-14, 2026-09-23)
+
+- **The owner:** "man it works! ... its hard to see on screenshot but it works! only 1 thing we need
+  to widen vagina slightly more". Photo145 (standing bent over, the pose that used to show the
+  longest rod) is intact from below.
+- **Change:** the vagina's fitted layer aims at Nahka's drawing × 1.41 × gain 1.35
+  (`physics_design.OPENINGS['vagina']['gain']`). The push is unchanged (2.21); the inner-lip weights
+  rise from 0.55 to at most 0.74.
+- **Simulated (the entrance ring, 738 vertices):**
+
+  | gain  | median radius | inside the shaft | stretch p99 / max |
+  | ----- | ------------- | ---------------- | ----------------- |
+  | 1.00  | 1.33          | 56%              | 3.9 / 7.1         |
+  | 1.25  | 1.49          | 35%              | 4.7 / 8.7         |
+  | 1.35  | 1.55          | 30%              | 5.0 / 9.3         |
+  | 1.50  | 1.65          | 25%              | 5.5 / 10.2        |
+
+  At 1.35 the entrance matches the partner's shaft (1.55) and stretches less than Nahka's own
+  slider (5.2 / 13.0). At 1.5 the p99 passes hers.
+- **Build:** bbbc36acde38, restaged in place (no Deploy). The rebuilt body measures 1.55 / 30% /
+  5.0 / 9.3, as predicted. verify_zex PASS.
