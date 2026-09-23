@@ -136,7 +136,14 @@ animated transform. A bone that both an animation and the physics move therefore
 the physics says. ZeX's answer is twin bones: animations move `Vagina_L_01`, physics moves
 `Vagina_CBP_L_01`. A vertex weighted to BOTH gets both motions.
 
-OCBP (the Fallout 4 port) must at least keep a bone's rest offset: `Penis_Balls_CBP_01` sits
-7.6 units from its parent, and popular configs jiggle it without it snapping. Whether OCBP also
-discards the animated transform is unmeasured; the in-game test decides it. The anus has no twins,
-so its physics would sit on the animated bones directly.
+OCBPC, the Fallout 4 port with collisions, is open source (github.com/ericncream/OpenCBP_FO4,
+branch `cbpc`, GPL-3.0), and its source settles what the in-game test was going to decide
+(decision A-9 lists the file and line of each point):
+- It SETS a simulated bone's local transform to the value it first saw plus the physics offset.
+  A bone under physics ignores animations, so the anus bones (no twins) move by physics alone.
+- `femaleOnly` limits whose bones are SIMULATED, not whose colliders count. Every actor near the
+  player contributes its collider spheres, and an actor's own colliders act on its own affected
+  bones.
+- Sphere offsets are in the actor's frame (the skeleton root: heading only), not the bone's.
+- The collision push ignores `linear`; `maxoffset × linear` caps it.
+- `tools/ocbpc_sim.py` is a faithful Python port, used to tune the values offline.

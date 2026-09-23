@@ -16,6 +16,9 @@ weights are written here, and every step is proven against something already in 
            band a fraction, protected vertices nothing. A vagina weight is split between the
            animated bone and its twin (TWIN_SHARE); the rest of the vertex's weights make room
            proportionally; at most 4 influences, as the vertex format allows.
+           The bones collisions push (the lower-lip twins, the anus) also carry a layer fitted to
+           Nahka's own openings (decision A-9, below at "Collision-grade weights"); the animated
+           lower lips then keep JaneBod's weight whole instead of sharing it with their twins.
 
 Output: build/project/ShapeData/AnatomyBodyZeX (+ .osd) and SliderSets/AnatomyBodyZeX.osp.
 
@@ -54,6 +57,146 @@ TWIN_SHARE = 0.5            # of each vagina weight, to the physics twin (tuned 
 # rest the mesh is identical and OCBP (and the hand collisions already configured) now reach it.
 BREAST_MOVE = {'CLOTH_Bone_Googles_00': 'LBreast_skin', 'CLOTH_Bone_Googles_01': 'RBreast_skin'}
 K, RADIUS = 4, 1.0          # the two genital meshes coincide within 0.77 units (research.md)
+
+# Collision-grade weights (decision A-9, superseding A-6 for the lower-lip twins and the anus).
+# JaneBod's pattern is for ANIMATIONS, which swing a bone several units: at most 0.17 on a lip twin
+# after the split, 0.07 on the anus (measured). A collision moves a bone only as far as it takes to
+# clear the shaft (1.4-2.2 units, tools/ocbpc_sim.py), so those weights opened the lips ~0.2 units:
+# nothing to see. So these bones carry a layer FITTED to the openings Nahka drew:
+#   for every vertex her VaginaPenetrate / AnusPenetrate moves, scaled from the shaft she drew for
+#   to the partner's (physics_design.OPENINGS), find the non-negative weights whose bone pushes
+#   (physics_design.expected_push: where each sphere is driven by a shaft in that opening) best
+#   reproduce her displacement. Exact least squares over every subset of the opening's bones
+#   (at most 4, so 15 subsets), the best non-negative one kept.
+# What the bones cannot reproduce is reported as the fit residual, not hidden: ZeX's anus bones sit
+# behind Nahka's ring, so a shaft pushes all four backwards and her ring's front has no bone to
+# open it (physics_design.py). Scaled by (1 - mask) like everything here: protected skin never moves.
+# JaneBod's light anus pattern stays underneath: Anus_01 and Anus_02 are pushed almost the same way,
+# so the fit only ever picks one of them, and a bone left weightless is dropped by the tools.
+LIP_TWINS = ('Vagina_CBP_L_02', 'Vagina_CBP_R_02')
+ANUS = ('Anus_01', 'Anus_02', 'Anus_03', 'Anus_04')
+LAYER_CAP = 0.9                             # the layer never takes more than this of a vertex
+MAX_GENITAL = 0.95                          # the vertex keeps at least this much of its own
+MOVE_MIN = 0.02                             # morph moves below this carry no layer
+SMOOTH_ROUNDS = 3
+
+
+def solve(cols, target):
+    """Least squares over the columns (3-vectors), ridge 1e-9: weights, residual vector."""
+    n = len(cols)
+    a = [[sum(cols[i][k] * cols[j][k] for k in range(3)) + (1e-9 if i == j else 0.0) for j in range(n)]
+         for i in range(n)]
+    b = [sum(cols[i][k] * target[k] for k in range(3)) for i in range(n)]
+    for i in range(n):                                  # Gauss-Jordan, n <= 4
+        piv = max(range(i, n), key=lambda r: abs(a[r][i]))
+        a[i], a[piv], b[i], b[piv] = a[piv], a[i], b[piv], b[i]
+        for r in range(n):
+            if r != i and a[i][i]:
+                f = a[r][i] / a[i][i]
+                a[r] = [a[r][c] - f * a[i][c] for c in range(n)]
+                b[r] -= f * b[i]
+    w = [b[i] / a[i][i] if a[i][i] else 0.0 for i in range(n)]
+    fit = [sum(w[i] * cols[i][k] for i in range(n)) for k in range(3)]
+    return w, [target[k] - fit[k] for k in range(3)]
+
+
+def side(bone):
+    """-1 for a bone on her left, +1 on her right, 0 on the midline (from its sphere's x)."""
+    import physics_design as pd
+    x = pd.sphere_centre(bone)[0]
+    return 0 if abs(x) < 0.05 else (1 if x > 0 else -1)
+
+
+def fit_layer(move, pushes, x=0.0):
+    """move: the displacement wanted; pushes: {bone: push vector}. Best non-negative weights, using
+    only bones on the vertex's own side (a lip must follow its own bones: fitting the right lip to a
+    left bone reproduces the drawing for a centred shaft and nothing else), both near the midline."""
+    here = 0 if abs(x) < 0.05 else (1 if x > 0 else -1)
+    bones = [b for b in pushes if here == 0 or side(b) in (0, here)]
+    best = ({}, math.sqrt(sum(c * c for c in move)))
+    for mask_bits in range(1, 1 << len(bones)):
+        chosen = [bones[i] for i in range(len(bones)) if mask_bits >> i & 1]
+        w, res = solve([pushes[b] for b in chosen], move)
+        if min(w) <= 0.0:
+            continue
+        err = math.sqrt(sum(c * c for c in res))
+        if err < best[1] - 1e-9:
+            best = (dict(zip(chosen, w)), err)
+    weights, err = best
+    total = sum(weights.values())
+    if total > LAYER_CAP:                              # capped: measure what is actually delivered
+        weights = {b: w * LAYER_CAP / total for b, w in weights.items()}
+        got = [sum(w * pushes[b][k] for b, w in weights.items()) for k in range(3)]
+        err = math.sqrt(sum((move[k] - got[k]) ** 2 for k in range(3)))
+    return weights, err
+
+
+def smooth(layers, positions, triangles, rounds=SMOOTH_ROUNDS):
+    """Neighbouring vertices fitted independently can land on different bone subsets, and the jump
+    shows as a stretched triangle when the bones move. A few rounds of averaging with the
+    neighbours even it out. On WELDED vertices: the copies a UV seam splits share one position,
+    must keep identical weights or the seam cracks open under a push, and have different
+    neighbours on each side, so they are smoothed as one."""
+    wid = nif.weld(positions)
+    groups = collections.defaultdict(list)
+    for j, g in enumerate(wid):
+        groups[g].append(j)
+    nbr = collections.defaultdict(set)
+    for t in triangles:
+        for a in t:
+            for b in t:
+                if wid[a] != wid[b]:
+                    nbr[wid[a]].add(wid[b])
+    cur = {}
+    for j, v in layers.items():
+        cur.setdefault(wid[j], v[0])
+    for _ in range(rounds):
+        nxt = {}
+        for g in set(cur) | {n for g in cur for n in nbr[g]}:
+            ns = nbr[g]
+            if not ns:
+                continue
+            acc = collections.defaultdict(float)
+            for n in ns:
+                for b, w in cur.get(n, {}).items():
+                    acc[b] += w / len(ns)
+            mine = cur.get(g, {})
+            mixed = {b: 0.5 * mine.get(b, 0.0) + 0.5 * acc.get(b, 0.0) for b in set(mine) | set(acc)}
+            mixed = {b: w for b, w in mixed.items() if w > 1e-4}
+            if mixed:
+                nxt[g] = mixed
+        cur = nxt
+    out = {}
+    for g, w in cur.items():
+        total = sum(w.values())
+        if total > LAYER_CAP:
+            w = {b: x * LAYER_CAP / total for b, x in w.items()}
+        for j in groups[g]:
+            out[j] = w
+    return out
+
+
+def opening_layers(osd_data, positions):
+    """{vertex: ({bone: weight}, residual, wanted, opening)} for both openings, from Nahka's sliders."""
+    import physics_design as pd
+    out = {}
+    for name, o in pd.OPENINGS.items():
+        morph = osd_data.get(ab.TARGET + o['morph'], {})
+        scale = pd.SHAFT_RADIUS / o['drawn_for']
+        pushes = {}
+        for b in o['bones']:
+            u, dist = pd.expected_push(b, name)
+            pushes[b] = tuple(c * dist for c in u)
+        for j, v in morph.items():
+            want = tuple(c * scale for c in v)
+            if math.sqrt(sum(c * c for c in want)) < MOVE_MIN:
+                continue
+            w, err = fit_layer(want, pushes, x=positions[j][0])
+            if j in out:                                  # both sliders move it: keep the bigger move
+                if sum(c * c for c in want) <= sum(c * c for c in out[j][2]):
+                    continue
+            out[j] = (w, err, want, name)
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -216,6 +359,18 @@ def main():
             rgen[v] = g
     grid = ab.Grid(rpos, list(range(rs.count)))
     mask = {int(v.get('i')): float(v.get('m')) for v in ET.parse(MASK).getroot().iter('V')}
+    import osd as osd_mod
+    pos_all = shape.positions()
+    layers = opening_layers(osd_mod.read(ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.osd'), pos_all)
+    smoothed = smooth(layers, pos_all, shape.triangles())
+    for name in ('vagina', 'anus'):
+        import physics_design as pd
+        mine = {j: v for j, v in layers.items() if v[3] == name and mask.get(j, 0.0) < 1.0}
+        wanted = sum(math.sqrt(sum(c * c for c in v[2])) for v in mine.values())
+        missed = sum(v[1] for v in mine.values())
+        print(f'   {name}: {len(mine)} vertices fitted to {pd.OPENINGS[name]["morph"]}; '
+              f'displacement reproduced {100 * (1 - missed / wanted) if wanted else 0:.0f}% '
+              f'(sum of residuals / sum of wanted moves)')
     pos = shape.positions()
     new_weights = {}
     for j in range(shape.count):
@@ -223,23 +378,26 @@ def main():
         if m >= 1.0:
             continue
         near = grid.nearest(pos[j], K, limit=RADIUS)
-        if not near:
-            continue
-        idw = ab.idw(pos[j], rpos, near)
         g = collections.defaultdict(float)
-        for v, w in idw:
+        for v, w in (ab.idw(pos[j], rpos, near) if near else []):
             for b, x in rgen.get(v, {}).items():
                 g[b] += w * x
-        if not g:
-            continue
         s = 1.0 - m
         genital = {}
         for b, x in g.items():
-            if b in TWIN:
+            if TWIN.get(b) in LIP_TWINS:
+                genital[b] = s * x                        # the animated lip keeps JaneBod's weight whole
+            elif b in TWIN:
                 genital[b] = s * x * (1 - TWIN_SHARE)
                 genital[TWIN[b]] = s * x * TWIN_SHARE
             else:
                 genital[b] = s * x
+        layer = smoothed.get(j, {})
+        room = MAX_GENITAL - sum(genital.values())
+        want = s * sum(layer.values())
+        scale = s * (min(1.0, room / want) if want > room else 1.0) if want > 0 else 0.0
+        for b, x in layer.items():
+            genital[b] = genital.get(b, 0.0) + x * scale
         total = sum(genital.values())
         if total < 1e-4:
             continue

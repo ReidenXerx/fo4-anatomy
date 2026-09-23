@@ -8,19 +8,18 @@ dropped; the output (build/config/, never committed: it carries their work, A-2)
     - [Attach]/[Attach.A] lines naming a bone the ZeX skeleton does not have are commented out,
       with the reason. Measured: 12 of 17 (3BBB bone names); they could never move anything.
     - Our bones: the vagina _CBP_ twins (A-6: animations keep the animated bones) and the anus
-      bones (ZeX has no anus twins), each with a spring section of its own: stiff and damped,
-      so walking does not wobble them, but linear near 1 so a collision's push is not scaled away.
+      bones (ZeX has no anus twins; OCBPC SETS a simulated bone's transform, so animations no
+      longer move them), each with a spring section of its own (values and reasons at SPRING).
   OCBPCollisionConfig.txt
     - Affected: the lower labia twins (Vagina_CBP_L_02 / _R_02) and the four anus bones.
       Colliders: the penis bones from Penis_01 out, plus the hands and fingers already listed.
-    - Every sphere of ours sits ON its bone (offset 0,0,0). Whether this OCBPC build rotates an
-      offset by the bone is unproven (the deployed breast spheres read correctly only as WORLD
-      offsets, but no body ever carried breast weights to test them), and a zero offset means
-      the same thing either way. The opening then comes from where the bones are: L_02 sits
-      0.64 left of the midline and R_02 0.53 right, so a penis on the midline pushes them apart;
-      the anus bones ring the opening (back, front, left, right).
+      Every actor's colliders count, whatever femaleOnly says (scan.cpp:204-218: an actor that is
+      not tracked is still entered), and an actor's own colliders act on its own affected bones.
+    - Sphere offsets are in the actor's frame; ours are x-only (reasons at AFFECTED).
     - Penis_00 is left out: every skeleton has the penis bones, and a female's own Penis_00
-      rests 2 units from her vulva, where it would hold her open.
+      rests 2 units from her vulva, where it would hold her open. Her Penis_01-05 rest 7+ units
+      in front of her pubis (clear of her own spheres), but they are still colliders for OTHER
+      actors: in a female/female scene they can push the partner. No key filters colliders by sex.
 
     python tools/physics_config.py
 """
@@ -38,18 +37,30 @@ ATTACH = [('Vagina_CBP_00', 'Clitoris'),
           ('Vagina_CBP_L_02', 'Labia'), ('Vagina_CBP_R_02', 'Labia'),
           ('Anus_01', 'Anus'), ('Anus_02', 'Anus'), ('Anus_03', 'Anus'), ('Anus_04', 'Anus')]
 
-SPRING = dict(stiffness=60.0, stiffness2=60.0, damping=6.0, timetick=4.0, timeStep=0.020,
+# Tuned with tools/ocbpc_sim.py, a port of OCBPC's own update (decision A-9). What the source says,
+# and what follows from it:
+#  - a collision push is divided by linear before it is applied and multiplied back after, so a LOW
+#    linear quiets walking without weakening a push; but maxoffset caps the internal offset, so the
+#    push a bone can reach is maxoffset * linear: maxoffset = 3 / linear keeps 3 units of room.
+#    Measured (walk 1.5u @ 2 Hz, run 3u @ 3 Hz): linear 0.9 moved the bones 0.95 / 2.25 units, which
+#    heavy weights would turn into flapping; linear 0.2 at stiffness 150 moves them ~0.1 / ~0.35.
+#  - stiffness2 multiplies the SQUARED offset; with the large internal offsets a low linear implies,
+#    it would dominate the spring, so it is 0 here.
+SPRING = dict(stiffness=150.0, stiffness2=0.0, damping=6.0, timetick=4.0, timeStep=0.020,
               gravityBias=0.0, gravityCorrection=0.0, cogOffsetX=0.0, cogOffsetY=0.0, cogOffsetZ=0.0,
               rotationalX=0.0, rotationalY=0.0, rotationalZ=0.0, rotateLinearX=0.0, rotateLinearY=0.0,
               rotateLinearZ=0.0, rotateRotationX=0.0, rotateRotationY=0.0, rotateRotationZ=0.0, absRotX=0)
+QUIET = dict(linearX=0.2, linearY=0.2, linearZ=0.2, maxoffsetX=15.0, maxoffsetY=15.0, maxoffsetZ=15.0)
 SECTIONS = {
-    'Labia': dict(SPRING, linearX=0.9, linearY=0.9, linearZ=0.9, maxoffsetX=2.5, maxoffsetY=2.5, maxoffsetZ=2.5),
-    'Clitoris': dict(SPRING, linearX=0.4, linearY=0.4, linearZ=0.4, maxoffsetX=0.8, maxoffsetY=0.8, maxoffsetZ=0.8),
-    'Anus': dict(SPRING, linearX=0.9, linearY=0.9, linearZ=0.9, maxoffsetX=1.5, maxoffsetY=1.5, maxoffsetZ=1.5),
+    'Labia': dict(SPRING, **QUIET),
+    'Clitoris': dict(SPRING, **QUIET),
+    'Anus': dict(SPRING, **QUIET),
 }
-AFFECTED = {'Vagina_CBP_L_02': 0.6, 'Vagina_CBP_R_02': 0.6,
-            'Anus_01': 0.4, 'Anus_02': 0.4, 'Anus_03': 0.4, 'Anus_04': 0.4}
-COLLIDERS = {'Penis_01': 1.3, 'Penis_02': 1.3, 'Penis_03': 1.3, 'Penis_04': 1.25, 'Penis_05': 1.1}
+# The spheres (her bones and the partner's penis bones) are the physical design the weights are
+# fitted to, so they live in ONE place, physics_design.py, with the reasons: x-only offsets in the
+# actor's frame, lip sphere + penis sphere = 3.2 to close the gaps between penis bones, and why the
+# anus's side spheres sit a unit outside the ring.
+from physics_design import AFFECTED, COLLIDERS  # noqa: E402
 
 
 def sections(text):
@@ -105,10 +116,10 @@ def collisions(text):
         elif name == 'ColliderNodes':
             lines = _append_list(lines, COLLIDERS)
         out += lines
-    out += ['', '#' * 78, '# Anatomy spheres (fo4-anatomy A-7): on the bone, offset 0,0,0 -- see physics_config.py',
+    out += ['', '#' * 78, '# Anatomy spheres (fo4-anatomy A-7, A-9): offsets in the actor frame, x only -- see physics_config.py',
             '#' * 78]
-    for node, r in list(AFFECTED.items()) + list(COLLIDERS.items()):
-        out += ['', f'[{node}]', f'0,0,0,{r}']
+    for node, spheres in list(AFFECTED.items()) + list(COLLIDERS.items()):
+        out += ['', f'[{node}]'] + [','.join(f'{v:g}' for v in s) for s in spheres]
     return '\n'.join(out) + '\n'
 
 
@@ -147,7 +158,8 @@ def main():
     missing = [b for b, _ in ATTACH if b not in skeleton] + [n for n in list(AFFECTED) + list(COLLIDERS) if n not in skeleton]
     print(f'ocbp.ini: {len(dead)} dead attach lines commented out ({sorted(set(dead))}); '
           f'{len(ATTACH)} anatomy bones attached in {len(SECTIONS)} new sections')
-    print(f'OCBPCollisionConfig.txt: +{len(AFFECTED)} affected, +{len(COLLIDERS)} colliders, all spheres on their bones')
+    print(f'OCBPCollisionConfig.txt: +{len(AFFECTED)} affected, +{len(COLLIDERS)} colliders '
+          f'({sum(len(s) for s in AFFECTED.values()) + sum(len(s) for s in COLLIDERS.values())} spheres)')
     print(f'anatomy bones missing from the skeleton: {missing or "none"}')
     if missing:
         raise SystemExit(1)

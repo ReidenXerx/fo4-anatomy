@@ -13,6 +13,8 @@ Anatomy-dev is OUR mod, created at the owner's request and deployed by them (A-8
 file is touched.
 
     python tools/restage.py
+    python tools/restage.py --build-only   # steps 2-4 only: nothing reaches Data, so it runs while
+                                           # someone else holds the game
 """
 import hashlib
 import pathlib
@@ -41,7 +43,8 @@ def run(args):
 
 
 def main():
-    if lab.game_running():
+    build_only = '--build-only' in sys.argv[1:]
+    if not build_only and lab.game_running():
         raise SystemExit('Fallout4.exe is running: take the game from its holder first')
     lab.setup()
     if ZERO.exists():
@@ -50,6 +53,10 @@ def main():
         raise SystemExit('BodySlide build failed')
     run(['compare_builds.py', str(CURRENT), str(ZERO)])
     stage = package.main()
+    if build_only:
+        print(f'built and packaged ({stage}); body {sha(ZERO / "Meshes/Actors/Character/CharacterAssets/FemaleBody.nif")}; '
+              f'nothing written to Anatomy-dev')
+        return
     changed, new = [], []
     for src in sorted(p for p in stage.rglob('*') if p.is_file()):
         rel = src.relative_to(stage)

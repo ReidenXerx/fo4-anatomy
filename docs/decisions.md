@@ -96,3 +96,63 @@ right: a mod the owner installs is visible, conflict-managed by Vortex, and undo
 zeroed body, the two configs, and the BodySlide project with its zero preset. It must win its three
 conflicts: `bodyslides_f4_sd`, MadKita's Actual Jiggle, and Jiggle Physics.
 `tools/install_test.py` stays for an owner who explicitly wants the in-place route.
+
+## A-9 — Collision-grade genital weights and physics values, measured offline (agent, 2026-09-23)
+
+Supersedes A-6 for the lower-lip twins (`Vagina_CBP_L_02` / `_R_02`) and the anus, and A-7's spring
+and sphere values. The owner's words: "feel free enhance physics config"; A-1 (full physics) is the
+goal this serves.
+
+**Why.** OCBPC is open source (github.com/ericncream/OpenCBP_FO4, branch `cbpc`, GPL-3.0), and
+`tools/ocbpc_sim.py` ports its per-bone update faithfully. Measured with it and `tools/fit_check.py`
+on the deployed build (86f6fc78): JaneBod's weights, made for animations that swing a bone several
+units, put at most 0.17 on a lip twin and 0.07 on the anus. A collision moves a bone only as far as
+the shaft needs, so the lips opened about 0.2 units: nothing to see. `linear` 0.9 made the bones flap
+0.95 units at a walk. The 1.3-unit penis spheres, 3 units apart, left gaps that the lips fell into
+as the shaft slid (push 0.23..0.98).
+
+**What the source settled** (it was "unmeasured" in research.md):
+- OCBPC SETS a simulated bone's local transform from its first-seen value plus the physics offset
+  (Thing.cpp:640-662). An animation of the same bone is discarded, so the anus bones, which have no
+  twins, move by physics alone.
+- `femaleOnly` does not drop a male's colliders: an untracked actor is still entered
+  (scan.cpp:204-218). Every actor's colliders act, its own included (only a bone's own spheres are
+  skipped).
+- Sphere offsets are in the actor's frame, heading only (CollisionHub.cpp:124, Thing.cpp:326).
+- A push is divided by `linear` and multiplied back, so `linear` does not weaken it; but `maxoffset`
+  caps the INTERNAL offset (actual cap = maxoffset × linear).
+- While a bone overlaps, only the push runs; the spring is skipped. A pushed lip rests wherever the
+  insertion left it on the shaft's surface.
+
+**What changed:**
+- **Weights** (`zex_bones.py`): the lower-lip twins and the anus bones carry a layer FITTED to
+  Nahka's own openings. For each vertex her VaginaPenetrate / AnusPenetrate moves (scaled from the
+  shaft she drew for to BodyTalk's 1.55), take the non-negative weights whose bone pushes best
+  reproduce it. A vertex is fitted only to bones on its own side, smoothed three rounds over
+  position-welded vertices (seam copies stay identical: crack 0.0000). The animated lips keep
+  JaneBod's weight whole; JaneBod's light anus pattern stays underneath, so no anus bone is left
+  weightless.
+- **Spheres** (`physics_design.py`, the one place): lip spheres 0.6 outside their bones (x only,
+  which survives the pelvis pitching), r 1.2; penis spheres r 2.0 (tip 1.8), so lip + penis = 3.2
+  closes the gaps; anus back/front on-bone r 0.5, sides 1.0 outside r 0.6.
+- **Springs** (`physics_config.py`): stiffness 150, stiffness2 0, damping 6, linear 0.2,
+  maxoffset 15 (3 units of real room).
+
+**Measured** (`fit_check.py`: six shaft paths, the deployed build against the new one):
+- Entrance vertices left inside a 1.55 shaft: 75-85% before, 47-71% after. On the visible lip
+  surface outside the entrance (the "as drawn" path): 344 before, 127 after. Nahka's own slider,
+  scaled to the same shaft, leaves 232.
+- Stretch: 99th percentile 3.95, worst 7.95, both below Nahka's own slider (5.17 / 13.0).
+- Walking flap: 0.17 / 0.41 before, 0.07 / 0.29 after (walk / run).
+- The anus is unchanged in clearance. ZeX puts its four bones 1.0-1.4 units BEHIND Nahka's ring, so
+  a shaft in her ring pushes all four backwards and the ring's front has no bone to open it.
+  Fitting cannot fix that; moving the ring or the bones could. This is open, and the in-game test
+  says how visible it is.
+
+**Tried and dropped:** the upper-lip twins as collision bones too. The fit reproduced 78% instead
+of 51% and cleared more of the entrance, but those bones sit 0.9 ahead of the shaft, so it drives
+them forward, and canal-mouth vertices were pulled out of the shaft (edges stretched 35×).
+
+**Known limit:** a woman's own penis bones are colliders for OTHER actors, and no key filters
+colliders by sex. In a female/female scene, the partner's invisible Penis_01-05 (7-20 units in
+front of her pubis) can push these spheres.

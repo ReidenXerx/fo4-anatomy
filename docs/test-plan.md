@@ -67,3 +67,18 @@ from the scene.
 ### Pass 3 (requested): camera at hip height, lit
 Rest from the front (stripped via a non-animating original position), then "[UAP] BP70 - Pit Doggy 02"
 from behind at hip height.
+
+### Pass 4 (planned): build 1b5c6f20 (decision A-9 weights and physics)
+Staged into Anatomy-dev when the game is free (`tools/restage.py`). It is already built and
+verified: `verify_zex` PASS, `compare_builds` PASS, and the built body carries the fitted weights
+exactly. `tools/fit_check.py` predicts the following, so these are the things to look for:
+
+| Situation | Deployed build 86f6fc78 | Build 1b5c6f20 (predicted) |
+| --- | --- | --- |
+| Vaginal: visible lips left inside the shaft | 344 vertices | 127 (Nahka's own slider: 232) |
+| Vaginal: lips parting | about 0.2 units | about 1.2 units at the inner lips, sideways |
+| Anal: opening | barely | back and sides open; the ring's FRONT cannot (no bone there) |
+| Walking or running | flap up to 0.17 / 0.41 | 0.07 / 0.29 |
+
+Shots: the same as pass 3 ("[UAP] BP70 - Pit Doggy 02" from behind and from the side at hip height),
+plus one anal position from behind if the pack has a UAP one, plus a run toward the camera.
