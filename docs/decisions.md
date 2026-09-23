@@ -467,3 +467,45 @@ does we have such metric)".
   put, and nothing changes from A-16. Build a13c4011c17b.
 - **Open:** tune the stretch and the prop radius by the owner's look. A fisting animation may pulse,
   because the knuckle ball and the wrist are 7 units apart.
+
+## A-18 — The arousal MCM (the owner's poll, 2026-09-23)
+
+- **The poll:** "What should the MCM menu hold?" was answered "Arousal only". The genitals and the
+  physics have no player-facing knob in v1.
+- **The page (`tools/build_mcm.py` -> `MCM/Config/Anatomy/`):**
+
+  | setting | id | default | range |
+  | --- | --- | --- | --- |
+  | Arousal nipples (on/off) | `bEnabled:General` | on | switch |
+  | Nipple response (× the A-16 gains) | `fNippleStrength:General` | 1.0 | 0 .. 2 |
+  | Rise speed (divides every source's half-life) | `fRiseSpeed:General` | 1.0 | 0.25 .. 4 |
+  | Fade speed (divides the 60 s fall) | `fFadeSpeed:General` | 1.0 | 0.25 .. 4 |
+  | Being in a scene | `bScenes:Sources` | on | switch |
+  | Watching a scene | `bWatching:Sources` | on | switch |
+  | Companions' own arousal (Ivy, Overture) | `bCompanions:Sources` | on | switch |
+  | Being naked | `bNaked:Sources` | on | switch |
+
+- **One source of truth:** the defaults are read out of `Arousal.psc`'s `Defaults()`, never typed
+  in the generator. The generator refuses when:
+  - a default has no menu entry;
+  - a menu entry has no default;
+  - a default is outside its slider;
+  - the ids the menu writes differ from the ids `LoadSettings` reads.
+  All four refusals were made to fire once.
+  This is fo4-chemistry's `build-mcm.py` rule, and its config shape, which runs in the owner's game.
+- **Reading:** `LoadSettings()` runs every tick (3 s). MCM answers 0 / false for a mod with no
+  settings at all, and `bEnabled = false` would then read as "switched off". The rise speed can
+  never be 0 (its slider starts at 0.25), so a 0 there means "MCM has nothing for us" and the
+  defaults stand. This is Chemistry's tell, too. `MCM.IsInstalled()` is asked once per load, not
+  per tick: without MCM.pex the call fails and logs.
+- **Behaviour:**
+  - Off removes every layer of ours at the next tick and stops tracking.
+  - A new strength rewrites every shown layer. Their `_shown` is set to -1, which means "a layer
+    may be on her, value unknown". `Forget` removes a layer whenever `_shown != 0`, so a woman who
+    leaves before the rewrite is still cleaned.
+  - Strength 0 removes the layer rather than writing her own values back under our keyword.
+  - Someone in a scene is not "watching" it. With scenes switched off, the partner next to her must
+    not count as a scene she watches. With every switch on, `Next()` gives exactly the A-16
+    numbers: the scene's 1.0 was already the top.
+- **Save compatibility:** the new variables start at their declared values in an old save, and
+  `LoadSettings` overwrites them at the first tick.

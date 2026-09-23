@@ -136,3 +136,18 @@ crotch skin; no change anywhere else on the body.
   cutting the partner.
 - A-15: build bbbc36acde38 opens the entrance to the shaft (gain 1.35), restaged in place.
 - Still to look at: the wider entrance in a vaginal scene, one anal scene, and walking nude.
+
+### The arousal MCM (A-18), staged 21:06 on build a13c4011c17b
+- The new `Arousal.pex` is live already (rewritten in place). The two MCM files are new, so they
+  need the owner's Deploy: `MCM/Config/Anatomy/config.json` and `settings.ini`. Until then MCM has
+  nothing for Anatomy, and the script keeps its defaults, which are A-16's behaviour.
+- Checks, after the Deploy:
+  1. Mod Configuration Menu lists "Anatomy" (Anatomy.esp must be enabled).
+  2. "Arousal nipples" off: within a few seconds of closing the menu, every aroused woman's nipples
+     are back to her own.
+  3. On again, "Nipple response" at 2 shows bigger nipples, and at 0 no change.
+  4. "Being in a scene" off: a woman in a scene stays as she is. "Watching a scene" still counts
+     for onlookers.
+- Still open from A-17: which object the purple knotted toy was (look it up in
+  `Documents/My Games/Fallout4/F4SE/anatomy_ocbpc.log`), a DR dildo or bat scene, and one anal
+  scene.

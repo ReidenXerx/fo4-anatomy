@@ -18,7 +18,11 @@ small nipples stays smaller than one with big ones, and Silhouette's flattening 
 (NipBGone) still wins where armour covers them. At zero the layer is removed and she is forgotten.
 
 Every source is optional: a missing plugin only removes that source. No AAF call is made (a call
-into AAF can end the calling stack, fo4-rapport docs/aaf-under-the-hood.md); only its keyword is read.}
+into AAF can end the calling stack, fo4-rapport docs/aaf-under-the-hood.md); only its keyword is read.
+
+The player's settings (MCM, page "Arousal"; tools/build_mcm.py builds the menu from Defaults()) are
+read every tick: on/off (off removes every layer of ours), how far the nipples rise, how fast arousal
+rises and fades, and which sources count. Without MCM the defaults below are the behaviour.}
 
 Int Property TICK = 1 AutoReadOnly
 Float Property TICK_SECONDS = 3.0 AutoReadOnly
@@ -38,6 +42,18 @@ Float Property DESIRE_HALF = 45.0 AutoReadOnly
 Float Property NAKED_DRIVE = 0.3 AutoReadOnly
 Float Property NAKED_HALF = 45.0 AutoReadOnly
 Float Property FALL_HALF = 60.0 AutoReadOnly
+
+; the player's settings (Defaults() and LoadSettings())
+Bool bEnabled = True
+Float fNippleStrength = 1.0      ; x GAINS: 1 is the tuned look, 0 shows nothing
+Float fRiseSpeed = 1.0           ; divides every source's half-life
+Float fFadeSpeed = 1.0           ; divides FALL_HALF
+Bool bScenes = True
+Bool bWatching = True
+Bool bCompanions = True          ; Ivy's own arousal and Overture's Desire
+Bool bNaked = True
+Bool _mcm = False
+Float _appliedStrength = -1.0    ; the strength the shown layers were written with
 
 Actor[] _who
 Float[] _level
@@ -111,14 +127,72 @@ Function Setup()
 		_ivyAroused = Game.GetFormFromFile(0x000011AA, "CompanionIvy.esm") as GlobalVariable
 		_ivy = Game.GetFormFromFile(0x00000803, "CompanionIvy.esm") as ActorBase
 	EndIf
+	; asked once per load, not every tick: without MCM.pex the call fails (and logs) and answers False
+	_mcm = MCM.IsInstalled()
+	LoadSettings()
 	Debug.Trace("[Anatomy] arousal: layer " + (_layer != None) + ", AAF busy keyword " + (_busy != None) \
 		+ ", Overture desire " + (_desire != None) + ", Ivy " + (_ivyAroused != None && _ivy != None) \
-		+ ", tracking " + _who.Length, 0)
+		+ ", MCM " + _mcm + ", enabled " + bEnabled + ", tracking " + _who.Length, 0)
+EndFunction
+
+Function Defaults()
+	bEnabled = True
+	fNippleStrength = 1.0
+	fRiseSpeed = 1.0
+	fFadeSpeed = 1.0
+	bScenes = True
+	bWatching = True
+	bCompanions = True
+	bNaked = True
+EndFunction
+
+Function LoadSettings()
+	Defaults()
+	; MCM answers 0 / false for a mod it has no settings for, and a false bEnabled would then read as
+	; the player switching it off. The rise speed can never be 0 (its slider starts at 0.25), so a 0
+	; there means MCM has nothing for Anatomy: the defaults stand (fo4-chemistry's LoadSettings).
+	If _mcm && MCM.GetModSettingFloat("Anatomy", "fRiseSpeed:General") > 0.0
+		bEnabled = MCM.GetModSettingBool("Anatomy", "bEnabled:General")
+		fNippleStrength = AtLeast(MCM.GetModSettingFloat("Anatomy", "fNippleStrength:General"), 0.0)
+		fRiseSpeed = AtLeast(MCM.GetModSettingFloat("Anatomy", "fRiseSpeed:General"), 0.1)
+		fFadeSpeed = AtLeast(MCM.GetModSettingFloat("Anatomy", "fFadeSpeed:General"), 0.1)
+		bScenes = MCM.GetModSettingBool("Anatomy", "bScenes:Sources")
+		bWatching = MCM.GetModSettingBool("Anatomy", "bWatching:Sources")
+		bCompanions = MCM.GetModSettingBool("Anatomy", "bCompanions:Sources")
+		bNaked = MCM.GetModSettingBool("Anatomy", "bNaked:Sources")
+	EndIf
+EndFunction
+
+Float Function AtLeast(Float value, Float floor)
+	If value < floor
+		Return floor
+	EndIf
+	Return value
 EndFunction
 
 Function Tick()
 	If _layer == None || _npc == None
 		Return
+	EndIf
+	LoadSettings()
+	If !bEnabled                                 ; switched off: nothing of ours stays on anyone
+		Int w = _who.Length - 1
+		While w >= 0
+			Forget(w)
+			w -= 1
+		EndWhile
+		_lastTick = -1.0
+		Return
+	EndIf
+	If fNippleStrength != _appliedStrength       ; a new strength: rewrite every shown layer
+		Int s = 0
+		While s < _shown.Length
+			If _shown[s] != 0.0
+				_shown[s] = -1.0                     ; "a layer may be on her, value unknown": Show rewrites it
+			EndIf
+			s += 1
+		EndWhile
+		_appliedStrength = fNippleStrength
 	EndIf
 	Float now = Utility.GetCurrentRealTime()
 	Float dt = TICK_SECONDS
@@ -210,32 +284,37 @@ EndFunction
 Float Function Next(Actor a, Float cur, Actor[] busy, Float dt)
 	Float drive = 0.0
 	Float half = FALL_HALF
-	If _busy != None && a.HasKeyword(_busy)
-		drive = SCENE_DRIVE
+	Bool inScene = _busy != None && a.HasKeyword(_busy)
+	If inScene && bScenes
+		drive = SCENE_DRIVE                      ; the strongest source: nothing below can pass it
 		half = SCENE_HALF
-	Else
-		If _ivy != None && _ivyAroused != None && a.GetActorBase() == _ivy && _ivyAroused.GetValue() >= 1.0
-			drive = IVY_DRIVE
-			half = IVY_HALF
-		EndIf
-		If WATCH_DRIVE > drive && Watching(a, busy)
-			drive = WATCH_DRIVE
-			half = WATCH_HALF
-		EndIf
-		If _desire != None
-			Float d = a.GetValue(_desire) * DESIRE_SCALE
-			If d > drive
-				drive = d
-				half = DESIRE_HALF
-			EndIf
-		EndIf
-		If NAKED_DRIVE > drive && Naked(a)
-			drive = NAKED_DRIVE
-			half = NAKED_HALF
+	EndIf
+	If bCompanions && IVY_DRIVE > drive && _ivy != None && _ivyAroused != None && a.GetActorBase() == _ivy \
+			&& _ivyAroused.GetValue() >= 1.0
+		drive = IVY_DRIVE
+		half = IVY_HALF
+	EndIf
+	; someone in a scene is not watching it: with scenes switched off, her partner next to her must not
+	; count as a scene she watches
+	If bWatching && !inScene && WATCH_DRIVE > drive && Watching(a, busy)
+		drive = WATCH_DRIVE
+		half = WATCH_HALF
+	EndIf
+	If bCompanions && _desire != None
+		Float d = a.GetValue(_desire) * DESIRE_SCALE
+		If d > drive
+			drive = d
+			half = DESIRE_HALF
 		EndIf
 	EndIf
+	If bNaked && NAKED_DRIVE > drive && Naked(a)
+		drive = NAKED_DRIVE
+		half = NAKED_HALF
+	EndIf
 	If drive < cur
-		half = FALL_HALF
+		half = FALL_HALF / fFadeSpeed
+	Else
+		half = half / fRiseSpeed
 	EndIf
 	Float nxt = cur + (drive - cur) * (1.0 - Math.Pow(0.5, dt / half))
 	If nxt < 0.0
@@ -275,12 +354,13 @@ Function Show(Int k)
 		Return                                   ; not yet: retried next tick, still unshown
 	EndIf
 	_shown[k] = stepped
-	If stepped <= 0.0
+	If stepped <= 0.0 || fNippleStrength <= 0.0
 		BodyGen.RemoveMorphsByKeyword(a, True, _layer)
 	Else
+		Float rise = fNippleStrength * stepped
 		Int m = 0
 		While m < _morphs.Length
-			BodyGen.SetMorph(a, True, _morphs[m], _layer, Strongest(a, _morphs[m]) + _gains[m] * stepped)
+			BodyGen.SetMorph(a, True, _morphs[m], _layer, Strongest(a, _morphs[m]) + _gains[m] * rise)
 			m += 1
 		EndWhile
 	EndIf
@@ -319,7 +399,7 @@ EndFunction
 
 Function Forget(Int k)
 	Actor a = _who[k]
-	If a != None && _shown[k] > 0.0
+	If a != None && _shown[k] != 0.0             ; shown, or -1: a layer may be on her
 		BodyGen.RemoveMorphsByKeyword(a, True, _layer)
 		If a.Is3DLoaded()
 			BodyGen.UpdateMorphs(a)

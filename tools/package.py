@@ -10,6 +10,7 @@
     Anatomy.esp, Scripts/Anatomy/Arousal.pex                        arousal and nipples (A-16): tools/make_esp.py
                                                                     and scripts/build-papyrus.ps1; the plugin
                                                                     must be enabled
+    MCM/Config/Anatomy/config.json, settings.ini                    the arousal menu (tools/build_mcm.py)
     Tools/BodySlide/SliderSets/AnatomyBodyZeX.osp                   the project, to rebuild with any preset
     Tools/BodySlide/ShapeData/AnatomyBodyZeX/...
     Textures/Actors/Character/BaseHumanFemale/FemaleBody*, femalebodydirty*
@@ -40,6 +41,7 @@ PROJECT = ROOT / 'build/project'
 SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
 PLUGIN = ROOT / 'build/plugin/Anatomy.esp'
 PAPYRUS = ROOT / 'build/papyrus'
+MCM = ROOT / 'build/mcm/MCM/Config/Anatomy'
 # the fo4-ocbpc fork (GPL-3.0, sibling repo; A-17): OCBPC 0.3 plus stretch groups and prop colliders.
 # Must win cbp.dll over Jiggle Physics and OCBPC-0.3-CBBE.
 OCBPC_DLL = ROOT.parent / 'fo4-ocbpc/x64/Release/cbp.dll'
@@ -57,6 +59,8 @@ def main():
         'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif': SKELETON,
         'Anatomy.esp': PLUGIN,
         'Scripts/Anatomy/Arousal.pex': PAPYRUS / 'Anatomy/Arousal.pex',
+        'MCM/Config/Anatomy/config.json': MCM / 'config.json',
+        'MCM/Config/Anatomy/settings.ini': MCM / 'settings.ini',
         'F4SE/Plugins/ocbp.ini': CONFIG / 'ocbp.ini',
         'F4SE/Plugins/cbp.dll': OCBPC_DLL,
         'F4SE/Plugins/OCBPCollisionConfig.txt': CONFIG / 'OCBPCollisionConfig.txt',
@@ -69,7 +73,7 @@ def main():
     for rel, src in files.items():
         if not src.exists():
             raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config, make_esp, '
-                             f'build-papyrus.ps1 and the zero build first')
+                             f'build-papyrus.ps1, build_mcm and the zero build first')
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)

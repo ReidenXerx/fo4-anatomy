@@ -38,7 +38,7 @@
 
 1. Replace the JaneBod-derived weights (the vulva sway and the outer-lip base) with our own
    procedural weights, then look again in game.
-2. MCM for arousal: on/off, nipple strength, which sources count, rise/fade speed.
+2. ~~MCM for arousal: on/off, nipple strength, which sources count, rise/fade speed.~~ Done (A-18).
 3. The contact-driven mouth (F4SE plugin + `AAF_BlockMFG_Mouth`), coordinated with Rapport.
 4. The builder:
    - Windows exe (the Python pipeline, packaged);
