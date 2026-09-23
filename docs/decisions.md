@@ -417,3 +417,53 @@ does we have such metric)".
 - **To uninstall:** do it when no woman is aroused. Otherwise her layer stays in LooksMenu's
   co-save under a keyword that no longer resolves.
 - **Open:** gains and half-lives, tuned by the owner's look.
+- **The owner's look (20:00):** "man thats fucking gorgeous ... lets make nipples a slightly bigger
+  in erect state". Length went from +0.55 to +0.70 and size from +0.25 to +0.40 (d2c4321).
+
+## A-17 — Fisting and toys, through our own OCBPC (the owner's poll, 2026-09-23)
+
+- **The poll:**
+  - Order: fisting, then toys and the bat, then the mouth.
+  - Toys: upgrade the physics plugin, not per-toy meshes.
+- **The plugin:** fo4-ocbpc, a sibling repo and GPL-3.0 like its origin (ericncream/OpenCBP_FO4).
+  - It branches at abc0192, the commit behind the deployed OCBPC 0.3 `cbp.dll` (2020-04-16), found
+    by its config keys: it knows `detectArmor`, `Override:` and `Attach.`, and none of 2021-2022's.
+    Everything else keeps behaving as the owner's does.
+  - Built with VS2022, after two build-only fixes. The rebuilt DLL imports only KERNEL32 and
+    exports the same two entry points.
+- **Stretch groups (fork 2fc9a05):**
+  - A section may carry `stretchGroup/Knee/Gain/Max/AxisX/Y/Z`. After an actor's bones run, each
+    group takes the SMALLEST push across its opening's axis. A big object pushes every bone; a small
+    one off-centre pushes one side; a hand pressing from outside pushes along the axis.
+  - Past the knee, each bone's child `<bone>_Stretch` moves out by gain × (smallest − knee), capped
+    at max.
+  - The body's lip and anus weights sit on those children, which sit on their bones. A penis below
+    the knee moves the body exactly as before (fit_check identical: 30% / 71%).
+  - Labia knee 2.4, gain 3; anus knee 1.8, gain 2; max 1.5 to start.
+  - Simulated (smallest push across):
+
+    |                               | vagina  | anus    |
+    | ------------------------------ | ------- | ------- |
+    | every penis path               | ≤ 2.21  | ≤ 1.13  |
+    | two fingers                    | 2.11    | 1.34    |
+    | a fist filling the entrance    | 4.45    | 4.0     |
+    | a wrist filling the entrance   | 3.89    | 3.18    |
+
+    At max 2.5 a fist opens the entrance to a median 3.0 but stretches its worst edges ×27, which
+    is why max starts at 1.5.
+- **The fist:** one 3.0 ball on the middle knuckle (Finger31). A hand is 5.42 across the knuckles.
+  Four small knuckle spheres made a row wider than the opening, and the outer ones pushed the lips
+  back in.
+- **Props (fork 2fc9a05):**
+  - `ocbp.ini [Props]` lists the hands' AnimObject nodes. Whatever hangs there becomes a line of
+    1.6 spheres from the node, through its rendered bound's centre, to the far side. This covers DR
+    pack's dildos and bat (`DR_sex_Dildo03_BaseballBatt`).
+  - Colliders are rebuilt every frame, so a prop that appears mid-scene collides at once.
+  - WEAPON nodes are left out: a held rifle would squash her breasts.
+- **A trap caught:** the weight fit took the LARGEST collider as the shaft, so the fist ball would
+  have shrunk every fitted weight. It now uses the Penis spheres only.
+- **Deploy:** `cbp.dll` is new in Anatomy-dev and must win over Jiggle Physics (which deploys OCBPC
+  0.3 now) and OCBPC-0.3-CBBE. Until it does, 0.3 ignores the new keys, the stretch children stay
+  put, and nothing changes from A-16. Build a13c4011c17b.
+- **Open:** tune the stretch and the prop radius by the owner's look. A fisting animation may pulse,
+  because the knuckle ball and the wrist are 7 units apart.
