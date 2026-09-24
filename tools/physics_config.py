@@ -71,7 +71,7 @@ SECTIONS = {
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
 from physics_design import (AFFECTED, AIM, AIM_CHAIN, COLLIDERS, CREATURE_COLLIDERS, FACE, MOUTH,  # noqa: E402
-                            MOUTH_CHAINS, PARENT, PROPS, STRETCH)
+                            MOUTH_CHAINS, PARENT, PROPS, SHAPE, STRETCH)
 
 
 def sections(text):
@@ -252,6 +252,8 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
     lines += ['', '[Face]'] + [f'{k}={v}' for k, v in FACE.items()]
     lines += ['', '; the penis finds its opening (A-28): openings in Pelvis_skin\'s frame, angles in degrees',
               '[Aim]'] + [f'{k}={v}' for k, v in aim_keys(pelvis_world, head_f, head_m, neck_f, neck_m).items()]
+    lines += ['', '; every man\'s penis: the shaft this thin, the head this big (one size per man) (A-31)',
+              '[Shape]'] + [f'{k}={v}' for k, v in SHAPE.items()]
     lines += ['', '; our nodes, created at run time under the skeleton the actor loaded: name=parent,x,y,z',
               '[Bones]'] + [f'{n}={p},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, p, l in bone_table(pelvis_world)]
     return '\n'.join(lines) + '\n'

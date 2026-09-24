@@ -1208,3 +1208,38 @@ scenes, the AAF menu's too.
   the wrong side, on a lost non-core weight, and on welded copies that differ. verify_zex's check 4 now
   allows exactly this, and a planted ButtFat -> pelvis move still FAILS it. split_genitals: 2513 of
   2513 seam vertices move together. compare_builds: PASS, since the mesh and the morphs are untouched.
+
+## A-31 — Every man's penis a mushroom: a thinner shaft, a bigger, redder, glossy head (the owner's poll, 2026-09-25)
+
+- **Ask:** "i want make it mushroom bc personally i like it more ... more narrow ствол give us more fit
+  stability especially with mouth ... i like when head is bigger ... lets make it more red bc rn its like
+  dead color lol. and make it more glossy". Poll: mushroom only, **everyone** (the player too), the head
+  **varied 1.2 to 1.4**.
+- **Measured (BodyTalk4, the men's body here; scratchpad penis_shape):** the erect penis is a bullet, the
+  head (1.89) narrower than the shaft (2.04). No slider makes a mushroom: TipShape and TipShapeRounded widen
+  the head only up to the shaft. The tip bone Penis_05 carries the glans alone (0.96-1.00 over its last three
+  slabs) and pivots near the tip. LooksMenu's layers are a MAX (field notes §8), so a thinner shaft cannot come
+  from a BodyGen layer of ours.
+- **Shape (fork 03bdbf4, `[Shape]`):** the fork scales the chain at run time. Penis_01 gets the shaft scale
+  (0.85) and Penis_02..04 inherit it; each later joint's offset is divided by it, so every joint stays where
+  the animation put it. The tip gets head/shaft, so the head is 1.2..1.4 in the world, a stable hash of the
+  man's form id. The colliders scale with their bones. Shaft 2.04 -> 1.74; head 2.14 / 2.33 / 2.52 at
+  1.2 / 1.3 / 1.4, crowned just behind the tip; length +0.2..0.4. tests/aim case 22; 39/39 mutations.
+- **Colour and gloss (`tools/glans_overlay.py`, Arousal's `Glans`):** two LooksMenu overlays on every man,
+  painted in his body's own UV triangle by triangle where Penis_05 carries the skin (smoothstep 0.35..0.8 of
+  its weight, so both end at the crown). The stage stops if a triangle with no head weight covers a painted
+  texel (0 of 3854; a probe confirms the check sees the crown's shared edge).
+  - `AnatomyGlansFlush`: multiply (dest colour x ours, unlit). It is white everywhere and rose (1, .72, .75)
+    on the head, so the lit skin keeps its detail and only its hue deepens.
+  - `AnatomyGlansGloss`: additive, a faint sheen plus the game's ShinyGlass cubemap (Textures1.ba2) masked
+    to the head, envmap scale 0.35.
+  - The BGEM layout was decoded from materials that work in this game (Caliente's overlay, a glass
+    material: nothing left over), and every file written is read back.
+  - The Overlays API was read from LooksMenu's compiled script, not remembered: Add / GetAll / Remove /
+    Update.
+  - Each man in the scan is checked once, the player too. MCM "Glans colour and gloss" off removes ours,
+    and only ours, from every man given them.
+- **Open:**
+  - The overlays are painted in the owner's BodyTalk4 UV. For players, the Anatomy Builder must paint them
+    from the player's own men's body before they can ship (they are not in release.py).
+  - Tune FLUSH, SHEEN and ENV_SCALE by the owner's look.

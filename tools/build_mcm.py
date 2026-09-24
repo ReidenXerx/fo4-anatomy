@@ -41,6 +41,9 @@ PAGES = [
          'companion\'s desire (Overture). Nothing happens without those mods.', None, None, None),
         ('Sources', 'bNaked', 'Being naked', 'Nothing worn in the body slot: a little, slowly.',
          None, None, None),
+        ('section', 'Men'),
+        ('Men', 'bGlans', 'Glans colour and gloss', 'Every man\'s glans a little redder and glossy (two '
+         'LooksMenu overlays). Off takes them off every man they were given to.', None, None, None),
     ]),
 ]
 

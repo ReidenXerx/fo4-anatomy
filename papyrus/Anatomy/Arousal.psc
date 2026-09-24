@@ -52,7 +52,12 @@ Bool bScenes = True
 Bool bWatching = True
 Bool bCompanions = True          ; Ivy's own arousal and Overture's Desire
 Bool bNaked = True
+Bool bGlans = True               ; A-31: every man's glans a little redder and glossy (LooksMenu overlays)
 Bool _mcm = False
+Bool _looksMenu = False          ; LooksMenu's Overlays natives are there
+Actor[] _glans                   ; the men given our overlays (checked once each, then remembered)
+String GLANS_FLUSH = "AnatomyGlansFlush"
+String GLANS_GLOSS = "AnatomyGlansGloss"
 Float _appliedStrength = -1.0    ; the strength the shown layers were written with
 Int _aimBusy = 0                 ; how many the fork's aim was last told are in a scene (A-28)
 
@@ -160,6 +165,10 @@ Function Setup()
 	EndIf
 	; asked once per load, not every tick: without MCM.pex the call fails (and logs) and answers False
 	_mcm = MCM.IsInstalled()
+	_looksMenu = Game.IsPluginInstalled("LooksMenu.esp")
+	If _glans == None
+		_glans = new Actor[0]
+	EndIf
 	LoadSettings()
 	Debug.Trace("[Anatomy] arousal: layer " + (_layer != None) + ", AAF busy keyword " + (_busy != None) \
 		+ ", Overture desire " + (_desire != None) + ", Ivy " + (_ivyAroused != None && _ivy != None) \
@@ -175,6 +184,7 @@ Function Defaults()
 	bWatching = True
 	bCompanions = True
 	bNaked = True
+	bGlans = True
 EndFunction
 
 Function LoadSettings()
@@ -193,6 +203,7 @@ Function LoadSettings()
 		bWatching = MCM.GetModSettingBool("Anatomy", "bWatching:Sources")
 		bCompanions = MCM.GetModSettingBool("Anatomy", "bCompanions:Sources")
 		bNaked = MCM.GetModSettingBool("Anatomy", "bNaked:Sources")
+		bGlans = MCM.GetModSettingBool("Anatomy", "bGlans:Men")
 	EndIf
 EndFunction
 
@@ -215,7 +226,9 @@ Function Tick()
 			w -= 1
 		EndWhile
 		_lastTick = -1.0
-		TellAim(BusyAmong(People()))             ; the aim is not arousal's: it still hears who is in a scene
+		Actor[] everyone = People()
+		Glans(everyone)                          ; the men's glans is not arousal's either
+		TellAim(BusyAmong(everyone))             ; the aim is not arousal's: it still hears who is in a scene
 		Return
 	EndIf
 	If fNippleStrength != _appliedStrength       ; a new strength: rewrite every shown layer
@@ -241,6 +254,7 @@ Function Tick()
 	Actor[] people = People()
 	Actor[] busy = BusyAmong(people)
 	TellAim(busy)
+	Glans(people)
 	Int i = 0
 
 	; everyone here who could be aroused
@@ -327,6 +341,104 @@ Function TellAim(Actor[] busy)
 		AnatomyAim.SetBusy(busy)
 	EndIf
 	_aimBusy = busy.Length
+EndFunction
+
+; A-31 (the owner's poll, 2026-09-25): "lets make it more red ... and make it more glossy". Two overlays of
+; ours (tools/glans_overlay.py) on every man here, the player too: a multiply pass that deepens the head's
+; hue and an additive one with the game's glass cubemap, both painted only where the head bone carries
+; the skin. Each man is checked once (he may carry them from an earlier session: LooksMenu keeps them
+; in its co-save), then remembered. Off takes ours, and only ours, off every man we gave them to.
+Function Glans(Actor[] people)
+	If !_looksMenu
+		Return
+	EndIf
+	If !bGlans
+		Int g = _glans.Length - 1
+		While g >= 0
+			If _glans[g] != None
+				GlansOff(_glans[g])
+			EndIf
+			g -= 1
+		EndWhile
+		_glans = new Actor[0]
+		Return
+	EndIf
+	If _glans.Length >= MAX_PEOPLE
+		_glans = new Actor[0]                    ; forgetting only costs a check: GlansOn finds his overlays
+	EndIf
+	Int i = 0
+	While i < people.Length
+		Actor a = people[i]
+		If IsMan(a) && _glans.Find(a, 0) < 0
+			GlansOn(a)
+			_glans.Add(a, 1)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+Function GlansOn(Actor a)
+	Bool flush = False
+	Bool gloss = False
+	Overlays:Entry[] had = Overlays.GetAll(a, False)
+	Int j = 0
+	While had != None && j < had.Length
+		If had[j] != None && had[j].template == GLANS_FLUSH
+			flush = True
+		ElseIf had[j] != None && had[j].template == GLANS_GLOSS
+			gloss = True
+		EndIf
+		j += 1
+	EndWhile
+	If !flush
+		Overlays.Add(a, False, GlansEntry(GLANS_FLUSH))
+	EndIf
+	If !gloss
+		Overlays.Add(a, False, GlansEntry(GLANS_GLOSS))
+	EndIf
+	If !flush || !gloss
+		Overlays.Update(a)
+	EndIf
+EndFunction
+
+Function GlansOff(Actor a)
+	Overlays:Entry[] had = Overlays.GetAll(a, False)
+	Bool removed = False
+	Int j = 0
+	While had != None && j < had.Length
+		If had[j] != None && (had[j].template == GLANS_FLUSH || had[j].template == GLANS_GLOSS)
+			Overlays.Remove(a, False, had[j].uid)
+			removed = True
+		EndIf
+		j += 1
+	EndWhile
+	If removed
+		Overlays.Update(a)
+	EndIf
+EndFunction
+
+; white and opaque: the colour is in the texture (a tint would multiply the whole body, not just the head)
+Overlays:Entry Function GlansEntry(String asTemplate)
+	Overlays:Entry e = new Overlays:Entry
+	e.template = asTemplate
+	e.red = 1.0
+	e.green = 1.0
+	e.blue = 1.0
+	e.alpha = 1.0
+	e.offset_u = 0.0
+	e.offset_v = 0.0
+	e.scale_u = 1.0
+	e.scale_v = 1.0
+	e.priority = 0
+	Return e
+EndFunction
+
+Bool Function IsMan(Actor a)
+	If a == None || a.GetRace() != _human
+		Return False
+	EndIf
+	ActorBase b = a.GetLeveledActorBase()
+	Return b != None && b.GetSex() == 0
 EndFunction
 
 Bool Function IsWoman(Actor a)

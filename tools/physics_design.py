@@ -188,6 +188,16 @@ AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss
            grips='LArm|RArm',   # a gripping hand is the target: the middle of <side>_Finger21..53
            mouthDrop=1.3)       # a mouth is entered this far below her lip line: centred on it the shaft rode
                                 # over her upper lip into cheek and nose (the owner's look, 2026-09-24)
+# The shape (A-31, the owner's poll 2026-09-25): "i want make it mushroom ... more narrow ствол give us more
+# fit stability especially with mouth ... i like when head is bigger". Everyone, the player too; the head
+# varied per man. The fork scales the chain's bones at run time (BodyTalk's files untouched): Penis_01 x
+# shaft (Penis_02..04 inherit it, their joints pushed back out so every joint stays put) and the tip bone
+# Penis_05, which alone carries the glans (0.96-1.00 over its last three slabs), to head in the world.
+# Measured on BodyTalk4's erect penis (scratchpad penis_shape, max radius root -> tip): the shaft 2.04 -> 1.74
+# at 0.85, the head 1.89 today (narrower than the shaft: a bullet) -> 2.14 / 2.33 / 2.52 at 1.2 / 1.3 / 1.4,
+# the crown just behind the tip (the tip bone pivots at the tip), the length +0.2..0.4. The colliders on
+# those bones scale with them (Collision.cpp), so the thinner shaft also pushes her open less.
+SHAPE = dict(enabled=1, shaft=0.85, headMin=1.2, headMax=1.4)
 # The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
 # by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the
 # vagina (the lips open there anyway), 1.46 four units in, then 2.5 to 5.9 -- past the shaft's 1.55 from
