@@ -1097,5 +1097,19 @@ scenes, the AAF menu's too.
     stretched. His own hand counts too. For a second after it lets go, nothing is entered.
   - Offline: tests/aim now 18 cases, and 27 of 27 solver mutations are caught. A grip near the tip is
     needed to catch "a hand stretches". Fork build cbp.dll afab87963bd3.
+- **The owner's third look (2026-09-24):** the vagina and hands are good. Two notes:
+  - "mouth still needs work ... align with mouth itself pretty bad", with the glans clipping above the upper
+    lip. The shaft's axis was aimed at the line where her lips meet, so its upper half rode over her upper
+    lip into her cheek and nose. The log agreed: "upper lip 0.71 up". The mouth is now entered 1.3 below
+    that line (`mouthDrop`, along the head's up) and the throat path moves down with it.
+  - "anal looks good maybe would be good make a little more hole opening". Raising the fitted gain did
+    almost nothing (1.25: 71% -> 70% still inside the shaft). The limit was the stretch group (A-17): its
+    knee 1.8 is above the ~1.1 a penis pushes the ring across, so the stretch never opened for one.
+    `fit_check` now simulates the stretch (a port of the fork's SimObj::UpdateStretch). By knee, as drawn:
+    0.8 -> 68%, 0.7 -> 59%, 0.65 -> 47%, 0.6 -> 35%, 0.5 -> 23%. The owner asked for "a little", so 0.65:
+    the worst edge stretch is 12.95, under Nahka's own slider's 14.77. Walking and seams are unchanged. It is
+    an ini change; the body is not rebuilt.
+  - The lip-sync probe data (Rapport's lip-synced barks now move +0xF0) went to Rapport with a caveat: AAF
+    writes MFG during scenes too.
 - **Open:** tune capture/keep/entry, depth and the stretch by the owner's look; AAF position tags as a
   tie-breaker in two-hole positions; men's openings (our bones are women's only).

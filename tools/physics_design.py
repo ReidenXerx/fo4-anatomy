@@ -100,7 +100,10 @@ PENIS_SPACING = 3.0
 # max starts at 1.5, not 2.5: at 2.5 a fist opens the entrance to a median 3.0 but stretches its worst
 # edges x27; the owner's look tunes it (the keys are in ocbp.ini, no rebuild).
 STRETCH = {'Labia': dict(group=1, knee=2.4, gain=3.0, max=1.5, axis=VAGINA_AXIS),
-           'Anus': dict(group=2, knee=1.8, gain=2.0, max=1.5, axis=ANUS_AXIS)}
+           'Anus': dict(group=2, knee=0.65, gain=2.0, max=1.5, axis=ANUS_AXIS)}
+# (Anus knee 1.8 -> 0.65, the owner's look 2026-09-24: "a little more hole opening". A penis pushes the ring
+# across by ~1.1, under 1.8, so the stretch never opened for one. fit_check, stretch now simulated: as drawn
+# 71% -> 47% of the entrance still inside the shaft, worst edge stretch 12.95 under Nahka's own slider's 14.77.)
 STRETCH_BONES = {b: b + '_Stretch' for b in ('AnatLip_L', 'AnatLip_R', 'AnatAnus_F', 'AnatAnus_B',
                                               'AnatAnus_L', 'AnatAnus_R')}
 
@@ -182,7 +185,9 @@ AIM_CHAIN = ('Penis_00',) + SHAFT
 AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss=5.0, keepMiss=8.0, entryAngle=75,
            reach=1.3, minReach=2.0, depth=2.0, minInside=3.0, maxStretch=1.10, rate=8.0, mouths=1,
            anatomyBone='AnatVulva', hands='LArm_Finger31|RArm_Finger31', handRadius=4.0, handHold=1.0,
-           grips='LArm|RArm')   # a gripping hand is the target: the middle of <side>_Finger21..53
+           grips='LArm|RArm',   # a gripping hand is the target: the middle of <side>_Finger21..53
+           mouthDrop=1.3)       # a mouth is entered this far below her lip line: centred on it the shaft rode
+                                # over her upper lip into cheek and nose (the owner's look, 2026-09-24)
 # The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
 # by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the
 # vagina (the lips open there anyway), 1.46 four units in, then 2.5 to 5.9 -- past the shaft's 1.55 from

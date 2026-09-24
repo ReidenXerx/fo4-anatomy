@@ -92,21 +92,22 @@ class Build:
                 raise SystemExit(f'{nif_path}: {sum(b is None for b in back)} genital vertices have no body twin')
             self.tris = self.tris + [tuple(back[k] for k in t) for t in g.triangles()]
         self.weights = {}
-        # a body weighted to the openings' stretch children (A-17) moves with their bones below the
-        # stretch knee, which every path here stays under
-        fold = {child: bone for bone, child in pd.STRETCH_BONES.items()}
+        # a vertex on an opening's stretch child (A-17) moves with its bone, and past the group's knee
+        # further out (the fork's SimObj::UpdateStretch, ported in stretch_offsets below)
+        children = set(pd.STRETCH_BONES.values())
         for j in range(s.count):
-            w = {fold.get(bones[sl], bones[sl]): x for sl, x in s.skin_weights(j)
-                 if fold.get(bones[sl], bones[sl]) in pd.REST}
+            w = {bones[sl]: x for sl, x in s.skin_weights(j) if bones[sl] in pd.REST or bones[sl] in children}
             if w:
                 self.weights[j] = w
         self.section = {}
+        self.section_name = {}
         for ini_path in ini_paths:
             if not ini_path.exists():
                 continue
             ini = parse_ini(ini_path.read_text(encoding='utf-8', errors='replace'))
             attach = ini.get('Attach', {})
             self.section.update({b: ini[attach[b]] for b in pd.REST if b in attach and attach[b] in ini})
+            self.section_name.update({b: attach[b] for b in pd.REST if b in attach and attach[b] in ini})
         spheres = {}
         for col_path in col_paths:
             if col_path.exists():
@@ -129,12 +130,54 @@ def pushes(build, centre, axis):
     return out
 
 
+def stretch_offsets(build, push):
+    """The fork's stretch groups (SimObj::UpdateStretch): per group the SMALLEST push across its opening's
+    axis; past the knee each bone's _Stretch child moves out along the bone's own push across, by
+    gain x (smallest - knee), capped at max, and only with two or more members. Parameters are the
+    build's own ini section's; the axis is its opening's, in the same (skin) frame as the pushes."""
+    across, groups = {}, {}
+    for b, sec in build.section.items():
+        g = int(float(sec.get('stretchGroup', 0) or 0))
+        name = build.section_name.get(b)
+        if g <= 0 or name not in pd.STRETCH or b not in push:
+            continue
+        ax = pd.unit(pd.STRETCH[name]['axis'])
+        v = push[b]
+        along = sum(v[k] * ax[k] for k in range(3))
+        across[b] = [v[k] - along * ax[k] for k in range(3)]
+        groups.setdefault(g, []).append(b)
+    out = {}
+    for g, members in groups.items():
+        smallest = min(math.sqrt(sum(c * c for c in across[b])) for b in members)
+        for b in members:
+            sec = build.section[b]
+            extra = float(sec.get('stretchGain', 0)) * (smallest - float(sec.get('stretchKnee', 0)))
+            if len(members) < 2 or extra < 0:
+                extra = 0.0
+            cap = float(sec.get('stretchMax', 0) or 0)
+            if cap > 0:
+                extra = min(extra, cap)
+            m = math.sqrt(sum(c * c for c in across[b]))
+            if m > 1e-4 and extra > 0:
+                out[pd.STRETCH_BONES[b]] = [c * extra / m for c in across[b]]
+    return out
+
+
 def judge(build, centre, axis, push, moved=None):
     weighted = moved is None
     if moved is None:
         moved = {}
+        extra = stretch_offsets(build, push)
+        parent = {child: bone for bone, child in pd.STRETCH_BONES.items()}
+
+        def disp(name):
+            if name in parent:                     # a child: its bone's push, and its own stretch
+                base = push.get(parent[name], (0, 0, 0))
+                e = extra.get(name, (0, 0, 0))
+                return [base[k] + e[k] for k in range(3)]
+            return push.get(name, (0, 0, 0))
         for j, w in build.weights.items():
-            d = [sum(x * push.get(b, (0, 0, 0))[k] for b, x in w.items()) for k in range(3)]
+            d = [sum(x * disp(b)[k] for b, x in w.items()) for k in range(3)]
             if any(abs(c) > 1e-6 for c in d):
                 moved[j] = d
     region, inside, worst = [], 0, 0.0
