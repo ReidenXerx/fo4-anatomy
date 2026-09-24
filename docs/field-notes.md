@@ -354,8 +354,8 @@ GPL-3.0; it never ships.
   - Drives: an AAF scene (busy keyword) 1.0 with a 10 s half-life; Ivy 0.8; watching within ~17 m
     0.55; Desire × 0.7; naked (body slot empty) 0.3 with a 45 s half-life.
   - It falls with a 60 s half-life.
-  - Nipples on top of her strongest other layer: NippleLength +0.70, NipplePerk2 +0.5, NippleTip
-    +0.4, NippleSize +0.40.
+  - Nipples on top of her strongest other layer: NippleLength +0.60, NipplePerk2 +0.44, NippleTip
+    +0.35, NippleSize +0.35 (A-16; the owner's second look, 2026-09-24).
 - **Nipple morphs measured** (the most movement at 1.0):
 
   | morph | moves up to | notes |

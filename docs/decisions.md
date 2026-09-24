@@ -419,6 +419,11 @@ does we have such metric)".
 - **Open:** gains and half-lives, tuned by the owner's look.
 - **The owner's look (20:00):** "man thats fucking gorgeous ... lets make nipples a slightly bigger
   in erect state". Length went from +0.55 to +0.70 and size from +0.25 to +0.40 (d2c4321).
+- **The owner's second look (2026-09-24, Photo163, a scene):** "lets make nipple erection SLIGHLY less".
+  In the photo the erect nipple reads as a long tube. Every gain comes down about an eighth: length +0.70
+  to +0.60, perk +0.5 to +0.44, tip +0.4 to +0.35, size +0.40 to +0.35. `Setup()` sets the gains on every
+  load, so a save made before this takes the new look at its next load. MCM's strength slider still
+  scales all four.
 
 ## A-17 — Fisting and toys, through our own OCBPC (the owner's poll, 2026-09-23)
 

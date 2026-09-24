@@ -113,15 +113,16 @@ Function Setup()
 	_morphs = new String[4]
 	_gains = new Float[4]
 	; the owner's first look (2026-09-23): "gorgeous ... lets make nipples a slightly bigger in erect
-	; state": length 0.55 -> 0.70 and size 0.25 -> 0.40; perk and tip kept
+	; state": length 0.55 -> 0.70 and size 0.25 -> 0.40; perk and tip kept. Then (2026-09-24, Photo163):
+	; "lets make nipple erection SLIGHLY less" -- every gain about an eighth down
 	_morphs[0] = "NippleLength"               ; the erection itself: up to 1.1 units out at 1.0
-	_gains[0] = 0.70
+	_gains[0] = 0.60
 	_morphs[1] = "NipplePerk2"
-	_gains[1] = 0.5
+	_gains[1] = 0.44
 	_morphs[2] = "NippleTip"
-	_gains[2] = 0.4
+	_gains[2] = 0.35
 	_morphs[3] = "NippleSize"
-	_gains[3] = 0.40
+	_gains[3] = 0.35
 	_layer = Game.GetFormFromFile(0x00000801, "Anatomy.esp") as Keyword
 	_npc = Game.GetFormFromFile(0x00013794, "Fallout4.esm") as Keyword          ; ActorTypeNPC
 	_human = Game.GetFormFromFile(0x00013746, "Fallout4.esm") as Race           ; HumanRace
