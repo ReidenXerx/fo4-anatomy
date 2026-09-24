@@ -525,8 +525,12 @@ GPL-3.0; it never ships.
     without it, at once on a cell change, and never across a different actor's form. A freed address
     reused by another actor must not get the old face back.
   - First probe data (17:37): during Rapport's two lines the engine's line state was right (4.2 s,
-    3.1 s), but +0xF0 stayed flat. Either the lines have no lip data, or the model is incomplete.
-    Vanilla lines will tell, now that the probe watches every face that speaks.
+    3.1 s), but +0xF0 stayed flat.
+    - The cause: all 6,656 of Rapport's .fuz files carry a 0-byte lip track (the packer was never
+      given --lip).
+    - A line with no lip track plays for its full length with nothing to animate. So a flat +0xF0
+      during a line means "no lip data", not a broken probe.
+    - Vanilla lines, logged as "its own face", confirm the layer from the other side.
   - `[Face]` in our ocbp.ini:
     - `authority`: 0 means no listener and no hello.
     - `probe`: logs each line's lip ids from +0xF0. Dev only: release.py refuses it.

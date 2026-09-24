@@ -1003,5 +1003,12 @@ scenes, the AAF menu's too.
     lines were borrowed voices), or lip sync lives somewhere not yet found.
   - The owner had not looked at the lips. The probe now watches every face in reach that speaks, so
     vanilla dialogue, which surely has lip data, will tell the two apart. Rapport was told.
+  - **Answered the same hour by the rapport session:** all 6,656 of Rapport's .fuz files carry a
+    0-byte lip track. Its packer takes --lip but was never given one; Overture's pipeline runs the
+    game's LipGenerator.exe and is fine.
+    - A line with no lip track still plays for its full length, with nothing to animate. The flat
+      layer was the right reading.
+    - Rapport is regenerating its barks with lip tracks. Its first held bark afterwards gives the
+      measured MOUTH ids.
 - Live, with the owner's word that the game was closed: cbp.dll 013278e6cd67 (fork ebe2195), and
   the ini is still fd9a077a0849.
