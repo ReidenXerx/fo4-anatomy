@@ -208,11 +208,15 @@ def aim_keys(pelvis_world):
     def axis(a):
         return zb.apply(zb.transpose(pr), list(a))
 
-    def fmt(v):
-        return ','.join(f'{x:.5f}' for x in v)
+    def fmt(v, digits=5):
+        return ','.join(f'{x:.{digits}f}' for x in v)
+
+    def path(points, local=point):
+        return ';'.join(fmt(local(q), 3) for q in points)
 
     return dict(AIM, chain='|'.join(AIM_CHAIN), vagina=fmt(point(pd.VAGINA_CENTRE)), vaginaIn=fmt(axis(pd.VAGINA_AXIS)),
-                anus=fmt(point(pd.ANUS_CENTRE)), anusIn=fmt(axis(pd.ANUS_AXIS)))
+                vaginaPath=path(pd.VAGINA_PATH), anus=fmt(point(pd.ANUS_CENTRE)), anusIn=fmt(axis(pd.ANUS_AXIS)),
+                anusPath=path(pd.ANUS_PATH), throatF=path(pd.THROAT['F'], list), throatM=path(pd.THROAT['M'], list))
 
 
 def anatomy_ini(pelvis_world):

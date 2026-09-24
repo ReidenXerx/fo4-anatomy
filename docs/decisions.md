@@ -1058,5 +1058,31 @@ scenes, the AAF menu's too.
 - **Build:** fork 8eee190, cbp.dll 13bd73d14f73; Arousal.pex a9fa6c70692e, AnatomyAim.pex fc3ef4ce09ad (a NEW
   file: it needs the owner's Deploy). A review (Sonnet) found that someone leaving the scan with a correction on
   would keep it; they are now looked up by form and put back after half a second unseen.
+- **The owner's first look (2026-09-24, Photo164-166): "it works!"** The log confirmed the animation keys
+  Penis_00 every frame, and the correction still shows. Two problems:
+  1. "vaginal scenes ... has tree stage or something with occasional handjob etc. but penis still try to go
+     into vagina". The one lock logged was 32.8 degrees off, near the 35 limit: at 12 units that is a 6.5
+     miss, not a near miss. An angle alone was too loose a gate.
+  2. Clipping: in cowgirl the glans came out through her mons. The entrance's axis tilts forward 28 degrees;
+     a whole shaft inside her along it ends at y 9.2, and her front is at 8.2. The owner pointed at PPA's
+     answer: the penis bends inside, along the shape of the passage ("like snake in hole").
+- **Second version (fork, `AimSolve` v2):**
+  - A lock needs the animation's own shaft line to pass within 5 units of the entrance (kept to 8), and the
+    closest of those wins, not the smallest angle.
+  - A knuckle (`LArm/RArm_Finger31`) within 4 units of the shaft's outer part (past its first bone) means a
+    hand holds it. It is not aimed, a lock lets go at once, and it stays unaimed 1 s after the hand leaves.
+  - The snake: the shaft runs straight from its root to the entrance, then each joint lands ON the path
+    inside, one bone's length from the last. That is a sphere-path crossing, not a distance along the path,
+    because a bone spanning a bend would otherwise put its joint outside the path. Every bone keeps its
+    length, and every joint's turn is its own correction in its parent's frame, smoothed.
+  - The paths are measured, not drawn (`tools/canal.py`): the middle of her body along the midline, height
+    by height. From the vagina the path leads 1.5 along the axis, curves back toward her middle
+    (y 1.55 -> -0.27), then rises and drifts forward to y 2.1. It stays inside: 1.46 of flesh four units in,
+    2.5 to 5.9 after. The anus joins the same midline. The throat is designed, not measured, in HEAD's
+    frame: back from the mouth, then down the neck.
+  - Offline: 17 cases (bending along a curve to 0.01, stretched too; a turned parent; the gates;
+    choice by miss over angle). 22 of 22 solver mutations are caught. Two were first MISSED, and each
+    revealed a weak test. The second revealed a real flaw: joints were placed a distance ALONG the path,
+    which put them outside it at every bend.
 - **Open:** tune capture/keep/entry, depth and the stretch by the owner's look; AAF position tags as a
   tie-breaker in two-hole positions; men's openings (our bones are women's only).

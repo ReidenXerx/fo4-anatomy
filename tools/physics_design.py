@@ -173,8 +173,31 @@ FACE = dict(authority=1, react=1)   # react: the busy mouth's reaction rises abo
 # length (16.1). It aims depth inside, and stretches up to maxStretch so minInside passes the entrance.
 # Only people in an AAF scene (Anatomy:Arousal tells the fork through AnatomyAim.SetBusy).
 AIM_CHAIN = ('Penis_00',) + SHAFT
-AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, entryAngle=75, reach=1.3, minReach=2.0,
-           depth=2.0, minInside=3.0, maxStretch=1.10, rate=8.0, mouths=1, anatomyBone='AnatVulva')
+# The second look (the owner, 2026-09-24, Photo164-166): it works, but (1) hand-job stages of a vaginal scene
+# were aimed into her too, and (2) a deep shaft ran straight on along the entrance's axis, which tilts
+# forward, and came out through her mons. So: a lock needs the animation's own shaft line to pass within
+# captureMiss of the entrance (a near miss the animation meant, kept to keepMiss), a knuckle within
+# handRadius of the shaft's outer part means a hand holds it (not aimed, and not for handHold after), and
+# past the entrance the shaft bends joint by joint along the path inside her (PPA's "snake").
+AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss=5.0, keepMiss=8.0, entryAngle=75,
+           reach=1.3, minReach=2.0, depth=2.0, minInside=3.0, maxStretch=1.10, rate=8.0, mouths=1,
+           anatomyBone='AnatVulva', hands='LArm_Finger31|RArm_Finger31', handRadius=4.0, handHold=1.0)
+# The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
+# by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the
+# vagina (the lips open there anyway), 1.46 four units in, then 2.5 to 5.9 -- past the shaft's 1.55 from
+# there on. It leads a little along the entrance's axis, then curves BACK toward her middle before rising.
+VAGINA_PATH = ((0.0, 0.93, -53.59), (0.0, -0.27, -51.33), (0.0, 0.08, -48.36), (0.0, 0.68, -45.44),
+               (0.0, 1.39, -42.54), (0.0, 2.08, -39.62))
+ANUS_PATH = ((0.0, -0.36, -51.33), (0.0, 0.08, -48.39), (0.0, 0.67, -45.47), (0.0, 1.38, -42.56),
+             (0.0, 2.08, -39.65), (0.0, 2.58, -36.69))
+# The throat, in HEAD's own frame ([Mouth]: facing +y, up +x): from the mouth back into the head, then down
+# the neck in front of the spine, so a deep shaft goes down her throat instead of out of the back of her
+# skull. Designed from the mouth points (female -1.80, 8.12; male -1.84, 7.78), not measured: judge it by
+# the owner's look.
+THROAT = {'F': ((-2.4, 5.9, 0.0), (-3.6, 4.0, 0.0), (-6.0, 3.0, 0.0), (-9.0, 2.5, 0.0), (-12.0, 2.3, 0.0),
+                (-15.0, 2.3, 0.0)),
+          'M': ((-2.4, 5.6, 0.0), (-3.6, 3.7, 0.0), (-6.0, 2.8, 0.0), (-9.0, 2.4, 0.0), (-12.0, 2.2, 0.0),
+                (-15.0, 2.2, 0.0))}
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
