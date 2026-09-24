@@ -47,8 +47,9 @@ BODY = 'Meshes/Actors/Character/CharacterAssets/MaleBody.nif'
 SHAPE, HEAD_BONE = 'BaseMaleBody:0', 'Penis_05'
 SIZE = 2048
 FLUSH = (1.0, 0.72, 0.75)           # the multiply factor on the head: red kept, green and blue down
-SPEC, GLOSS = 1.0, 0.85            # the head's specular map: red = strength, green = smoothness (wet)
-SPEC_MULT = 1.6                     # the material's specular multiplier (the skin's own: 1.0)
+SPEC, GLOSS = 0.45, 0.55           # the head's specular map: red = strength, green = smoothness (a wet sheen;
+                                    # 1.0 / 0.85 at x1.6 read as pink chrome with swirls: the owner, 2026-09-25)
+SPEC_MULT = 1.0                     # the material's specular multiplier (the skin's own)
 SKIN = 'Materials/actors/Character/BaseHumanMale/basehumanskin.bgsm'
 ENV_SCALE = 1.0
 NORMAL = r'Actors\Character\BaseHumanMale\BaseMaleBody_n.dds'
