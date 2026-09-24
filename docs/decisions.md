@@ -980,3 +980,28 @@ scenes, the AAF menu's too.
 - **Staged 2026-09-24, with the game closed and fo4-mcp's "free":**
   - cbp.dll a8a641d91a24 (fork f39831b);
   - Anatomy/ocbp.ini fd9a077a0849. That is the dev ini: the release's 0af76318767b plus `probe=1`.
+
+**Review wave 2 (2026-09-24, fork 2ab7df1), and the probe's first data (fork ebe2195).**
+- A second review, on Sonnet by the owner's rule for review agents, found no critical issue. It found
+  two gaps; both are closed.
+  - **The engine weights were kept per face-data ADDRESS until a load.** A cell change frees faces,
+    and the allocator may give a freed address to another actor, whose first merge would then get
+    the old face back (for one frame, or until unpause). FaceCompose::Ledger now lets go by rule:
+    - after the merge that gives a face back;
+    - after two publishes without it;
+    - at once on a cell change, keeping only the faces found again by form;
+    - never across a different actor's form.
+  - **The reaction's loader refused only the five contact-mouth ids and the blink.** AfterMerge now
+    skips every MOUTH id and the blink whatever the terms say, so the right is enforced where the
+    layers meet.
+  - Tests: ten planted faults are all caught, including a reused address while paused after a
+    cell change.
+- **The probe's first real lines (the owner's 17:37 run, build a8a641d91a24):** Rapport held
+  001D1F4B and 00115EA1, and each spoke.
+  - The engine's line state lasted 4.2 s and 3.1 s.
+  - The MFG layer did not move at all. So either those lines carry no lip data (both of Rapport's
+    lines were borrowed voices), or lip sync lives somewhere not yet found.
+  - The owner had not looked at the lips. The probe now watches every face in reach that speaks, so
+    vanilla dialogue, which surely has lip data, will tell the two apart. Rapport was told.
+- Live, with the owner's word that the game was closed: cbp.dll 013278e6cd67 (fork ebe2195), and
+  the ini is still fd9a077a0849.

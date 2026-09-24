@@ -297,7 +297,7 @@ running one cannot be moved. Checked outside the game.
   The log says `[face] Rapport let go of <form>'s face`.
 - A save loaded mid-scene: `[face] every held face let go: a save is loading`.
 
-### Face authority, review wave 1: cbp.dll a8a641d91a24 (fork f39831b) + Anatomy/ocbp.ini fd9a077a0849
+### Face authority, reviews 1 and 2: cbp.dll 013278e6cd67 (fork ebe2195) + Anatomy/ocbp.ini fd9a077a0849
 
 - At startup, `anatomy_ocbpc.log` has:
   - `[mouth] on: mouth on (...), [Face] authority 1, react 1, probe 1`;
@@ -317,3 +317,6 @@ running one cannot be moved. Checked outside the game.
   brows lift, the cheeks rise and the nose wrinkles above it (A-26), and all of that fades when
   contact ends. Too much or too little: name the feature, since each is one number in
   physics_design.FACE_WHILE_BUSY.
+- Ordinary dialogue, any NPC: the log gets `[face] <form> (its own face) spoke a line for N s:
+  its lip sync moved ...`. These are the vanilla lip ids. If a line shows "moved none", say whether
+  the lips moved on screen.

@@ -520,6 +520,13 @@ GPL-3.0; it never ships.
   - While the engine plays a line on a held face, the mouth ids go back to the engine, which is the
     lip sync in +0xF0, for exactly the line. That is since c7a0115; before it, only Rapport's own
     9 s window did this.
+  - The engine weights the hook keeps are per face-data address, so they are let go by rule
+    (FaceCompose::Ledger, fork 2ab7df1): after the merge that gives a face back, after two publishes
+    without it, at once on a cell change, and never across a different actor's form. A freed address
+    reused by another actor must not get the old face back.
+  - First probe data (17:37): during Rapport's two lines the engine's line state was right (4.2 s,
+    3.1 s), but +0xF0 stayed flat. Either the lines have no lip data, or the model is incomplete.
+    Vanilla lines will tell, now that the probe watches every face that speaks.
   - `[Face]` in our ocbp.ini:
     - `authority`: 0 means no listener and no hello.
     - `probe`: logs each line's lip ids from +0xF0. Dev only: release.py refuses it.
