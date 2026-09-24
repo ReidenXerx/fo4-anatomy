@@ -6,8 +6,8 @@ Two LooksMenu overlays on the men's body (BodyTalk4, whose files stay untouched)
                      It multiplies the skin already lit, so the skin's own detail and light stay; only
                      the hue deepens. Unlit (lighting influence 0): it is a factor, not a colour.
   AnatomyGlansGloss  a LIT pass: the men's own skin material (basehumanskin.bgsm, read as the game
-                     loads it) with its colour black and transparent, blended (one, inverse source
-                     alpha), so all it adds is its specular: ours, strong and very smooth on the head
+                     loads it) with its colour black, blended ADDITIVELY (one + one), so all it adds is
+                     its specular: ours, strong and very smooth on the head
                      only, over the skin's own normal map. Real highlights from real lights, as a wet
                      surface shows them. Rim, subsurface, skin tint and shadow casting are off (a black
                      diffuse must add nothing else).
@@ -15,6 +15,9 @@ Two LooksMenu overlays on the men's body (BodyTalk4, whose files stay untouched)
                      the owner: "its not gloss its like condom of top of head". A reflection with no
                      lighting reads as a clear shell. LMNSOverlays' nail polish (lit BGSM overlays)
                      showed LooksMenu takes lit materials.
+                     Blended (one, inverse source alpha) first, it turned the whole man near black at
+                     some angles (the owner, 2026-09-25): the lit shader does not carry the texture's
+                     alpha 0 through, so the black covered him. One + one needs no alpha: black adds 0.
 The head is where the tip bone Penis_05 carries the vertex (the same bone the shape scales, A-31):
 mask = smoothstep(0.35, 0.8) of its weight, so both end at the crown. Painted triangle by triangle
 (barycentric), never as a box: the shaft sits next to the head on the same UV island.
@@ -180,7 +183,7 @@ def gloss_bgsm(skin):
     tail[skin_tint] = 0
     head = bytearray(skin[:63])
     head[32] = 1                                              # alpha blend
-    struct.pack_into('<II', head, 33, 0, 7)                   # one, inverse source alpha
+    struct.pack_into('<II', head, 33, 0, 0)                   # one + one: adds its specular and nothing else
     head[41] = 0                                              # alpha test ref
     head[42] = 0                                              # alpha test off
     head[43] = 0                                              # z write off: a coat, not a surface
@@ -227,7 +230,7 @@ def main():
     if old.exists():
         old.unlink()
     print(f'{GLOSS_ID}.bgsm: the men\'s skin material ({len(skin)} B), normal {skin_tex[1]}, specular map ours, '
-          f'one / inverse source alpha, specular x{SPEC_MULT}')
+          f'one + one, specular x{SPEC_MULT}')
     templates = [dict(id=i, name=n, slots=[dict(slot=3, material='Overlays\\Anatomy\\' + i + ext)], playable=False,
                       transformable=False, sort=0, gender=0)
                  for i, n, ext in ((FLUSH_ID, 'Anatomy - glans colour', '.bgem'), (GLOSS_ID, 'Anatomy - glans gloss', '.bgsm'))]
