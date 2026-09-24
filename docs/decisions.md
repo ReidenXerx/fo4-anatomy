@@ -959,6 +959,24 @@ scenes, the AAF menu's too.
   them.
 - **Tests, in the fork's tests/face:** 44 checks, 10 of them frame by frame against a model of the
   merge. Four planted faults are all caught.
-- **Open, the owner's call:** A-26's reaction is off on a held face, which means it is off in every
-  AAF scene Rapport drives. It could be layered raise-only on top during contact, as the contact
-  mouth is.
+- **A-26 under a held face: the owner's poll, 2026-09-24.** The recommendation was to layer it on
+  top. His answer: "i agree with recommendation if it will work smoothly and wont bite as in future
+  bc we dividing logic of face expressions on several branchs in architecture. so keep in mind
+  this". Fork 8bec8a7 does it:
+  - The layers still meet in one place, FaceCompose::AfterMerge, with each one's rights written
+    there. The order is the engine, Rapport's face, the contact mouth (ids 2/21/22/44/46), then the
+    reaction.
+  - The reaction only RAISES its own ids (0, 3/26, 4/27, 14/37, 15/38), by at most its terms and
+    only as far as the contact blend. So it comes and goes with the contact, and a brow Rapport sets
+    higher stays Rapport's.
+  - `[Face] react=0` takes it off held faces without a rebuild, if Rapport ever animates the
+    reaction itself.
+- **The hello's features (fork f39831b), so Rapport can rely on each:**
+  - bit 0: set/clear, and the speaking bit;
+  - bit 1: the engine's own lines hand the MOUTH ids back, so Rapport can drop its 9 s mouth-bit
+    clearing;
+  - bit 2: the reaction may rise above a held face (sent only with react=1).
+- Rapport now also sends Clear(0) from its load Reset (its build 23AC97D9, not yet staged).
+- **Staged 2026-09-24, with the game closed and fo4-mcp's "free":**
+  - cbp.dll a8a641d91a24 (fork f39831b);
+  - Anatomy/ocbp.ini fd9a077a0849. That is the dev ini: the release's 0af76318767b plus `probe=1`.

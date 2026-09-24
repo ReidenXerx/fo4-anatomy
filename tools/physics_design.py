@@ -161,7 +161,7 @@ MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), prop
 # The fork's [Face] (A-27): Rapport's faces are written after the engine's merge. Only the switch ships:
 # probe= (log what a line's lip sync moves) and test= (the self-test) are for a tester's own ini, and
 # release.py refuses an ini that sets them.
-FACE = dict(authority=1)
+FACE = dict(authority=1, react=1)   # react: the busy mouth's reaction rises above Rapport's held face
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated

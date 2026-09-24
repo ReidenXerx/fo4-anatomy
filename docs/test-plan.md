@@ -297,10 +297,10 @@ running one cannot be moved. Checked outside the game.
   The log says `[face] Rapport let go of <form>'s face`.
 - A save loaded mid-scene: `[face] every held face let go: a save is loading`.
 
-### Face authority, review wave 1: cbp.dll efd8334d9712 (fork c7a0115) + Anatomy/ocbp.ini with [Face]
+### Face authority, review wave 1: cbp.dll a8a641d91a24 (fork f39831b) + Anatomy/ocbp.ini fd9a077a0849
 
 - At startup, `anatomy_ocbpc.log` has:
-  - `[mouth] on: mouth on (...), [Face] authority 1, probe 1`;
+  - `[mouth] on: mouth on (...), [Face] authority 1, react 1, probe 1`;
   - `[face] Rapport is loaded: listening`;
   - `[face] hello sent`.
 - A Rapport scene where someone speaks:
@@ -313,3 +313,7 @@ running one cannot be moved. Checked outside the game.
 - Pause the game (menu) mid-scene: the face holds still, and the mouth does not drift wider.
 - Leave the scene area through a door, or cross into another cell: no one else's face flickers into
   a held one.
+- Oral under Rapport: Rapport's oral face is the base. As the shaft goes deeper and faster, the
+  brows lift, the cheeks rise and the nose wrinkles above it (A-26), and all of that fades when
+  contact ends. Too much or too little: name the feature, since each is one number in
+  physics_design.FACE_WHILE_BUSY.
