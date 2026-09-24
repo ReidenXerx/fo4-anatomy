@@ -186,8 +186,11 @@ AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss
            reach=1.3, minReach=2.0, depth=2.0, minInside=3.0, maxStretch=1.10, rate=8.0, mouths=1,
            anatomyBone='AnatVulva', hands='LArm_Finger31|RArm_Finger31', handRadius=4.0, handHold=1.0,
            grips='LArm|RArm',   # a gripping hand is the target: the middle of <side>_Finger21..53
-           mouthDrop=1.3)       # a mouth is entered this far below her lip line: centred on it the shaft rode
+           mouthDrop=1.3,       # a mouth is entered this far below her lip line: centred on it the shaft rode
                                 # over her upper lip into cheek and nose (the owner's look, 2026-09-24)
+           mouthLead=1.5)       # and turned onto her mouth's axis this far in front of her lips: straight from his
+                                # hips, it crossed them at a slant, an oval wider than her mouth opens, and the
+                                # corner clipped (the owner's look, 2026-09-25, A-32)
 # The shape (A-31, the owner's poll 2026-09-25): "i want make it mushroom ... more narrow ствол give us more
 # fit stability especially with mouth ... i like when head is bigger". Everyone, the player too; the head
 # varied per man. The fork scales the chain's bones at run time (BodyTalk's files untouched): Penis_01 x
