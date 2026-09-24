@@ -6,7 +6,8 @@
      puts them; no ZeX genital bone is left; every bone that carries weight exists in the skeleton
      women load (ours, tools/skeleton.py): a missing one leaves its vertices behind when she moves.
   4. The skin outside the mask is untouched: every protected vertex (mask value 1) carries exactly
-     the weights it had before.
+     the weights it had before, but for the hip fold (A-30): the split of its core share among
+     pelvis, spine and thighs, with every other bone's weight and the core's total kept.
   5. The genital weights landed on the genitals: which vertices carry them, how strongly, and their
      weighted centres next to their bones.
 
@@ -116,18 +117,31 @@ def main():
     move = zex_bones.BREAST_MOVE if zex_bones.MOVE_BREASTS else {}
     m = mask_values(ab.OUT / 'Masks/AnatomyGenitalRegion.xml')
     bb, _ = before_nif.skin(b)
-    changed = 0
+    # the one change allowed outside the mask is the hip fold's (A-30, tools/hip_fold.py): the split of
+    # a vertex's core share among pelvis, spine and thighs. Every other bone keeps its weight (one under
+    # 0.005 may give up its slot) and the core's total is the same.
+    import hip_fold
+    core = set(hip_fold.CORE)
+    changed = fold = 0
     for i, v in m.items():
         if v < 1.0:
             continue
-        wb = sorted((move.get(bb[s], bb[s]), round(w, 4)) for s, w in b.skin_weights(i))
-        wa = sorted((bones[s], round(w, 4)) for s, w in a.skin_weights(i))
-        if wb != wa:
+        wb = dict((move.get(bb[s], bb[s]), w) for s, w in b.skin_weights(i))
+        wa = dict((bones[s], w) for s, w in a.skin_weights(i))
+        if sorted((k, round(x, 4)) for k, x in wb.items()) == sorted((k, round(x, 4)) for k, x in wa.items()):
+            continue
+        others = all(abs(wa.get(k, 0.0) - x) <= 0.003 or (x < 0.005 and k not in wa)
+                     for k, x in wb.items() if k not in core) and all(k in core or k in wb for k in wa)
+        total = abs(sum(x for k, x in wb.items() if k in core) - sum(x for k, x in wa.items() if k in core)) <= 0.006
+        if others and total:
+            fold += 1
+        else:
             changed += 1
     protected = sum(1 for v in m.values() if v >= 1.0)
-    print(f'4. protected vertices {protected}; weights changed on {changed} (breast move applied before comparing)')
+    print(f'4. protected vertices {protected}; the hip fold re-split pelvis/thigh on {fold} (A-30); any other '
+          f'weight changed on {changed} (breast move applied before comparing)')
     if changed:
-        problems.append(f'{changed} protected vertices changed weight')
+        problems.append(f'{changed} protected vertices changed weight beyond the hip fold\'s pelvis/thigh split')
     left_on_cloth = sum(1 for i in range(a.count) for s, w in a.skin_weights(i) if bones[s] in move)
     before_cloth = collections.Counter(move[bb[s]] for i in range(b.count) for s, w in b.skin_weights(i) if bb[s] in move)
     after_breast = collections.Counter(bones[s] for i in range(a.count) for s, w in a.skin_weights(i)
@@ -165,7 +179,7 @@ def main():
         print('\nFAIL - ' + '\n       '.join(problems))
         sys.exit(1)
     print(f'\nPASS - geometry and sliders unchanged, {len(pd.REST)} genital bones of our own bound where the design '
-          f'puts them and present in the women\'s skeleton, CBBE skin untouched outside the mask.')
+          f'puts them and present in the women\'s skeleton, CBBE skin untouched outside the mask but for the hip fold's pelvis/thigh split (A-30).')
 
 
 if __name__ == '__main__':

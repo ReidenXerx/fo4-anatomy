@@ -1168,4 +1168,43 @@ scenes, the AAF menu's too.
 - **Offline:** tests/face has a deep-face section (decode and refusals, none/half/full depth, blink,
   A-26 standing down, lifetime). 16 of 16 authority mutations caught. One was first MISSED: the test
   masked only the jaw, which the contact mouth overwrites anyway. The test now masks 17 too.
-- cbp.dll 6a40a1e7a848 carries A-29 and the A-28 pull-out fix. It is built and not yet staged.
+- cbp.dll 6a40a1e7a848 carries A-29 and the A-28 pull-out fix. Staged 2026-09-24. The owner (2026-09-25):
+  "facial deep expressions in browes is very immersive"; the throat bend (A-28) "is ideal".
+
+## A-30 — The hip fold: a softer pelvis -> thigh handover (the owner's poll, 2026-09-25)
+
+- **Ask:** "on inner side of hip its like a seam or something like mess with meshes and there not smooth
+  skin", then Photo177-178 ("ляжка"): a fold and a fin on the inside of her hip in a legs-up scene.
+- **What it is not (measured):** no weighted bone is missing from the skeleton women load (the A-14
+  fin); SQr17's thigh jiggle bones carry no vertex of this body; ButtFat's physics swung 5 units bends
+  edges 1.6x at most; the mesh at rest is sound, and texture cannot fold geometry.
+- **What it is:** the skinning. CBBE hands the groin's vertices from Pelvis_skin to the thigh over a thin
+  band, and with the legs up that band tears: worst edge 11x, 128 edges over 3x (the original CBBE:
+  8x in the inner thigh alone). The worst sat in the perineum, where the split jumps 0.52 -> 0.16
+  between neighbours.
+- **The poll:** the cost is garments worn OVER the naked body (panties, stockings, leg pieces). They
+  keep CBBE's weights, so in deep bends the skin can move up to 3.8 off them at the hip (1.5 walking).
+  Full outfits replace the body. The owner: "I agree with recommendation". BodySlide's Fix Clipping
+  does not cover this: it pushes a garment out of the body at rest, and here the rest shape is
+  unchanged. For a garment that clips, copy its bone weights from this body in Outfit Studio.
+- **Built (`tools/hip_fold.py`, builder stage 3b, before the genitals are split off):** the core bones'
+  split (Pelvis, Pelvis_Rear, Spine1, the thighs) is averaged with the neighbours across the band (both
+  groups >= 0.05, grown 4 rings, 20 rounds). The core's total and every other bone's weight stay
+  exactly (a weight under 0.005 may give up its slot). When four slots are too few, the torso bones'
+  shares merge (they barely move against each other when a leg bends) and the thigh keeps its share.
+  A first cut that let the thigh drop tore 7.2x at the perineum; one that left the genital zone out
+  kept its 11x there. With one slot, the bigger group takes it.
+- **Measured on the built body (81626eed4a79) against the deployed one:**
+
+  | pose | worst edge | edges > 3x | p99 |
+  | --- | --- | --- | --- |
+  | legs up 100 | 11.1 -> 4.0 | 128 -> 33 | 3.34 -> 2.61 |
+  | legs up and spread | 10.6 -> 3.9 | 96 -> 15 | 3.10 -> 2.33 |
+  | sitting 90 | 10.3 -> 3.8 | 107 -> 18 | 3.17 -> 2.46 |
+  | spread 45 | 4.2 -> 1.8 | 3 -> 0 | 1.55 -> 1.30 |
+  | walking | 3.5 -> 2.0 | 1 -> 0 | 1.59 -> 1.41 |
+
+- **Proofs:** hip_fold stops on a weight set that is not four or fewer summing to 1, on a thigh given to
+  the wrong side, on a lost non-core weight, and on welded copies that differ. verify_zex's check 4 now
+  allows exactly this, and a planted ButtFat -> pelvis move still FAILS it. split_genitals: 2513 of
+  2513 seam vertices move together. compare_builds: PASS, since the mesh and the morphs are untouched.

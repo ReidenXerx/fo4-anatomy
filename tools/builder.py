@@ -175,6 +175,8 @@ def main():
         sys.argv = ['mask.py', '--project', str(ab.OUT)]
         run_stage('2. the genital region', mask.main)
         run_stage('3. bones and weights', zb.main)
+        import hip_fold
+        run_stage('3b. the hip fold (A-30)', hip_fold.main)
         sys.argv = ['verify_zex.py', '--saved', str(ab.OUT / 'ShapeData/AnatomyBodyZeX')]
         run_stage('4. verification', verify_zex.main)
         run_stage('5. the genitals\' own shape', sg.main)
