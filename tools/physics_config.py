@@ -240,6 +240,25 @@ def aim_keys(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None):
     return keys
 
 
+def lip_keys():
+    """[Mouth] lip table (A-32, tools/lips.py): how each mouth morph moves the lips' inner edges across the
+    mouth, per sex, measured on the heads the game loads. lipXs = where; lip<F|M><id> = upper edge's
+    moves;lower edge's moves at those x, in the head's own units."""
+    import gamedata
+    import lips
+    game = gamedata.Game(lips.DATA)
+    out = ['; the lips around what is in her mouth (A-32): each morph\'s move of the upper;lower lip edge at lipXs',
+           'lipXs=' + ','.join(f'{x:g}' for x in lips.XS)]
+    for sex, head in (('F', 'BaseFemaleHead'), ('M', 'BaseMaleHead')):
+        table, gap, _, _, _ = lips.measure(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))
+        if gap > 0.1:
+            raise SystemExit(f'{head}: the lips do not meet at rest ({gap:.3f}): not the head lips.py measured')
+        for mid, _ in lips.MORPHS:
+            u, lo = table[mid]
+            out.append(f'lip{sex}{mid}=' + ','.join(f'{v:.3f}' for v in u) + ';' + ','.join(f'{v:.3f}' for v in lo))
+    return out
+
+
 def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None):
     """Our own ocbp.ini, read by the fork AFTER the player's (A-21): only our lines, nothing of theirs."""
     lines = ['; fo4-anatomy: read by the fo4-ocbpc fork after Data/F4SE/Plugins/ocbp.ini (decision A-21).',
@@ -248,7 +267,7 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
     for sec, vals in SECTIONS.items():
         lines += ['', f'[{sec}]'] + [f'{k}={v}' for k, v in vals.items()]
     lines += ['', '[Props]'] + [f'{k}={v}' for k, v in PROPS.items()]
-    lines += ['', '[Mouth]'] + [f'{k}={v}' for k, v in MOUTH.items()]
+    lines += ['', '[Mouth]'] + [f'{k}={v}' for k, v in MOUTH.items()] + lip_keys()
     lines += ['', '[Face]'] + [f'{k}={v}' for k, v in FACE.items()]
     lines += ['', '; the penis finds its opening (A-28): openings in Pelvis_skin\'s frame, angles in degrees',
               '[Aim]'] + [f'{k}={v}' for k, v in aim_keys(pelvis_world, head_f, head_m, neck_f, neck_m).items()]

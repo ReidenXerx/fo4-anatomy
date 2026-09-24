@@ -1239,7 +1239,47 @@ scenes, the AAF menu's too.
     Update.
   - Each man in the scan is checked once, the player too. MCM "Glans colour and gloss" off removes ours,
     and only ours, from every man given them.
+- **The owner's first look (2026-09-25):** "the shaft is perfect width!", and the head's shape is good. But
+  the gloss was "not gloss its like condom of top of head ... maybe for gloss u use specular map". An unlit
+  reflection reads as a clear shell. LMNSOverlays' nail polish showed LooksMenu takes LIT (BGSM) overlays.
+  So `AnatomyGlansGloss` is now the men's own skin material (basehumanskin.bgsm, read as the game loads it):
+  - its colour is black and fully transparent, blended one / inverse source alpha, so all it adds is its
+    specular;
+  - its specular map is ours (strength 1.0, smoothness 0.85, on the head only), over the skin's own
+    normal map, with the specular multiplier at 1.6;
+  - rim, subsurface, skin tint and shadow casting are off, and it writes no depth.
+  The BGSM's lighting fields were decoded on two working files (the skin and the nail polish), which parse
+  to the same 25 trailing bytes. The template id is unchanged, so the men who have it keep it.
 - **Open:**
   - The overlays are painted in the owner's BodyTalk4 UV. For players, the Anatomy Builder must paint them
     from the player's own men's body before they can ship (they are not in release.py).
   - Tune FLUSH, SHEEN and ENV_SCALE by the owner's look.
+
+## A-32 — The lips fitted round what is in her mouth (the owner, 2026-09-25)
+
+- **Ask:** "minor clipping on mouth lips are we able to make mouth to automatically adjust to shape of thing
+  (penis/hand) is puting there? like real humans lips do when u put something there and they shrink around
+  it? would be a really realist look".
+- **Why it clipped (measured):** A-20's femaleGap 2.97 was the distance between two OUTER lip points,
+  including the jaw's forward swing. The shaft passes the lips' INNER edge, the rim of the head's mouth
+  hole, and there Jaw Open 1.0 opens 1.91. The jaw opened a third too little: the log's "lower lip 2.43
+  down -> Jaw Open 0.90" moves the edge only 1.72, so the lower lip sat ~0.7 inside the shaft.
+- **What a mouth can do (`tools/lips.py`, on the heads the game loads):** per morph, how far the upper
+  and lower inner edges move at seven points across the mouth (the rim is 3.2 wide):
+  - Jaw Open opens a rounded hole (1.91 in the middle, 1.46-1.51 near the corners).
+  - The lower funnel opens the middle only (0.32).
+  - Upper Lip Up and Lower Lip Down open their side (0.38-0.39); Upper Lip Down and Lower Lip Up close it.
+  - The upper lip rises at most ~0.6. A shaft wraps only riding below the lip line, which is where A-28's
+    mouthDrop (1.3) puts it.
+  - Pucker and the corners-in morphs narrow the OUTER mouth (6.2 wide) by at most 0.8, and do not change
+    the opening: not used.
+- **Built (fork b5e22d4):**
+  - [Mouth] carries the table per sex (lipXs, lip<F|M><id>). Each crossing gives its section in the lip
+    plane.
+  - `LipFit::Fit` puts the upper edge 0.05 over it and the lower 0.05 under it wherever it spans, and keeps
+    the lips closed elsewhere. Inside costs 30 times a gap. It is coordinate descent from last frame's lips,
+    eased at the open and close rates.
+  - The fitted lips replace jaw / funnel / lift in the contact-mouth layer; the anticipation floor stays.
+    A finger opens only the middle; two things together get lips round both.
+  - tests/lips: 9 cases, 10/10 mutations. tests/face: the lip path.
+- **Open:** tune clearance and the inside cost by the owner's look; the log prints each mouth's first fit.

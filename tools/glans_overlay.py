@@ -5,9 +5,16 @@ Two LooksMenu overlays on the men's body (BodyTalk4, whose files stay untouched)
   AnatomyGlansFlush  a MULTIPLY pass (src = dest colour, dst = zero): white everywhere, rose on the head.
                      It multiplies the skin already lit, so the skin's own detail and light stay; only
                      the hue deepens. Unlit (lighting influence 0): it is a factor, not a colour.
-  AnatomyGlansGloss  an ADDITIVE pass (one, one): a faint sheen on the head plus the game's own glass
-                     cubemap (Textures1.ba2 Shared/Cubemaps/ShinyGlass_e.dds), masked to the head, so
-                     the reflection moves with the view as a wet surface's does.
+  AnatomyGlansGloss  a LIT pass: the men's own skin material (basehumanskin.bgsm, read as the game
+                     loads it) with its colour black and transparent, blended (one, inverse source
+                     alpha), so all it adds is its specular: ours, strong and very smooth on the head
+                     only, over the skin's own normal map. Real highlights from real lights, as a wet
+                     surface shows them. Rim, subsurface, skin tint and shadow casting are off (a black
+                     diffuse must add nothing else).
+                     The first gloss (2026-09-25) was an unlit effect pass with the game's glass cubemap;
+                     the owner: "its not gloss its like condom of top of head". A reflection with no
+                     lighting reads as a clear shell. LMNSOverlays' nail polish (lit BGSM overlays)
+                     showed LooksMenu takes lit materials.
 The head is where the tip bone Penis_05 carries the vertex (the same bone the shape scales, A-31):
 mask = smoothstep(0.35, 0.8) of its weight, so both end at the crown. Painted triangle by triangle
 (barycentric), never as a box: the shaft sits next to the head on the same UV island.
@@ -17,7 +24,9 @@ Measured, and the stage stops on it: no triangle that carries no head weight may
 
 The BGEM layout is the one decoded from materials that work in this game (scratchpad bgem_read: the
 63-byte base header, five textures, 47 bytes of effect fields; Caliente's pubic hair overlay and a glass
-material both read with nothing left over), and every file written is read back through it.
+material both read with nothing left over), and every file written is read back through it. The BGSM's
+lighting fields were decoded the same way on the men's skin and LMNS's nail material (scratchpad
+bgsm_read: both parse to 25 identical trailing bytes); only those fields are changed here.
 
     python tools/glans_overlay.py [--data <Data>] [--out build/overlays]
 """
@@ -35,9 +44,10 @@ BODY = 'Meshes/Actors/Character/CharacterAssets/MaleBody.nif'
 SHAPE, HEAD_BONE = 'BaseMaleBody:0', 'Penis_05'
 SIZE = 2048
 FLUSH = (1.0, 0.72, 0.75)           # the multiply factor on the head: red kept, green and blue down
-SHEEN = 0.06                        # the gloss pass's own faint white on the head
-ENV_SCALE = 0.35                    # how strongly the cubemap shows (the glass material: 0.53)
-CUBEMAP = r'Shared\Cubemaps\ShinyGlass_e.dds'
+SPEC, GLOSS = 1.0, 0.85            # the head's specular map: red = strength, green = smoothness (wet)
+SPEC_MULT = 1.6                     # the material's specular multiplier (the skin's own: 1.0)
+SKIN = 'Materials/actors/Character/BaseHumanMale/basehumanskin.bgsm'
+ENV_SCALE = 1.0
 NORMAL = r'Actors\Character\BaseHumanMale\BaseMaleBody_n.dds'
 PLUGIN = 'Anatomy.esp'
 TEX = r'Overlays\Anatomy'
@@ -145,6 +155,43 @@ def read_back(blob):
     return src, dst, env, tex, lighting
 
 
+def gloss_bgsm(skin):
+    """The men's skin material as the gloss pass: black, transparent colour; our specular map; one + inverse
+    source alpha; rim, subsurface, skin tint and shadow casting off; specular multiplier SPEC_MULT."""
+    o = 63
+    tex = []
+    for _ in range(9):
+        n = struct.unpack_from('<I', skin, o)[0]
+        tex.append(skin[o + 4:o + 4 + n - 1].decode('latin1'))
+        o += 4 + n
+    tail = bytearray(skin[o:])
+    # the lighting fields, at their offsets from the end of the textures (decoded on two real files)
+    if tail[1] not in (0, 1) or tail[10] not in (0, 1) or tail[15] != 1:
+        raise SystemExit(f'{SKIN}: rim/subsurface/specular flags are not where the layout says: not a v2 skin BGSM')
+    n = struct.unpack_from('<I', tail, 64)[0]
+    after_root = 68 + n
+    emit = tail[after_root + 1]
+    flags = after_root + 2 + (12 if emit else 0) + 4          # model-space normals, then the bools
+    cast, skin_tint = flags + 5, flags + 12 + 12 + 2
+    tail[1] = 0                                               # rim lighting
+    tail[10] = 0                                              # subsurface lighting
+    struct.pack_into('<f', tail, 28, SPEC_MULT)
+    tail[cast] = 0
+    tail[skin_tint] = 0
+    head = bytearray(skin[:63])
+    head[32] = 1                                              # alpha blend
+    struct.pack_into('<II', head, 33, 0, 7)                   # one, inverse source alpha
+    head[41] = 0                                              # alpha test ref
+    head[42] = 0                                              # alpha test off
+    head[43] = 0                                              # z write off: a coat, not a surface
+    out = bytes(head)
+    ours = [TEX + r'\GlansGlossBase.dds', tex[1], TEX + r'\GlansSpec.dds'] + [''] * 6
+    for t in ours:
+        raw = t.encode('ascii') + b'\0'
+        out += struct.pack('<I', len(raw)) + raw
+    return out + bytes(tail), tex
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--data', type=pathlib.Path, default=DATA)
@@ -158,22 +205,32 @@ def main():
         raise SystemExit('almost nothing painted: the UVs or the bone are not what was measured')
     tex = args.out / 'Textures' / TEX.replace('\\', '/')
     dds(tex / 'GlansFlush.dds', [tuple(round(255 * (1 - v * (1 - f))) for f in FLUSH) for v in mask])
-    dds(tex / 'GlansSheen.dds', [(round(255 * v * SHEEN),) * 3 for v in mask])
-    dds(tex / 'GlansMask.dds', [(round(255 * v),) * 3 for v in mask])
+    dds(tex / 'GlansSpec.dds', [(round(255 * v * SPEC), round(255 * v * GLOSS), 0) for v in mask])
+    from PIL import Image
+    Image.new('RGBA', (4, 4), (0, 0, 0, 0)).save(tex / 'GlansGlossBase.dds', 'DDS', pixel_format='DXT5')
     mats = args.out / 'Materials' / TEX.replace('\\', '/')
     mats.mkdir(parents=True, exist_ok=True)
     flush = bgem(TEX + r'\GlansFlush.dds', src=4, dst=1)                    # dest colour x ours
-    gloss = bgem(TEX + r'\GlansSheen.dds', envmap=CUBEMAP, envmask=TEX + r'\GlansMask.dds', src=0, dst=0, env=True,
-                 lighting=1.0)                                               # one + one
-    for name, blob, want in ((FLUSH_ID, flush, (4, 1, 0)), (GLOSS_ID, gloss, (0, 0, 1))):
-        src, dst, env, texs, _ = read_back(blob)
-        if (src, dst, env) != want:
-            raise SystemExit(f'{name}: read back src {src} dst {dst} envmap {env}, wrote {want}')
-        (mats / f'{name}.bgem').write_bytes(blob)
-        print(f'{name}.bgem: blend {src}/{dst}, envmap {env}, textures {[t for t in texs if t]}')
-    templates = [dict(id=i, name=n, slots=[dict(slot=3, material='Overlays\\Anatomy\\' + i + '.bgem')], playable=False,
+    src, dst, env, texs, _ = read_back(flush)
+    if (src, dst, env) != (4, 1, 0):
+        raise SystemExit(f'{FLUSH_ID}: read back src {src} dst {dst} envmap {env}')
+    (mats / f'{FLUSH_ID}.bgem').write_bytes(flush)
+    print(f'{FLUSH_ID}.bgem: blend {src}/{dst}, textures {[t for t in texs if t]}')
+    import gamedata
+    skin = gamedata.Game(args.data).read(SKIN)
+    gloss, skin_tex = gloss_bgsm(skin)
+    if len(gloss) - len(skin) != sum(len(t) for t in (TEX + r'\GlansGlossBase.dds', TEX + r'\GlansSpec.dds')) - \
+            sum(len(t) for t in (skin_tex[0], skin_tex[2])):
+        raise SystemExit(f'{GLOSS_ID}: the lighting fields did not carry over whole')
+    (mats / f'{GLOSS_ID}.bgsm').write_bytes(gloss)
+    old = mats / f'{GLOSS_ID}.bgem'
+    if old.exists():
+        old.unlink()
+    print(f'{GLOSS_ID}.bgsm: the men\'s skin material ({len(skin)} B), normal {skin_tex[1]}, specular map ours, '
+          f'one / inverse source alpha, specular x{SPEC_MULT}')
+    templates = [dict(id=i, name=n, slots=[dict(slot=3, material='Overlays\\Anatomy\\' + i + ext)], playable=False,
                       transformable=False, sort=0, gender=0)
-                 for i, n in ((FLUSH_ID, 'Anatomy - glans colour'), (GLOSS_ID, 'Anatomy - glans gloss'))]
+                 for i, n, ext in ((FLUSH_ID, 'Anatomy - glans colour', '.bgem'), (GLOSS_ID, 'Anatomy - glans gloss', '.bgsm'))]
     tj = args.out / 'F4SE/Plugins/F4EE/Overlays' / PLUGIN / 'overlays.json'
     tj.parent.mkdir(parents=True, exist_ok=True)
     tj.write_text(json.dumps(templates, indent=4), encoding='utf-8')
