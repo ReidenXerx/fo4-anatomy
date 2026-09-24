@@ -274,3 +274,25 @@ running one cannot be moved. Checked outside the game.
 - Nothing else should change: other scenes, dialogue, kissing, or her blink.
 - Too much or too little: say which feature (brows, cheeks, nose). Each is one number in
   physics_design.FACE_WHILE_BUSY.
+
+### Rapport's face authority (A-27): cbp.dll a0c7b04f70fe, in place, together with Rapport's new DLL
+
+- `anatomy_ocbpc.log` at startup:
+  - `[face] Rapport is loaded: listening for the faces it holds`
+  - `[face] hello sent: Rapport's faces are applied here`. If it says "hello not heard" instead,
+    Rapport did not listen: tell the Rapport session.
+- In any AAF scene, the AAF menu's included:
+  - Both faces follow Rapport's expressions. They can close what the animation opens, e.g. a jaw
+    held shut.
+  - `[face] Rapport holds <form>'s face` and `[face] <form>: the held face is on` appear once per
+    actor.
+  - Her eyes may sit a little more closed than before. That is Rapport's eyelid value, now shown.
+- Oral:
+  - The mouth still opens around the shaft, and it goes back to Rapport's jaw after contact.
+  - A-26's brows and cheeks no longer add on top: Rapport's face rules.
+- A spoken line in a scene: the lips move while the brows and eyes stay Rapport's. The log gets
+  `[face] <form> spoke for N s: the animation layer moved ...`: send those lines to the Rapport
+  session.
+- After the scene and Rapport's ~20 s afterglow, the face is back to normal on the next frame.
+  The log says `[face] Rapport let go of <form>'s face`.
+- A save loaded mid-scene: `[face] every held face let go: a save is loading`.

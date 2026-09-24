@@ -424,8 +424,20 @@ GPL-3.0; it never ships.
   - It is at 0x6689D0: `bool merge(data, float dt, bool)`.
   - It computes `final[i] = clamp(max(override[i], animation[i]), 0, 1)`. **So an override can open
     the mouth beyond the animation, but never close what the animation opens.**
-  - It runs only when 0x667E50 reports a change. In a paused game (photo mode) that is false, which
-    is why SAM patches the `jz` at 0x668B32.
+  - Every frame the game runs (dt > 0) it recomputes the final weights from scratch (read in full
+    2026-09-24):
+    - It advances the animation layer by dt (0x9C15C0).
+    - Then it asks 0x667E50. If the answer is true, final = clamp(max(override, animation)) for all
+      54. If false, final = the animation layer, copied when anything differs, and the overrides
+      are IGNORED. SAM patches that `jz` at 0x668B32 so the max path always runs. What 0x667E50
+      tests is not known.
+    - With dt <= 0 (paused) it computes nothing, and the last final weights stay.
+    - So a value written after it lasts exactly one frame: a released face is gone the next frame.
+  - **The eyelids are special.** Its caller always passes flag = 1, so a blink state machine runs
+    first (0x668170; state +0x2A8, timer +0x2AC, resting value +0x2B0). It writes final[18] and
+    final[41] through 0x6683C0.
+    - After the merge, final[18/41] = min(1, that blink + animation[18/41]).
+    - So an MFG override never reaches the eyelids. This is what SAM's blink fix patches.
   - Its one caller, 0x6860FA, rebuilds the face mesh (0x685A60) when it returns true.
   - Source: Screen Archer Menu's `SAM/mfg.h` and `SAF/hacks.cpp` (github maximusmaxy/ScreenArcherMenu)
     gave the layout. The merge itself was disassembled (capstone, `scratchpad/fodis.py`).
@@ -479,6 +491,22 @@ GPL-3.0; it never ships.
   - The ids are the engine's 50-morph table as fo4-rapport/tools/make_mfg.py quotes it. 26 is
     labelled "Right Outer Brow Up" but sorts as "Right Brow Outer Up", the mirror of 3.
   - inih cuts lines at 200 bytes: physics_config guards it.
+- **Rapport's face authority (A-27, fork `FaceAuthority.h`):**
+  - Rapport sends its faces over F4SE messaging, and HookMerge writes them FIRST: owned morphs
+    replace the merge, and the blink keeps the larger value.
+  - The contact mouth then works from Rapport's jaw. A-26's face terms are off on a held face.
+  - UpdateMouths matches held faces to OCBPC's scanned actors (the player's cell, within
+    actorDistance, the player included) and looks up the rest by form (`LookupFormByID`). OCBPC
+    already does that lookup for the player on the same thread (the main one, from
+    ProcessEventQueue).
+  - F4SE loads plugins one at a time (Query, Load, then it records the plugin). So
+    `RegisterListener(..., "OCBPC plugin", ...)` in another plugin's Load works only if cbp.dll
+    sorted first. F4SE's docs say to register at PostLoad. Our hello goes at PostPostLoad.
+  - The discovery log now takes a lock: Rapport's messages arrive on a Papyrus thread, and every
+    other line comes from the main one.
+  - MSBuild's post-build step copies cbp.dll to `$(Fallout4Path)\cbp.dll`. With the variable unset
+    that is `C:\cbp.dll`, a stray copy at the drive root. Build with `/p:Fallout4Path=<scratch dir>`,
+    and never point it at the game: that would bypass the one-holder rule.
 - **The owner's oral look (Photo149-154):**
   - Mostly the animation's open mouth wraps the shaft fine (Photos 152, 153).
   - In Photo150 the lips stay CLOSED while the penis head is at her mouth, so it clips through.

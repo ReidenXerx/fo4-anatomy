@@ -877,3 +877,57 @@ brows, nose".
 - physics_config refuses a line longer than the fork's INI reader takes (200 bytes); it would cut
   it silently.
 - Rapport was told. Live: cbp.dll bd3362aefdb5 (fork 3edf048), Anatomy/ocbp.ini 8df243d02004.
+
+## A-27 — Rapport is the source of truth for faces (the owner, through the Rapport session, 2026-09-24)
+
+**The owner, to the Rapport session:** "we need grab whole power on ruling things we rule in rapport
+including expressions bc we need to be SOT". His poll the same day: Rapport's faces in ALL AAF
+scenes, the AAF menu's too.
+
+**Why it happens in our plugin.**
+- The engine merges a face as max(MFG override, animation), at +0x6689D0. An override can open a
+  feature but never close what an animation opens.
+- Read out of the executable the same day: after the merge, the upper eyelids are set to
+  min(1, blink + animation). Overrides never reach them.
+- Our mouth hook already writes after that merge. So Rapport sends its faces to cbp.dll, and they
+  are written over the merged weights.
+
+**The contract (agreed with the Rapport session; fork `CBPSSE/FaceAuthority.h`):**
+- F4SE messaging, sender "Rapport", receiver "OCBPC plugin":
+  - `'RFAS'` Set: u32 version 1, u32 formID, u64 owned, float value[54]. 232 bytes, values 0..1.
+  - `'RFAC'` Clear: version 1, formID. Form 0 means everyone.
+- Back to Rapport at PostPostLoad: `'RFAH'` Hello {version 1, features 1}.
+  - It is sent only when the merge hook is installed. With no hello, Rapport keeps its own way.
+- What Rapport sends:
+  - It owns ids 0-49, and a morph it does not name goes out as 0.
+  - It sends a face only when the face changes, and a clear at every scene end or afterglow end.
+- For a spoken line, Rapport re-sends the face without its 29 mouth bits for about 9 s. An unowned
+  morph keeps the engine's value, which is the lip sync. Bit 63 ("speaking") would do the same; it
+  stays in the contract, unused.
+- We drop every held face on PreLoadGame and NewGame. Rapport never sends a clear-all on a load.
+
+**Composition, every frame, after the engine's merge:**
+1. Owned morphs take Rapport's value. The blink (18/41) takes the larger of the engine's and
+   Rapport's, so the eyes still close.
+2. Then the contact mouth. It starts from Rapport's jaw (the oral base is 0.35), opens to the fit
+   while something is inside, and blends back afterwards.
+3. A-26's face terms are off on a held face: Rapport's is the face then.
+
+**What changes on screen:**
+- Rapport's faces hold in every scene, and they can CLOSE features, e.g. a jaw at 0 over an
+  animation that opens it.
+- Its eyelid values show for the first time, as a floor under the blink. The Rapport session was
+  told its eyes will look more closed than its values ever did.
+
+**Diagnostics:**
+- `anatomy_ocbpc.log` gets `[face]` lines: listening, hello, the first set per actor, applied (found
+  by the scan or looked up by form), let go.
+- While a held face has handed its mouth back, the animation layer is watched. When the line ends,
+  the log names the ids that moved (lip sync) and the ones that held steady. This is for Rapport's
+  mouth table: its measured list wins.
+- `[Mouth] authorityTest=<form id>` runs a self-test through F4SE: a test face, held 20 s of every 30.
+
+**Build:** fork d4bff80, cbp.dll a0c7b04f70fe (sha1).
+- Written in place 2026-09-24 16:19, with the game closed (fo4-mcp said "free"), and verified
+  live.
+- Offline test: 29/29. A mutant that ignores the owned mask fails 4 of them.
