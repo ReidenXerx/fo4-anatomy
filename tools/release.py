@@ -4,6 +4,7 @@
 
 What ships (nothing of anyone else's but Nahka's own work, with her page's permission, A-23):
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
+    Scripts/AnatomyAim.pex                                             the aim's scene list (A-28)
     F4SE/Plugins/cbp.dll                                               the fo4-ocbpc fork (GPL-3.0; MIT base)
     F4SE/Plugins/Anatomy/cbp.dll - GPL-3.0.txt, - MIT (OCBPC).txt      its two licences, as the fork has them
     F4SE/Plugins/Anatomy/ocbp.ini, OCBPCollisionConfig.txt             our physics lines and [Bones]
@@ -156,6 +157,7 @@ def files(version):
     out = {
         'Anatomy.esp': BUILD / 'plugin/Anatomy.esp',
         'Scripts/Anatomy/Arousal.pex': BUILD / 'papyrus/Anatomy/Arousal.pex',
+        'Scripts/AnatomyAim.pex': BUILD / 'papyrus/AnatomyAim.pex',
         'MCM/Config/Anatomy/config.json': BUILD / 'mcm/MCM/Config/Anatomy/config.json',
         'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm/MCM/Config/Anatomy/settings.ini',
         'F4SE/Plugins/cbp.dll': FORK / 'x64/Release/cbp.dll',

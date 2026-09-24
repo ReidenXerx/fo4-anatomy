@@ -70,8 +70,8 @@ SECTIONS = {
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
-from physics_design import (AFFECTED, COLLIDERS, CREATURE_COLLIDERS, FACE, MOUTH, MOUTH_CHAINS, PARENT,  # noqa: E402
-                            PROPS, STRETCH)
+from physics_design import (AFFECTED, AIM, AIM_CHAIN, COLLIDERS, CREATURE_COLLIDERS, FACE, MOUTH,  # noqa: E402
+                            MOUTH_CHAINS, PARENT, PROPS, STRETCH)
 
 
 def sections(text):
@@ -196,6 +196,25 @@ def bone_table(pelvis_world):
     return rows
 
 
+def aim_keys(pelvis_world):
+    """[Aim] (A-28) as the fork reads it: each opening's centre a point in Pelvis_skin's frame (bone_table's
+    formula), its axis into her a direction in that frame (stretch_keys's: R^T x the skin-space axis)."""
+    pr, pt, ps = pelvis_world
+
+    def point(skin):
+        w = [skin[i] - pd.SKIN_OFFSET[i] - pt[i] for i in range(3)]
+        return [v / ps for v in zb.apply(zb.transpose(pr), w)]
+
+    def axis(a):
+        return zb.apply(zb.transpose(pr), list(a))
+
+    def fmt(v):
+        return ','.join(f'{x:.5f}' for x in v)
+
+    return dict(AIM, chain='|'.join(AIM_CHAIN), vagina=fmt(point(pd.VAGINA_CENTRE)), vaginaIn=fmt(axis(pd.VAGINA_AXIS)),
+                anus=fmt(point(pd.ANUS_CENTRE)), anusIn=fmt(axis(pd.ANUS_AXIS)))
+
+
 def anatomy_ini(pelvis_world):
     """Our own ocbp.ini, read by the fork AFTER the player's (A-21): only our lines, nothing of theirs."""
     lines = ['; fo4-anatomy: read by the fo4-ocbpc fork after Data/F4SE/Plugins/ocbp.ini (decision A-21).',
@@ -206,6 +225,8 @@ def anatomy_ini(pelvis_world):
     lines += ['', '[Props]'] + [f'{k}={v}' for k, v in PROPS.items()]
     lines += ['', '[Mouth]'] + [f'{k}={v}' for k, v in MOUTH.items()]
     lines += ['', '[Face]'] + [f'{k}={v}' for k, v in FACE.items()]
+    lines += ['', '; the penis finds its opening (A-28): openings in Pelvis_skin\'s frame, angles in degrees',
+              '[Aim]'] + [f'{k}={v}' for k, v in aim_keys(pelvis_world).items()]
     lines += ['', '; our nodes, created at run time under the skeleton the actor loaded: name=parent,x,y,z',
               '[Bones]'] + [f'{n}={p},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, p, l in bone_table(pelvis_world)]
     return '\n'.join(lines) + '\n'

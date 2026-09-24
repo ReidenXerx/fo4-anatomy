@@ -1017,3 +1017,46 @@ scenes, the AAF menu's too.
       measured MOUTH ids.
 - Live, with the owner's word that the game was closed: cbp.dll 013278e6cd67 (fork ebe2195), and
   the ini is still fd9a077a0849.
+
+## A-28 — The penis finds its opening (the owner, 2026-09-24)
+
+- **The ask:** "autotargeting ... of cock into targeted holes ... if its vaginal pose - autotargeting vagina
+  with perfect fit into hole with aligning penis inside it and for mouth and anus too". The owner called it
+  "the last piece we miss for make all our engine TRULY amazing". I recommended automatic detection by
+  geometry (AAF's position tags could come later as a tie-breaker); the owner said "ofc".
+- **Why it is needed:** animations are made against ZeX's anatomy, not ours. A-14 measured anal
+  animations aiming 1.2 behind Nahka's ring; a shaft beside the opening pushes the lips instead of
+  entering.
+- **What it does (fo4-ocbpc `Aim.cpp`, `AimSolve.cpp`; `ocbp.ini [Aim]`):** each frame, before the colliders
+  are built, every chain `Penis_00`..`Penis_05` turns about `Penis_00` onto the opening it is closest to
+  entering, and its children's offsets stretch up to 10% when it falls short.
+  - The openings: her vagina and anus are the fit's own lines (`VAGINA/ANUS_CENTRE` along their `_AXIS`, the
+    paths every shaft was simulated along), in Pelvis_skin's frame. Only women carrying our bones
+    (`AnatVulva`) have them. Every mouth is [Mouth]'s own point, entered against the way the face looks.
+  - The rules: a new lock turns the shaft at most 35 degrees and is kept up to 45, so it does not flicker at
+    the edge. The shaft must run within 75 degrees of the opening's axis (never in from the side or from
+    inside). The opening is 2 to 1.3 x the chain's length (16.1) from its root. It aims 2 inside, so the
+    shaft follows the opening in. Never one's own opening. A lock is never stolen by a better one.
+  - The correction sits ON TOP of the animation's pose, in the root's parent's frame (it rides along
+    when the actor turns), and eases in and out (rate 8/s). A pose past the angles stays the
+    animation's. When nothing is locked, the animation's pose is put back exactly.
+  - The lips then open around the corrected shaft, because the colliders are built after it (A-15,
+    A-17), and the mouth opens to it (A-20).
+- **Only in scenes:** out of a scene the bind pose points the bones forward, so two nude people standing
+  close must never be aimed. `Anatomy:Arousal` already reads AAF's busy keyword each tick; it now tells the
+  fork who is busy through a native of our own, `AnatomyAim.SetBusy` (`Scripts/AnatomyAim.pex`). It does
+  this even with arousal switched off. OCBPC's `OCBP_API` script is not touched (A-21). The fork forgets
+  the list after 10 s of silence. The call is made while anyone is busy and once more after, so a cbp.dll
+  without the native can only complain during scenes.
+- **Tested offline:** `tests/aim` has 13 cases: the settled shaft runs through the aim point, gates,
+  hysteresis, the stretch cap, a turned parent, the fade, choice, smoothing, and the matrix round trip.
+  Fourteen mutations of the solver are each caught. Two checks no test could tell apart (an opening
+  behind the root; snapping the fade to exactly zero) turned out redundant and were removed.
+- **Unknown until the owner's look:** the hook runs after the game's event queue. If the animation writes
+  the penis bones AFTER it in the frame, the aim would be invisible. The log says which the first time a
+  chain is aimed ("the animation keys Penis_00 every frame" or "nothing keys Penis_00").
+- **Build:** fork 8eee190, cbp.dll 13bd73d14f73; Arousal.pex a9fa6c70692e, AnatomyAim.pex fc3ef4ce09ad (a NEW
+  file: it needs the owner's Deploy). A review (Sonnet) found that someone leaving the scan with a correction on
+  would keep it; they are now looked up by form and put back after half a second unseen.
+- **Open:** tune capture/keep/entry, depth and the stretch by the owner's look; AAF position tags as a
+  tie-breaker in two-hole positions; men's openings (our bones are women's only).

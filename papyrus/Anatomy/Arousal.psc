@@ -54,6 +54,7 @@ Bool bCompanions = True          ; Ivy's own arousal and Overture's Desire
 Bool bNaked = True
 Bool _mcm = False
 Float _appliedStrength = -1.0    ; the strength the shown layers were written with
+Int _aimBusy = 0                 ; how many the fork's aim was last told are in a scene (A-28)
 
 Actor[] _who
 Float[] _level
@@ -211,6 +212,7 @@ Function Tick()
 			w -= 1
 		EndWhile
 		_lastTick = -1.0
+		TellAim(BusyAmong(People()))             ; the aim is not arousal's: it still hears who is in a scene
 		Return
 	EndIf
 	If fNippleStrength != _appliedStrength       ; a new strength: rewrite every shown layer
@@ -233,31 +235,10 @@ Function Tick()
 		dt = MAX_STEP_SECONDS
 	EndIf
 
-	Actor player = Game.GetPlayer()
-	Actor[] people = new Actor[0]
-	people.Add(player, 1)
-	ObjectReference[] near = player.FindAllReferencesWithKeyword(_npc, SCAN_RADIUS)
+	Actor[] people = People()
+	Actor[] busy = BusyAmong(people)
+	TellAim(busy)
 	Int i = 0
-	While near != None && i < near.Length && people.Length < MAX_PEOPLE
-		If near[i] is Actor
-			Actor a = near[i] as Actor
-			If a != player && !a.IsDead() && a.Is3DLoaded()
-				people.Add(a, 1)
-			EndIf
-		EndIf
-		i += 1
-	EndWhile
-
-	Actor[] busy = new Actor[0]
-	If _busy != None
-		i = 0
-		While i < people.Length
-			If people[i].HasKeyword(_busy)
-				busy.Add(people[i], 1)
-			EndIf
-			i += 1
-		EndWhile
-	EndIf
 
 	; everyone here who could be aroused
 	i = 0
@@ -299,6 +280,50 @@ Function Tick()
 		EndIf
 		i -= 1
 	EndWhile
+EndFunction
+
+; the player and everyone alive and loaded around them
+Actor[] Function People()
+	Actor player = Game.GetPlayer()
+	Actor[] people = new Actor[0]
+	people.Add(player, 1)
+	ObjectReference[] near = player.FindAllReferencesWithKeyword(_npc, SCAN_RADIUS)
+	Int i = 0
+	While near != None && i < near.Length && people.Length < MAX_PEOPLE
+		If near[i] is Actor
+			Actor a = near[i] as Actor
+			If a != player && !a.IsDead() && a.Is3DLoaded()
+				people.Add(a, 1)
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	Return people
+EndFunction
+
+; those of them in an AAF scene (AAF's busy keyword); nobody without AAF
+Actor[] Function BusyAmong(Actor[] people)
+	Actor[] busy = new Actor[0]
+	If _busy != None
+		Int i = 0
+		While i < people.Length
+			If people[i].HasKeyword(_busy)
+				busy.Add(people[i], 1)
+			EndIf
+			i += 1
+		EndWhile
+	EndIf
+	Return busy
+EndFunction
+
+; A-28: the fork's aim (cbp.dll) turns a shaft onto an opening only between people in a scene, and hears
+; who they are from here, each tick while anyone is, and once more when nobody is. So with a cbp.dll that
+; lacks the native, Papyrus can complain only during scenes.
+Function TellAim(Actor[] busy)
+	If busy.Length > 0 || _aimBusy > 0
+		AnatomyAim.SetBusy(busy)
+	EndIf
+	_aimBusy = busy.Length
 EndFunction
 
 Bool Function IsWoman(Actor a)

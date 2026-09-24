@@ -163,6 +163,19 @@ MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), prop
 # release.py refuses an ini that sets them.
 FACE = dict(authority=1, react=1)   # react: the busy mouth's reaction rises above Rapport's held face
 
+# The fork's [Aim] (A-28): each frame a penis chain turns about its root onto the opening it is closest to
+# entering. The chain is ZeX's: Penis_00 hangs off the pelvis and carries the shaft the body skins to
+# (MaleBody names Penis_00-05). Her openings are the fit's own lines -- VAGINA/ANUS_CENTRE along their
+# _AXIS, into her, the paths every shaft was simulated along (fit_check, ocbpc_sim) -- which
+# physics_config.aim_keys writes into Pelvis_skin's frame as [Bones] are. Mouths are [Mouth]'s own point.
+# Angles in degrees. A new lock turns the shaft at most captureAngle and is kept up to keepAngle; the
+# shaft runs within entryAngle of the opening's axis, and the opening lies within reach x the chain's
+# length (16.1). It aims depth inside, and stretches up to maxStretch so minInside passes the entrance.
+# Only people in an AAF scene (Anatomy:Arousal tells the fork through AnatomyAim.SetBusy).
+AIM_CHAIN = ('Penis_00',) + SHAFT
+AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, entryAngle=75, reach=1.3, minReach=2.0,
+           depth=2.0, minInside=3.0, maxStretch=1.10, rate=8.0, mouths=1, anatomyBone='AnatVulva')
+
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
 # (tools/fit_check.py's judge, entrance ring): x1.35 puts the entrance's median radius at the shaft's
