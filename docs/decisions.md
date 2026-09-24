@@ -931,3 +931,34 @@ scenes, the AAF menu's too.
 - Written in place 2026-09-24 16:19, with the game closed (fo4-mcp said "free"), and verified
   live.
 - Offline test: 29/29. A mutant that ignores the owned mask fails 4 of them.
+
+**Revision after a four-lens review (2026-09-24, fork c7a0115).**
+- **The engine reads its own weights back.** The blink machine does not write the eyelids while a
+  line plays, and nothing is computed while paused or in the eyes-closed mode, so the merge reads
+  back what we wrote.
+  - The review's frame model: a lowered eyelid stayed at 1.0 for a whole line, and so did a released
+    one. The contact blend fed on itself while paused.
+  - Now the engine's own weights go back before each merge, and ours go on after it.
+- **Lines come from the engine.** Lip sync lives in +0xF0, the MFG layer, and a line plays while
+  the lip object at +0x2C0 is in state 3 or 4.
+  - A held face gives its mouth ids back to the engine for exactly the line, whoever made the actor
+    speak.
+  - Before, a line Rapport did not route kept a still mouth, and Rapport's own lines relied on its
+    9 s guess.
+- **The first speech diagnostic watched the wrong layer** (+0x1C8, the keyframes). Its two in-game
+  lines were not lip sync, and Rapport was told not to use them. The probe now watches +0xF0.
+- **Hardening:**
+  - the F4SE listener registers after the hooks;
+  - faces are released again at PostLoadGame;
+  - on a cell change the held faces are found again by form;
+  - the self-test is latched and can never send a clear-all;
+  - versions from 1 up are read, append-only;
+  - the log marks itself full at 4000 lines.
+- **`[Face]` section:** `authority=1` ships. It is its own switch: the hook installs for the mouth
+  OR the authority. `probe` and `test` are for testers, and release.py refuses an ini that sets
+  them.
+- **Tests, in the fork's tests/face:** 44 checks, 10 of them frame by frame against a model of the
+  merge. Four planted faults are all caught.
+- **Open, the owner's call:** A-26's reaction is off on a held face, which means it is off in every
+  AAF scene Rapport drives. It could be layered raise-only on top during contact, as the contact
+  mouth is.

@@ -416,9 +416,20 @@ GPL-3.0; it never ships.
     `actor->middleProcess->unk08->unk3B0[3]`; CommonLibF4 calls it
     `MiddleHighProcessData::faceAnimationData`. Its vtable is at RVA 0x2CE9C58.
   - `+0x18` float[54] holds the FINAL weights, which the face mesh is built from.
-  - `+0xF0` float[54] holds the overrides: the console's `mfg morphs <id> <value>` (value / 100),
-    AAF's mfgSets, and SAM's sliders.
-  - `+0x1C8` float[54] holds the animation's own values (keyframes, lip sync).
+  - `+0xF0` float[54] holds MFG: the console's `mfg morphs <id> <value>` (value / 100), AAF's
+    mfgSets, and SAM's sliders.
+    - **A spoken line's lip sync is written here too:** 0x667E50 hands +0xF0 to the lip evaluator
+      0x669050.
+    - When the line ends, the whole layer fades to 0 (+0x2E0 == 2). That wipes any MFG expression
+      the actor had.
+  - `+0x1C8` float[54] holds the expression keyframes: idle faces, and a line's own emotion.
+    - It does NOT hold lip sync. Until 2026-09-24 these notes said it did, which was an inference
+      from the merge's formula that nobody had checked.
+    - The first speech probe watched this layer and measured nothing but keyframes.
+  - `+0x2C0` is the lip-sync object of the line being spoken, or null.
+    - A line is playing while its state, `([obj + 0xC] >> 28) & 7`, is 3 or 4. That is the
+      engine's own test (+0x667E86, +0x668302).
+    - The end-of-line release (0x668040, the merge's last call) nulls the pointer before it lets go.
   - `+0x2B4` is a lock the merge takes.
 - **The merge, read out of Fallout4.exe:**
   - It is at 0x6689D0: `bool merge(data, float dt, bool)`.
@@ -427,15 +438,26 @@ GPL-3.0; it never ships.
   - Every frame the game runs (dt > 0) it recomputes the final weights from scratch (read in full
     2026-09-24):
     - It advances the animation layer by dt (0x9C15C0).
-    - Then it asks 0x667E50. If the answer is true, final = clamp(max(override, animation)) for all
-      54. If false, final = the animation layer, copied when anything differs, and the overrides
-      are IGNORED. SAM patches that `jz` at 0x668B32 so the max path always runs. What 0x667E50
-      tests is not known.
-    - With dt <= 0 (paused) it computes nothing, and the last final weights stay.
-    - So a value written after it lasts exactly one frame: a released face is gone the next frame.
+    - Then it calls 0x667E50. That evaluates a playing line's lip sync into +0xF0 (or fades the
+      layer after a line) and answers whether +0xF0 must be merged.
+      - True: final = clamp(max(+0xF0, +0x1C8)) for all 54.
+      - False: final = +0x1C8, copied when anything differs.
+      - SAM patches that `jz` at 0x668B32 so the max path always runs.
+    - With dt <= 0 (paused) it computes nothing, and the last final weights stay. The face's
+      eyes-closed mode (+0x2DB) skips the loops the same way.
+    - **So the engine can read back what was written after it:**
+      - all of it while paused or in eyes-closed mode;
+      - the eyelids while a line plays (below).
+    - Writing over our own last frame then compounds: a blend feeds on itself, an eyelid rises but
+      never falls, and a released face stays.
+    - Since fork c7a0115 the fork puts the engine's own weights back before each merge
+      (FaceCompose.h). A review's frame model of this merge found the problem.
   - **The eyelids are special.** Its caller always passes flag = 1, so a blink state machine runs
     first (0x668170; state +0x2A8, timer +0x2AC, resting value +0x2B0). It writes final[18] and
     final[41] through 0x6683C0.
+    - It skips that write while paused, while a line plays (lip object in state 3 or 4) with
+      bAllowBlinksDuringSpeech off (the default), and in its own eyes-closed states.
+    - Then the merge reads back whatever final[18/41] held.
     - After the merge, final[18/41] = min(1, that blink + animation[18/41]).
     - So an MFG override never reaches the eyelids. This is what SAM's blink fix patches.
   - Its one caller, 0x6860FA, rebuilds the face mesh (0x685A60) when it returns true.
@@ -495,6 +517,13 @@ GPL-3.0; it never ships.
   - Rapport sends its faces over F4SE messaging, and HookMerge writes them FIRST: owned morphs
     replace the merge, and the blink keeps the larger value.
   - The contact mouth then works from Rapport's jaw. A-26's face terms are off on a held face.
+  - While the engine plays a line on a held face, the mouth ids go back to the engine, which is the
+    lip sync in +0xF0, for exactly the line. That is since c7a0115; before it, only Rapport's own
+    9 s window did this.
+  - `[Face]` in our ocbp.ini:
+    - `authority`: 0 means no listener and no hello.
+    - `probe`: logs each line's lip ids from +0xF0. Dev only: release.py refuses it.
+    - `test=<form>`: the self-test.
   - UpdateMouths matches held faces to OCBPC's scanned actors (the player's cell, within
     actorDistance, the player included) and looks up the rest by form (`LookupFormByID`). OCBPC
     already does that lookup for the player on the same thread (the main one, from

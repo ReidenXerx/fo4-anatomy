@@ -134,6 +134,23 @@ def pillow_licence():
     return pathlib.Path(found[0])
 
 
+def face_section(ini):
+    """The fork's [Face] as players get it: the authority on, and nothing a tester sets (A-27)."""
+    face, section = {}, None
+    for line in ini.splitlines():
+        s = line.strip()
+        if s.startswith('['):
+            section = s
+        elif section == '[Face]' and '=' in s and not s.startswith(';'):
+            key, value = s.split('=', 1)
+            face[key.strip()] = value.strip()
+    testers = {k: v for k, v in face.items() if k in ('probe', 'test') and v not in ('', '0')}
+    if face.get('authority') != '1' or testers:
+        raise SystemExit(f'Anatomy/ocbp.ini [Face] is not what players get: {face}. Rerun '
+                         'tools/physics_config.py (a dev ini with probe= or test= must not ship)')
+    return '[Face]: authority=1, no probe, no self-test'
+
+
 def files(version):
     dist = BUILD / 'dist/AnatomyBuilder'
     out = {
@@ -208,6 +225,7 @@ def main():
     sys.path.insert(0, str(ROOT / 'tools'))
     import make_esp
     print(make_esp.verify(wanted['Anatomy.esp']))    # a keyword-less Anatomy.esp would move our layer into bodies
+    print(face_section(wanted['F4SE/Plugins/Anatomy/ocbp.ini'].read_text(encoding='utf-8')))
     print(f'cbp.dll from fork commit {commit}; builder exe from this tree')
     for rel, src in wanted.items():
         dst = stage / 'Data' / rel

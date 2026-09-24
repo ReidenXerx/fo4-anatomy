@@ -296,3 +296,20 @@ running one cannot be moved. Checked outside the game.
 - After the scene and Rapport's ~20 s afterglow, the face is back to normal on the next frame.
   The log says `[face] Rapport let go of <form>'s face`.
 - A save loaded mid-scene: `[face] every held face let go: a save is loading`.
+
+### Face authority, review wave 1: cbp.dll efd8334d9712 (fork c7a0115) + Anatomy/ocbp.ini with [Face]
+
+- At startup, `anatomy_ocbpc.log` has:
+  - `[mouth] on: mouth on (...), [Face] authority 1, probe 1`;
+  - `[face] Rapport is loaded: listening`;
+  - `[face] hello sent`.
+- A Rapport scene where someone speaks:
+  - The lips move during the line and go back to Rapport's face after it.
+  - The brows and eyes stay Rapport's throughout.
+  - The log gets `[face] <form> spoke a line for N s: its lip sync moved ...`. Those ids go to the
+    Rapport session for its MOUTH table.
+- Eyes during a line: a blink still closes them. When Rapport lowers them mid-line, they go down at
+  once.
+- Pause the game (menu) mid-scene: the face holds still, and the mouth does not drift wider.
+- Leave the scene area through a door, or cross into another cell: no one else's face flickers into
+  a held one.
