@@ -11,7 +11,7 @@ Every few seconds each woman near the player moves toward the strongest thing ar
 
 and falls back when it is gone (half-life 60 s: she stays aroused a while after a scene).
 
-Her nipples follow it: NippleLength, NipplePerk2, NippleTip and NippleSize rise by GAINS x arousal,
+Her nipples follow it: NippleLength, NipplePerk2, NippleTip and NipplePerkiness rise by GAINS x arousal,
 in steps of a tenth, ON TOP of her own shape. LooksMenu takes the MAX over its keyword layers, so our
 layer (Anatomy.esp's keyword) is written as her strongest other value plus our rise: a woman with
 small nipples stays smaller than one with big ones, and Silhouette's flattening under heavy clothes
@@ -115,15 +115,18 @@ Function Setup()
 	_gains = new Float[4]
 	; the owner's first look (2026-09-23): "gorgeous ... lets make nipples a slightly bigger in erect
 	; state": length 0.55 -> 0.70 and size 0.25 -> 0.40; perk and tip kept. Then (2026-09-24, Photo163):
-	; "lets make nipple erection SLIGHLY less" -- every gain about an eighth down
+	; "lets make nipple erection SLIGHLY less" -- every gain about an eighth down. Then (2026-09-25): "not
+	; only longer but also wider ... more BUMPED not just STRETCHED". Measured (A-16): Length pushes a thin
+	; tube out (radius ~0.5), and NippleSize NARROWS the tip (0.43 -> 0.25); Perk2 and Perkiness widen it
+	; into a dome. The same height (0.85 over the resting tip, was 0.83), 1.6-2x as wide all the way up.
 	_morphs[0] = "NippleLength"               ; the erection itself: up to 1.1 units out at 1.0
-	_gains[0] = 0.60
-	_morphs[1] = "NipplePerk2"
-	_gains[1] = 0.44
+	_gains[0] = 0.30
+	_morphs[1] = "NipplePerk2"                ; the bump: widest at the nipple's base
+	_gains[1] = 0.70
 	_morphs[2] = "NippleTip"
 	_gains[2] = 0.35
-	_morphs[3] = "NippleSize"
-	_gains[3] = 0.35
+	_morphs[3] = "NipplePerkiness"            ; a puffier areola under it
+	_gains[3] = 0.40
 	_layer = Game.GetFormFromFile(0x00000801, "Anatomy.esp") as Keyword
 	_npc = Game.GetFormFromFile(0x00013794, "Fallout4.esm") as Keyword          ; ActorTypeNPC
 	_human = Game.GetFormFromFile(0x00013746, "Fallout4.esm") as Race           ; HumanRace
@@ -432,6 +435,9 @@ Function Show(Int k)
 		BodyGen.RemoveMorphsByKeyword(a, True, _layer)
 	Else
 		Float rise = fNippleStrength * stepped
+		; our layer is rewritten whole: a morph dropped from the set (NippleSize, 2026-09-25) must not stay
+		; on a woman who was aroused when the save was made (Strongest skips our layer, so it reads the same)
+		BodyGen.RemoveMorphsByKeyword(a, True, _layer)
 		Int m = 0
 		While m < _morphs.Length
 			BodyGen.SetMorph(a, True, _morphs[m], _layer, Strongest(a, _morphs[m]) + _gains[m] * rise)

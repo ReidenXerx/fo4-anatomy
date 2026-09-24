@@ -424,6 +424,17 @@ does we have such metric)".
   to +0.60, perk +0.5 to +0.44, tip +0.4 to +0.35, size +0.40 to +0.35. `Setup()` sets the gains on every
   load, so a save made before this takes the new look at its next load. MCM's strength slider still
   scales all four.
+- **The owner's third look (2026-09-25):** "not only longer but also wider? to make it more BUMPED not
+  just STRETCHED". Measured, as the nipple's radius at heights over its resting tip
+  (scratchpad nipple_shape2):
+  - NippleLength pushes out a thin tube (radius ~0.5).
+  - NippleSize NARROWS the tip (0.43 -> 0.25 at the tip): it was working against "bigger" all along.
+  - NipplePerk2 and NipplePerkiness widen it into a dome.
+  Now: length +0.30, perk2 +0.70, tip +0.35, and **perkiness +0.40 in place of size**. The height is the
+  same (0.85 over the resting tip, was 0.83), and it is 1.6-2x as wide all the way up (0.92 against 0.49
+  a quarter up, 0.70 against 0.44 half up). `Show` now rewrites our layer whole
+  (`RemoveMorphsByKeyword`, then each morph), so the dropped NippleSize does not stay on a woman who was
+  aroused when a save was made.
 
 ## A-17 — Fisting and toys, through our own OCBPC (the owner's poll, 2026-09-23)
 
@@ -1121,6 +1132,22 @@ scenes, the AAF menu's too.
   (`[aim] X: let go of Y's mouth: ...`), once per pair and reason. Offline: 20 cases. Case 19 bobs a
   mouth 6 units a second and backs off; the chain stays on it within 0.01 every frame and fails against
   the old chasing correction. 30 of 30 solver mutations caught.
+- **The owner's fifth look (2026-09-25):**
+  - A handjob before she sits on him: "penis didnt hurry up in vagina and stick to hand but it stick
+    outside the grip ... from the 4 fingers side". The grip was the average of the fingers' twelve joints,
+    and that sits IN the fingers. Every hand lock in the log was 2.0-2.1 off the animation's own shaft.
+    Now (fork 5acb631, `AimSolve::GripCentre`) the grip is the centre of the circle through each curled
+    finger's three joints, the axis they wrap around. A finger that barely bends (circle over 4) or is
+    straight is skipped. With fewer than two curled, there is no grip and the animation's pose shows.
+  - The x-ray (Photo176): "penis should go deeper to throat when it start beinding and go down to neck
+    ... closer to back side of neck". Measured with the head mesh this time: under the jaw the throat's
+    front is at y 1.1-1.5, and the old path ran 0.33-0.43 of flesh from it even standing. It also hung
+    from HEAD alone, so a head thrown back swung it forward out of her throat. The owner: "if we will
+    properly anchored ... by head and neck nodes we would be good with any position of head and neck".
+    Now the path goes straight back 9 (to the pharynx), then down at 60% of the neck's depth: 1.4 to 3.8
+    of flesh all the way. The mouth part is in HEAD's frame (`throatF/M`) and the neck part in Neck's
+    (`throatNeckF/M`, new keys).
+  - Offline: tests/aim 21 cases, 34 of 34 solver mutations caught. cbp.dll a0c8a574e403.
 - **Open:** tune capture/keep/entry, depth and the stretch by the owner's look; AAF position tags as a
   tie-breaker in two-hole positions; men's openings (our bones are women's only).
 

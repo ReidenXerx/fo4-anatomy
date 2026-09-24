@@ -200,11 +200,21 @@ ANUS_PATH = ((0.0, -0.36, -51.33), (0.0, 0.08, -48.39), (0.0, 0.67, -45.47), (0.
 # it holds for either skeleton. The first design turned down the neck ~2 inside the lips; the owner's look
 # (Photo, 2026-09-24): "mouth needs same treatment". A blowjob keeps 6-8 of the shaft in the mouth, so
 # that bent the shaft down under her tongue and out through her jaw. Now: straight back 6 (the mouth's
-# depth, to the throat), then down the front half of the neck. Measured on the body: the lower neck runs
-# from y 3.2-4.6 (front) to -7.4..-8 (back), middle -2, with HEAD at the origin; the path ends at y -0.3,
-# over 3 from the front and 7 from the back. physics_config places it in each skeleton's HEAD frame.
-THROAT = ((0.0, -3.0, -0.13), (0.0, -6.0, -0.28), (0.0, -7.2, -2.18), (0.0, -7.7, -5.18), (0.0, -8.0, -8.18),
-          (0.0, -8.3, -11.18))
+# depth, to the throat), then down the front half of the neck.
+# The owner's x-ray (Photo176, 2026-09-25), her head thrown back: the shaft turned down right behind the
+# mouth and came out through the front of her throat under the chin. "penis should go deeper to throat when
+# it start beinding and go down to neck ... closer to back side of neck". Two faults, both measured
+# (scratchpad neck_measure: the head mesh AND the body, the midline |x| < 1.6, world, standing):
+#  - under the jaw the throat's front is at y 1.1-1.5, not the 3.2-4.6 of the lower neck the first design
+#    measured, so the old path (y -0.6..-0.9 there) ran 2.0 behind the skin: 0.45 of flesh past the shaft;
+#  - the whole path hung from HEAD, so a head thrown back swung its neck part forward, out of the neck.
+# Now: straight back 9 (to the pharynx), then down at y -3.0..-3.5, 60% of the upper neck's depth from the
+# front (front 1.3, back -6.65 at z 112.3: 4.7 from the front, 3.25 from the back). The mouth part is in
+# HEAD's frame (THROAT), the neck part in Neck's (THROAT_NECK), so the path bends where her neck bends.
+# Both are offsets from the mouth ([Mouth]'s point) in the standing body's frame (y forward, z up);
+# physics_config places them in each skeleton's own bones.
+THROAT = ((0.0, -3.0, -0.12), (0.0, -6.0, -0.3), (0.0, -9.0, -0.7), (0.0, -10.1, -3.2))
+THROAT_NECK = ((0.0, -10.5, -6.2), (0.0, -10.6, -9.2), (0.0, -10.3, -12.2))
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
