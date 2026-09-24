@@ -97,8 +97,11 @@ def build_dll():
     if dirty.strip():
         raise SystemExit('the fork has uncommitted changes, so no published commit would be the source of '
                          f'this cbp.dll; commit them first:\n{dirty}')
+    # PostBuildEventUseInBuild=false: the fork's post-build copies cbp.dll to $(Fallout4Path), which
+    # is unset here, so it lands at the drive root (C:\cbp.dll). A release copies nothing anywhere.
     subprocess.run([MSBUILD, 'OpenCBP_FO4.sln', '/t:CBPSSE', '/p:Configuration=Release', '/p:Platform=x64',
-                    '/p:PlatformToolset=v143', '/p:WindowsTargetPlatformVersion=10.0.22621.0', '/v:m'],
+                    '/p:PlatformToolset=v143', '/p:WindowsTargetPlatformVersion=10.0.22621.0',
+                    '/p:PostBuildEventUseInBuild=false', '/v:m'],
                    cwd=FORK, check=True, stdout=subprocess.DEVNULL)
     return subprocess.run(['git', 'rev-parse', '--short=12', 'HEAD'], cwd=FORK, capture_output=True,
                           text=True, check=True).stdout.strip()
