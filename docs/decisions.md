@@ -1111,5 +1111,34 @@ scenes, the AAF menu's too.
     an ini change; the body is not rebuilt.
   - The lip-sync probe data (Rapport's lip-synced barks now move +0xF0) went to Rapport with a caveat: AAF
     writes MFG during scenes too.
+- **The owner's fourth look (2026-09-24, Image #8): "penis is clipping in the bottom chin ... when it go
+  backward (pulling out) in particular moment the head of penis not blending as its expected".** The
+  bend was right; its timing was not. Each joint's correction CHASED the needed one at a fixed pace, so
+  while her head and his hips moved it lagged. On a fast pull-out a few degrees of lag along a 16-unit
+  shaft put the glans a unit or more off, down through her chin. Now (fork 14ed18d) the bend is solved
+  exactly every frame while locked, and only the lock's weight fades in and out. A switch between
+  openings crossfades from the pose that was showing. A release is logged with its reason
+  (`[aim] X: let go of Y's mouth: ...`), once per pair and reason. Offline: 20 cases. Case 19 bobs a
+  mouth 6 units a second and backs off; the chain stays on it within 0.01 every frame and fails against
+  the old chasing correction. 30 of 30 solver mutations caught.
 - **Open:** tune capture/keep/entry, depth and the stretch by the owner's look; AAF position tags as a
   tie-breaker in two-hole positions; men's openings (our bones are women's only).
+
+## A-29 — Her brows frown as he goes deep (the owner, through the Rapport session, 2026-09-24)
+
+- **Ask:** "can we make broves alive during blowjob? like when penis go deep in throat broves sliding
+  closer like хмурится [frowning]".
+- **Split (A-27 holds: Rapport authors faces):** Rapport sends a second face after its held one, the
+  DEEP face (RFAD, `'RFAD'`, the RFAS layout, 232 bytes): a mask of brow, lid, nose and cheek ids and
+  their values at full depth. It is the same for all six oral faces. The fork blends it in by depth, and
+  it says it can in the hello (feature bit 3, value 8). Rapport stays silent until it sees that bit.
+- **Blend (fork 10ca01f, `FaceAuthority::BlendDeep`):** masked ids move from the held value toward the
+  deep one by w = inside × clamp(depth / 6), the same depth signal A-26's reaction reads. MOUTH ids are
+  never blended, even if masked: the contact mouth owns them. A blink still closes over it (max of
+  engine and blend). A-26 stands down on masked ids, so each id has one author.
+- **Lifetime:** every RFAS drops the deep face, so Rapport re-sends RFAD after each one. RFAC drops it,
+  and so does a mask of 0. A deep face for a form with no held face is dropped.
+- **Offline:** tests/face has a deep-face section (decode and refusals, none/half/full depth, blink,
+  A-26 standing down, lifetime). 16 of 16 authority mutations caught. One was first MISSED: the test
+  masked only the jaw, which the contact mouth overwrites anyway. The test now masks 17 too.
+- cbp.dll 6a40a1e7a848 carries A-29 and the A-28 pull-out fix. It is built and not yet staged.
