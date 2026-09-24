@@ -1084,5 +1084,18 @@ scenes, the AAF menu's too.
     choice by miss over angle). 22 of 22 solver mutations are caught. Two were first MISSED, and each
     revealed a weak test. The second revealed a real flaw: joints were placed a distance ALONG the path,
     which put them outside it at every bend.
+- **The owner's second look (2026-09-24): "bending works gorgeous! for vagina".** Two more asks:
+  - "mouth needs same treatment". The designed throat turned down the neck about 2 units inside the lips,
+    and a blowjob keeps 6-8 of the shaft in the mouth, so the shaft bent down under her tongue. Now
+    (`physics_design.THROAT`): straight back 6 (the mouth's depth), then down the front half of the neck,
+    measured on the body (the lower neck's middle is at y -2; the path ends at -0.3). It is written as
+    offsets from the mouth and placed in each skeleton's own HEAD frame (the women's, ZeX's).
+  - "did u also do this for hands?" The hand gate had stepped aside, so the grip was the animation's. Now a
+    gripping hand is a target (`kHand`): the grip is the middle of its four fingers' twelve joints (they
+    ring a gripped shaft), its axis index knuckle to little knuckle, entered from either side. While a
+    knuckle holds the shaft only hands may be entered, so the shaft runs through the grip, never
+    stretched. His own hand counts too. For a second after it lets go, nothing is entered.
+  - Offline: tests/aim now 18 cases, and 27 of 27 solver mutations are caught. A grip near the tip is
+    needed to catch "a hand stretches". Fork build cbp.dll afab87963bd3.
 - **Open:** tune capture/keep/entry, depth and the stretch by the owner's look; AAF position tags as a
   tie-breaker in two-hole positions; men's openings (our bones are women's only).

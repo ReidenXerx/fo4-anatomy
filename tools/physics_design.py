@@ -181,7 +181,8 @@ AIM_CHAIN = ('Penis_00',) + SHAFT
 # past the entrance the shaft bends joint by joint along the path inside her (PPA's "snake").
 AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss=5.0, keepMiss=8.0, entryAngle=75,
            reach=1.3, minReach=2.0, depth=2.0, minInside=3.0, maxStretch=1.10, rate=8.0, mouths=1,
-           anatomyBone='AnatVulva', hands='LArm_Finger31|RArm_Finger31', handRadius=4.0, handHold=1.0)
+           anatomyBone='AnatVulva', hands='LArm_Finger31|RArm_Finger31', handRadius=4.0, handHold=1.0,
+           grips='LArm|RArm')   # a gripping hand is the target: the middle of <side>_Finger21..53
 # The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
 # by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the
 # vagina (the lips open there anyway), 1.46 four units in, then 2.5 to 5.9 -- past the shaft's 1.55 from
@@ -190,14 +191,15 @@ VAGINA_PATH = ((0.0, 0.93, -53.59), (0.0, -0.27, -51.33), (0.0, 0.08, -48.36), (
                (0.0, 1.39, -42.54), (0.0, 2.08, -39.62))
 ANUS_PATH = ((0.0, -0.36, -51.33), (0.0, 0.08, -48.39), (0.0, 0.67, -45.47), (0.0, 1.38, -42.56),
              (0.0, 2.08, -39.65), (0.0, 2.58, -36.69))
-# The throat, in HEAD's own frame ([Mouth]: facing +y, up +x): from the mouth back into the head, then down
-# the neck in front of the spine, so a deep shaft goes down her throat instead of out of the back of her
-# skull. Designed from the mouth points (female -1.80, 8.12; male -1.84, 7.78), not measured: judge it by
-# the owner's look.
-THROAT = {'F': ((-2.4, 5.9, 0.0), (-3.6, 4.0, 0.0), (-6.0, 3.0, 0.0), (-9.0, 2.5, 0.0), (-12.0, 2.3, 0.0),
-                (-15.0, 2.3, 0.0)),
-          'M': ((-2.4, 5.6, 0.0), (-3.6, 3.7, 0.0), (-6.0, 2.8, 0.0), (-9.0, 2.4, 0.0), (-12.0, 2.2, 0.0),
-                (-15.0, 2.2, 0.0))}
+# The throat: offsets from the mouth ([Mouth]'s point), in the standing body's frame (y forward, z up), so
+# it holds for either skeleton. The first design turned down the neck ~2 inside the lips; the owner's look
+# (Photo, 2026-09-24): "mouth needs same treatment". A blowjob keeps 6-8 of the shaft in the mouth, so
+# that bent the shaft down under her tongue and out through her jaw. Now: straight back 6 (the mouth's
+# depth, to the throat), then down the front half of the neck. Measured on the body: the lower neck runs
+# from y 3.2-4.6 (front) to -7.4..-8 (back), middle -2, with HEAD at the origin; the path ends at y -0.3,
+# over 3 from the front and 7 from the back. physics_config places it in each skeleton's HEAD frame.
+THROAT = ((0.0, -3.0, -0.13), (0.0, -6.0, -0.28), (0.0, -7.2, -2.18), (0.0, -7.7, -5.18), (0.0, -8.0, -8.18),
+          (0.0, -8.3, -11.18))
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
