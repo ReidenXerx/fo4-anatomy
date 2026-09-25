@@ -184,10 +184,12 @@ FACE = dict(authority=1, react=1)   # react: the busy mouth's reaction rises abo
 # The fork's [Eyes] (glances, RFAG; the owner, 2026-09-25: "glances on 1-2 seconds"): Rapport says who looks at
 # whom and for how long, the fork turns the eye the engine's way (it slides the eye texture's UV; fork Glance.h)
 # and opens the lids. glances=1 tells Rapport it works (hello bit 4): only once the owner has seen it in game.
-# signX/signY: which way +UV turns an eye, measured by the dev probe. The eyes sit eyeRise up the face from the
+# signUp/signSide: the engine's own axes, the owner's look and the probe (2026-09-25): the eye texture's u is
+# VERTICAL (-0.25 x up) and v SIDEWAYS (-0.25 x side); the first build had them swapped and the eyes went a
+# quarter-turn off ("his head on perfect 12 h then her gaze is somewhere 8-10 h"). The eyes sit eyeRise up the face from the
 # mouth's point and eyeBack into it (a human face's proportions in game units; an error of a unit is ~1 degree
 # at a partner's distance). probe= and test= are a tester's (release.py refuses them).
-EYES = dict(enabled=1, glances=0, signX=1, signY=1, eyeRise=4.8, eyeBack=0.8)
+EYES = dict(enabled=1, glances=0, signUp=-1, signSide=-1, eyeRise=4.8, eyeBack=0.8)
 
 # The fork's [Aim] (A-28): each frame a penis chain turns about its root onto the opening it is closest to
 # entering. The chain is ZeX's: Penis_00 hangs off the pelvis and carries the shaft the body skins to
