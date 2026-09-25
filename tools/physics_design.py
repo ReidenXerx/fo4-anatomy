@@ -156,10 +156,14 @@ FACE_DEPTH, FACE_STROKE = 6.0, 20.0
 # erect shaft (scratchpad, 2026-09-25) the colliders (2.0 shaft, 1.8 head) already sit ON its surface (half-width
 # 1.91-1.98, half-height 1.65-1.87 unscaled), so with A-31's shape the mouth took a 1.62-1.69 wide shaft for 1.25:
 # the lips wrapped a thinner one (the clipping) and the corners (A-32), which open only past +-1.6, never did.
+# 0.05 then made them ring the shaft too wide (the owner: "like the same big width as head"): the colliders sit on
+# its widest points, the ridge, and its mean radius (x0.85) is ~1.51; 0.2 gives 1.50 for the shaft, 2.14 for the
+# head (x1.3). And the lips now ease at lipOpenRate / lipCloseRate, not the jaw's slow close (6), so they close
+# back onto the shaft between strokes instead of staying as wide as the head that just passed.
 MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), props=0,
              femaleX=-1.80, femaleY=8.12, femaleZ=0.0, maleX=-1.84, maleY=7.78, maleZ=0.0,
              facingX=0.065, facingY=0.998, facingZ=0.0, upX=0.998, upY=-0.065, upZ=0.0,
-             femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.05,
+             femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.2, lipOpenRate=30.0, lipCloseRate=25.0,
              ahead=3.0, anticipate=0.3, margin=0.08, funnel=0.3, liftMove=0.53,
              openRate=20.0, closeRate=6.0, blendRate=12.0, holdSeconds=0.35,
              face=','.join(f'{FACE_MORPHS[m]}:{c}:{d}:{s}' for m, c, d, s in FACE_WHILE_BUSY),
