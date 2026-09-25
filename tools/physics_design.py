@@ -163,7 +163,7 @@ FACE_DEPTH, FACE_STROKE = 6.0, 20.0
 MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), props=0,
              femaleX=-1.80, femaleY=8.12, femaleZ=0.0, maleX=-1.84, maleY=7.78, maleZ=0.0,
              facingX=0.065, facingY=0.998, facingZ=0.0, upX=0.998, upY=-0.065, upZ=0.0,
-             femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.2, lipOpenRate=30.0, lipCloseRate=25.0,
+             femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.2, lipOpenRate=60.0, lipCloseRate=50.0,
              ahead=3.0, anticipate=0.3, margin=0.08, funnel=0.3, liftMove=0.53,
              openRate=20.0, closeRate=6.0, blendRate=12.0, holdSeconds=0.35,
              face=','.join(f'{FACE_MORPHS[m]}:{c}:{d}:{s}' for m, c, d, s in FACE_WHILE_BUSY),

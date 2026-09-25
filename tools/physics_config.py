@@ -247,19 +247,21 @@ def lip_keys():
     import gamedata
     import lips
     game = gamedata.Game(lips.DATA)
-    out = ['; the lips around what is in her mouth (A-32): each morph\'s move of the upper;lower lip edge at lipXs',
+    out = ['; the lips around what is in her mouth (A-32): each morph\'s move of the upper;lower lip edge at lipXs;'
+           ' and of the rim\'s left,right end (lipRim: the ends at rest)',
            'lipXs=' + ','.join(f'{x:g}' for x in lips.XS)]
     for sex, head in (('F', 'BaseFemaleHead'), ('M', 'BaseMaleHead')):
         table, gap, _, _, _ = lips.measure(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))
         if gap > 0.1:
             raise SystemExit(f'{head}: the lips do not meet at rest ({gap:.3f}): not the head lips.py measured')
+        rest = lips.measure(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))[4]
+        if not rest[0] < 0 < rest[1]:
+            raise SystemExit(f'{head}: the rim does not straddle the middle ({rest})')
+        out.append(f'lipRim{sex}={rest[0]:.3f},{rest[1]:.3f}')
         for mid, _ in lips.MORPHS:
-            u, lo = table[mid]
-            out.append(f'lip{sex}{mid}=' + ','.join(f'{v:.3f}' for v in u) + ';' + ','.join(f'{v:.3f}' for v in lo))
-        rl, rr, ml, mr = lips.corners(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))
-        if not (rl < 0 < rr and ml > 0.1 and mr > 0.1):
-            raise SystemExit(f'{head}: the corners are not what lips.corners measured ({rl}, {rr}, {ml}, {mr})')
-        out.append(f'lipCorner{sex}={rl:.3f},{rr:.3f},{ml:.3f},{mr:.3f}')
+            u, lo, (dl, dr) = table[mid]
+            out.append(f'lip{sex}{mid}=' + ','.join(f'{v:.3f}' for v in u) + ';' + ','.join(f'{v:.3f}' for v in lo)
+                       + f';{dl:.3f},{dr:.3f}')
     return out
 
 

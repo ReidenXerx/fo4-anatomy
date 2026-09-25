@@ -21,7 +21,10 @@ XS = (-1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2)
 # (id in the engine's 54, name in the head's .tri): what can move a lip's inner edge (Rapport's make_mfg order)
 MORPHS = ((2, 'JawOpen'), (22, 'LwrLipFunnel'), (46, 'UprLipFunnel'), (21, 'LUprLipUp'), (44, 'RUprLipUp'),
           (11, 'LLwrLipDn'), (34, 'RLwrLipDn'), (20, 'LUprLipDn'), (43, 'RUprLipDn'), (12, 'LLwrLipUp'),
-          (35, 'RLwrLipUp'))
+          (35, 'RLwrLipUp'), (8, 'LLipCornerOut'), (31, 'RLipCornerOut'))
+# ACROSS: every morph also moves the rim's two ends (the mouth's inner corners), the head's horizontal
+# room (the owner, 2026-09-25: "fit head of penis IN HORIZONTAL AXIS"). Jaw Open widens it 0.27 / 0.22,
+# each funnel narrows it 0.08 a side, Corner Out takes its own end out 0.40 / 0.34 and the other 0.11.
 
 
 def read_tri(data):
@@ -78,11 +81,15 @@ def measure(tri):
     zero = [(0.0, 0.0, 0.0)] * len(verts)
     u0, l0 = edge(upper, zero), edge(lower, zero)
     rest_gap = max(abs(a - b) for a, b in zip(u0, l0))
+    ends = lambda d: (min(verts[i][0] + d[i][0] for i in rim), max(verts[i][0] + d[i][0] for i in rim))
+    rest_ends = ends(zero)
     table = {}
     for mid, name in MORPHS:
         u, l = edge(upper, morphs[name]), edge(lower, morphs[name])
-        table[mid] = ([a - b for a, b in zip(u, u0)], [a - b for a, b in zip(l, l0)])
-    return table, rest_gap, len(upper), len(lower), (min(verts[i][0] for i in rim), max(verts[i][0] for i in rim))
+        lo, hi = ends(morphs[name])
+        table[mid] = ([a - b for a, b in zip(u, u0)], [a - b for a, b in zip(l, l0)],
+                      (lo - rest_ends[0], hi - rest_ends[1]))
+    return table, rest_gap, len(upper), len(lower), rest_ends
 
 
 def corners(tri):
@@ -113,8 +120,8 @@ def main():
     print(f'rim: upper {nu}, lower {nl} vertices, x {span[0]:.2f} .. {span[1]:.2f}; closed mouth gap {gap:.3f}')
     print(f'{"":14}' + ''.join(f'{x:+7.1f}' for x in XS))
     for mid, name in MORPHS:
-        u, l = table[mid]
-        print(f'{name:12} U' + ''.join(f'{v:+7.2f}' for v in u))
+        u, l, (dl, dr) = table[mid]
+        print(f'{name:12} U' + ''.join(f'{v:+7.2f}' for v in u) + f'   ends {dl:+.2f} / {dr:+.2f}')
         print(f'{"":12} L' + ''.join(f'{v:+7.2f}' for v in l))
     lo, hi, ml, mr = corners(gamedata.Game(args.data).read(HEAD_TRI))
     print(f'corners: rim {lo:.2f} .. {hi:.2f}; Left Lip Corner Out takes the left end {ml:.2f} out, Right {mr:.2f}')
