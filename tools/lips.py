@@ -85,6 +85,25 @@ def measure(tri):
     return table, rest_gap, len(upper), len(lower), (min(verts[i][0] for i in rim), max(verts[i][0] for i in rim))
 
 
+def corners(tri):
+    """(rim's -x end, rim's +x end, how far Left Lip Corner Out takes the -x end, Right the +x end): the
+    corners' room (the owner's look, 2026-09-25: the corner still clipped a shaft filling her mouth). Corner
+    Out barely moves the lips' heights (+-0.07), so it is not in the table: it moves the corner OUT."""
+    verts, tris, morphs = read_tri(tri)
+    front = {i for i in range(len(verts)) if verts[i][1] > 5.5 and abs(verts[i][0]) < 3.4 and -5.0 < verts[i][2] < 0.5}
+    ec = collections.Counter()
+    for t in tris:
+        for a, b in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+            ec[(min(a, b), max(a, b))] += 1
+    rim = {v for e, c in ec.items() if c == 1 and e[0] in front and e[1] in front for v in e}
+    lo = min(verts[i][0] for i in rim)
+    hi = max(verts[i][0] for i in rim)
+    left, right = morphs['LLipCornerOut'], morphs['RLipCornerOut']
+    lo_out = min(verts[i][0] + left[i][0] for i in rim)
+    hi_out = max(verts[i][0] + right[i][0] for i in rim)
+    return lo, hi, lo - lo_out, hi_out - hi
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--data', type=pathlib.Path, default=DATA)
@@ -97,6 +116,8 @@ def main():
         u, l = table[mid]
         print(f'{name:12} U' + ''.join(f'{v:+7.2f}' for v in u))
         print(f'{"":12} L' + ''.join(f'{v:+7.2f}' for v in l))
+    lo, hi, ml, mr = corners(gamedata.Game(args.data).read(HEAD_TRI))
+    print(f'corners: rim {lo:.2f} .. {hi:.2f}; Left Lip Corner Out takes the left end {ml:.2f} out, Right {mr:.2f}')
     bad = [MORPHS[k][1] for k, (mid, _) in enumerate(MORPHS) if any(math.isnan(v) for v in table[mid][0] + table[mid][1])]
     if bad or gap > 0.1:
         raise SystemExit(f'the rim is not what was measured (gap {gap:.3f}, unreadable: {bad})')

@@ -256,6 +256,10 @@ def lip_keys():
         for mid, _ in lips.MORPHS:
             u, lo = table[mid]
             out.append(f'lip{sex}{mid}=' + ','.join(f'{v:.3f}' for v in u) + ';' + ','.join(f'{v:.3f}' for v in lo))
+        rl, rr, ml, mr = lips.corners(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))
+        if not (rl < 0 < rr and ml > 0.1 and mr > 0.1):
+            raise SystemExit(f'{head}: the corners are not what lips.corners measured ({rl}, {rr}, {ml}, {mr})')
+        out.append(f'lipCorner{sex}={rl:.3f},{rr:.3f},{ml:.3f},{mr:.3f}')
     return out
 
 
