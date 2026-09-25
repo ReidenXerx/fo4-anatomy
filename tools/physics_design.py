@@ -67,7 +67,12 @@ REST = {
 }
 
 # "x,y,z,r" per sphere (offsets 0: each bone is its sphere's centre). AnatVulva has none: it only sways.
-AFFECTED = {'AnatLip_L': [(0.0, 0.0, 0.0, 1.2)], 'AnatLip_R': [(0.0, 0.0, 0.0, 1.2)],
+# The inner lips' spheres 1.2 -> 1.7 (2026-09-26, tools/tube_check.py): A-31's thinner shaft (colliders 2.0 -> 1.7)
+# pushed them 1.65 where the owner's approved look (A-15) had 2.17, and fit_check's "through" rose 27% -> 42%. The
+# vulva's vertices follow these bones only in part, so the lips must push past the flesh for the flesh to clear
+# it. With the tube ([Tube]) 1.7 pushes 2.25 and leaves 26% through, under the fist stretch's knee (2.4) on every
+# path; 1.9 would cross it (2.48). The price: the region's p99 edge stretch 3.7 -> 4.7.
+AFFECTED = {'AnatLip_L': [(0.0, 0.0, 0.0, 1.7)], 'AnatLip_R': [(0.0, 0.0, 0.0, 1.7)],
             'AnatLipOuter_L': [(0.0, 0.0, 0.0, 0.8)], 'AnatLipOuter_R': [(0.0, 0.0, 0.0, 0.8)],
             'AnatAnus_F': [(0.0, 0.0, 0.0, 0.3)], 'AnatAnus_B': [(0.0, 0.0, 0.0, 0.6)],
             'AnatAnus_L': [(0.0, 0.0, 0.0, 0.6)], 'AnatAnus_R': [(0.0, 0.0, 0.0, 0.6)]}
@@ -190,6 +195,14 @@ FACE = dict(authority=1, react=1)   # react: the busy mouth's reaction rises abo
 # mouth's point and eyeBack into it (a human face's proportions in game units; an error of a unit is ~1 degree
 # at a partner's distance). probe= and test= are a tester's (release.py refuses them).
 EYES = dict(enabled=1, glances=0, signUp=-1, signSide=-1, eyeRise=4.8, eyeBack=0.8)
+# The fork's [Tube] (2026-09-26, fork Tube.h, tools/tube_check.py): every penis chain collides as ONE tube instead
+# of its bones' balls. OCBPC collides sphere against sphere and ADDS every overlap; five balls ~3 apart made a lip
+# ride 0.8 in and out along the shaft, stand 0.6 .. 1.4 ahead of the glans, and a ball in two grid cells push twice.
+# The tube is the mouth's reading of a chain (A-32): the radius straight between bones less the skin (the flesh's
+# mean), and the glans's own profile. Measured in fit_check's port: the anus 72% -> 27% through, its thrust wobble
+# 0.69 -> 0.21, its opening held on a steep entry (0.52 -> 1.25); the vagina's wobble halved.
+TUBE = dict(enabled=1, chains=MOUTH['chains'], skin=MOUTH['skin'], glans=MOUTH['glans'],
+            glansProfile=MOUTH['glansProfile'])
 
 # The fork's [Aim] (A-28): each frame a penis chain turns about its root onto the opening it is closest to
 # entering. The chain is ZeX's: Penis_00 hangs off the pelvis and carries the shaft the body skins to

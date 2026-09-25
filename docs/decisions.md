@@ -1319,3 +1319,29 @@ scenes, the AAF menu's too.
 - **Open:**
   - Which way +UV turns an eye (signX/signY) is for the dev probe and the owner's look to settle.
   - glances=1 (hello bit 4) comes only after the owner has seen eyes turn.
+
+## A-35 — The mouth's lessons for the vagina and anus: a tube, not balls (2026-09-26)
+
+- **Ask:** "check maybe lessons we teach during extensive fight with mouth lips in blowjob could also be used to
+  improve our anus and vagina too".
+- **What carried over, measured (tools/tube_check.py, fit_check's OCBPC port, on the deployed body):**
+  - OCBPC collides sphere against sphere and adds every overlap; the partner's penis is five balls ~3 apart.
+    Against the mesh's mean radius (A-31's shape), a labia sphere rides 0.13 inside to 0.69 off the flesh as
+    the balls pass; the tip ball stands 0.6-1.4 ahead of the glans.
+  - A ball in two spatial-grid cells pushed a bone once per cell (an upstream OCBPC fault).
+  - A-31's thinner shaft silently undid A-15: the labia push fell 2.17 -> 1.65 and fit_check's "through" rose
+    27% -> 42% (vagina) and the anus's 47% -> 72%. fit_check never knew the run-time shape: it reads the
+    collision file's unscaled radii.
+- **Built:**
+  - fork b40dca1: [Tube] collides each penis chain as one tube (the mouth's reading, Glans.h's profile), one
+    push per partner; each collider once per collision pass.
+  - The inner lips' spheres 1.2 -> 1.7, so the vulva clears the thinner shaft again.
+  - In the port: anus through 72% -> 27% and wobble 0.69 -> 0.21; vagina through 42% -> 26% (the approved
+    27%), wobble halved, under the fist stretch's knee on every path.
+- **Checked and not taken:**
+  - A lead-in for the vagina/anus aim (the mouth's mouthLead). Steeper and flatter entries clip about as
+    much as the drawn axis, so there is no oval to fix.
+  - Tilting the anus's entry axis. With the rough estimate +40 degrees looked better; with the exact tube the
+    drawn +27 is best. The entry POINT matters far more (0.3 off: 57-68%).
+- **Open:** the owner's look (tube on, lips 1.7); the region's p99 edge stretch rises 3.7 -> 4.7 with the
+  lips; stale: field-notes' "anus knee 1.8" (the code has 0.65 since 09-24).
