@@ -122,8 +122,44 @@ def dds(path, rgb):
     from PIL import Image
     im = Image.new('RGB', (SIZE, SIZE))
     im.putdata(rgb)
+    write_mipped(path, im, 'DXT1')
+
+
+def write_mipped(path, im, fmt):
+    """A DDS with its whole mip chain, each level box-filtered from the one above, down to 1x1. Without
+    it (Pillow writes one level) the game drew the multiply overlay's missing levels as BLACK, and a
+    man seen at a distance or a slant went black all over (the owner, 2026-09-25, Photo190)."""
+    import io
+    from PIL import Image
+    levels = [im]
+    while levels[-1].size[0] > 1 or levels[-1].size[1] > 1:
+        w, h = levels[-1].size
+        levels.append(levels[-1].resize((max(1, w // 2), max(1, h // 2)), Image.BOX))
+    blocks = b''
+    for lv in levels:
+        w, h = lv.size
+        if w < 4 or h < 4:                  # a block is 4x4: a smaller level is one block of itself tiled
+            tile = Image.new(lv.mode, (4, 4))
+            for y in range(0, 4, h):
+                for x in range(0, 4, w):
+                    tile.paste(lv, (x, y))
+            lv = tile
+        buf = io.BytesIO()
+        lv.save(buf, 'DDS', pixel_format=fmt)
+        blocks += buf.getvalue()[128:]
+    first = io.BytesIO()
+    levels[0].save(first, 'DDS', pixel_format=fmt)
+    head = bytearray(first.getvalue()[:128])
+    struct.pack_into('<I', head, 8, struct.unpack_from('<I', head, 8)[0] | 0x20000)       # DDSD_MIPMAPCOUNT
+    struct.pack_into('<I', head, 28, len(levels))
+    struct.pack_into('<I', head, 108, struct.unpack_from('<I', head, 108)[0] | 0x400008)  # COMPLEX | MIPMAP
+    per_block = 8 if fmt == 'DXT1' else 16
+    want = sum(max(1, (lv.size[0] + 3) // 4) * max(1, (lv.size[1] + 3) // 4) * per_block for lv in levels)
+    if len(blocks) != want:
+        raise SystemExit(f'{path.name}: {len(blocks)} bytes of blocks for {len(levels)} levels, the format says {want}')
     path.parent.mkdir(parents=True, exist_ok=True)
-    im.save(path, 'DDS', pixel_format='DXT1')
+    path.write_bytes(bytes(head) + blocks)
+    return len(levels)
 
 
 def bgem(base, envmap='', normal=NORMAL, envmask='', src=6, dst=7, env=False, lighting=0.0):
@@ -211,7 +247,7 @@ def main():
     dds(tex / 'GlansFlush.dds', [tuple(round(255 * (1 - v * (1 - f))) for f in FLUSH) for v in mask])
     dds(tex / 'GlansSpec.dds', [(round(255 * v * SPEC), round(255 * v * GLOSS), 0) for v in mask])
     from PIL import Image
-    Image.new('RGBA', (4, 4), (0, 0, 0, 0)).save(tex / 'GlansGlossBase.dds', 'DDS', pixel_format='DXT5')
+    write_mipped(tex / 'GlansGlossBase.dds', Image.new('RGBA', (4, 4), (0, 0, 0, 0)), 'DXT5')
     mats = args.out / 'Materials' / TEX.replace('\\', '/')
     mats.mkdir(parents=True, exist_ok=True)
     flush = bgem(TEX + r'\GlansFlush.dds', src=4, dst=1)                    # dest colour x ours
