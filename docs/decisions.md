@@ -1426,3 +1426,18 @@ scenes, the AAF menu's too.
   - The purple ghoul rear: which NPC; Point Lookout ghouls have their own rear part.
   - Players build their own body in BodySlide, which drops a post-build fix. For the release: a builder
     step after their build, or a shipped patcher.
+
+## A-38 — A toy collides as one tube too (the owner's pick, 2026-09-26)
+
+- **Ask:** the Sonnet harness found props excluded from the tube (TubeCollide.cpp: `!c.isProp`), so a toy still
+  collided as its line of balls. The owner queued the fix: "yeah ofc go on".
+- **Measured (fork tests/tube case 7):** a toy is AddPropColliders's line, balls of 1.6 every 1.5. They
+  barely ride, but two or three push a lip at once and ADD. An inner lip (1.7) ended 4.96 .. 5.05 from the
+  toy's axis, where the toy's surface is 3.10. As one tube it rests on the surface everywhere (3.100).
+- **Built (fork):** [Tube] props=1 turns each prop's line into a tube, read like a penis's (radius less the
+  skin).
+  - Who it pushes differs from a penis (Tube::Reaches): a penis never pushes its own owner; a toy pushes
+    only the [Props] target bones, its holder's own included (solo scenes). That is the rule its balls
+    always had.
+  - Tests: tube 8 cases; mutants 8/8, 3 of them on Reaches.
+- **Open:** the owner's look in a toy scene.

@@ -212,7 +212,10 @@ EYES = dict(enabled=1, glances=1, signUp=-1, signSide=-1, axes='0,1,1.4,0', uMax
 # The tube is the mouth's reading of a chain (A-32): the radius straight between bones less the skin (the flesh's
 # mean), and the glans's own profile. Measured in fit_check's port: the anus 72% -> 27% through, its thrust wobble
 # 0.69 -> 0.21, its opening held on a steep entry (0.52 -> 1.25); the vagina's wobble halved.
-TUBE = dict(enabled=1, chains=MOUTH['chains'], skin=MOUTH['skin'], glans=MOUTH['glans'],
+# props=1 (A-38, 2026-09-26): a toy on a [Props] node collides as ONE tube too. Its balls sit 1.5 apart with
+# a 3.3 reach, so two or three push a lip at once and ADD: fork tests/tube case 7 puts an inner lip at
+# 4.96 .. 5.05 from a toy's axis as balls, and at the toy's own surface (3.10) as a tube.
+TUBE = dict(enabled=1, props=1, chains=MOUTH['chains'], skin=MOUTH['skin'], glans=MOUTH['glans'],
             glansProfile=MOUTH['glansProfile'])
 
 # The fork's [Aim] (A-28): each frame a penis chain turns about its root onto the opening it is closest to
