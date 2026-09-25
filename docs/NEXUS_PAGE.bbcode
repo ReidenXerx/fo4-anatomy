@@ -32,7 +32,7 @@ CBBE's women have closed skin where the genitals should be, and no bones there f
 
 [center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-anatomy@276c3dc7df3ebbd7c28f53eeda1073ecfa0be936/docs/img/divider.png[/img][/center]
 
-[size=5][b][color=#ffb547]Anatomy Rebuild[/color][/b] (optional download)[/size]
+[size=5][b][color=#ffb547]Anatomy Rebuild[/color][/b] (optional, from the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url])[/size]
 
 Run [font=Courier New]AnatomyRebuild.exe[/font] after every BodySlide build and your outfits get the body's hip fix, so they stop parting from the skin at the groin in legs-up poses (a combat-armour leg on all fours: worst gap 5.10 → 2.25). It also removes the neck seam line. It never runs BodySlide and never moves a vertex, a morph or a slider, so any preset works, zaps included. [font=Courier New]--undo[/font] puts your builds back.
 
@@ -41,12 +41,14 @@ Run [font=Courier New]AnatomyRebuild.exe[/font] after every BodySlide build and 
 [size=5][b][color=#ffb547]Install[/color][/b][/size]
 
 [list=1]
-[*]Install the [b]Anatomy Engine[/b] (fo4-ocbpc), then Anatomy.
-[*]Run [font=Courier New]Data\Tools\AnatomyBuilder\AnatomyBuilder.exe[/font] once. On MO2, run it from MO2, like BodySlide.
+[*]Install the [url=https://www.nexusmods.com/fallout4/mods/109434]Anatomy Engine[/url] (fo4-ocbpc), then Anatomy.
+[*]Get the [b]Anatomy Builder[/b]: [font=Courier New]AnatomyBuilder-1.0.1.zip[/font] from the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url]. Extract it into a folder of its own (anywhere; [font=Courier New]Data\Tools[/font] works too) and run [font=Courier New]AnatomyBuilder.exe[/font] once. Vortex or no mod manager: double-click it. MO2: add it to MO2's executables and run it from MO2, like BodySlide.
 [*]In BodySlide, pick "Anatomy Body" and your preset, then Build.
-[*]Optional: run Anatomy Rebuild after every BodySlide build.
+[*]Optional: [font=Courier New]AnatomyRebuild-1.0.1.zip[/font], from the same page, after every BodySlide build. Keep its folder: the backups for [font=Courier New]--undo[/font] live beside it.
 [/list]
-Run the builder again after changing your CBBE or skin mod.
+Run the builder again after changing your CBBE or skin mod. It finds your game by itself; if it can't, run it with [font=Courier New]--data "<your Fallout 4>\Data"[/font].
+
+[b]Why two downloads?[/b] Nexus quarantines any download that contains a program, so the Nexus file holds the game files only and the two tools live on GitHub, next to their source.
 
 [quote]
 [b]Needs:[/b] Fallout 4 1.10.163 (Steam or GOG, not next-gen), F4SE 0.6.23, the Anatomy Engine (fo4-ocbpc), CBBE with its BodySlide files, and BodySlide. LooksMenu (nipples, glans colour), AAF (scenes) and MCM (settings) for the parts that use them.
@@ -59,8 +61,8 @@ Run the builder again after changing your CBBE or skin mod.
 [b]Is everything tested in game?[/b]
 [spoiler]Most of it. Built and tested offline, but not yet seen in game: fisting and big-toy stretch, toys colliding as one tube, Rapport's MCM knobs for the physics, and the brows following vaginal and anal depth (the oral ones are confirmed). Known limits: in a two-hole position the aim chooses by geometry alone, men's own openings are not modelled, and the wrist can show a faint line against the hands. If you see any of this, please tell us.[/spoiler]
 
-[b]Why are there .exe files?[/b]
-[spoiler]The Anatomy Builder and Anatomy Rebuild are Python tools packed to run without installing Python. Their source is in [url=https://github.com/ReidenXerx/fo4-anatomy]the public repository[/url] ([font=Courier New]tools/builder.py[/font], [font=Courier New]tools/rebuild.py[/font]).[/spoiler]
+[b]What are the two tools?[/b]
+[spoiler]The Anatomy Builder and Anatomy Rebuild are Python tools packed to run without installing Python. They are not in the Nexus download. Their source is in [url=https://github.com/ReidenXerx/fo4-anatomy]the public repository[/url] ([font=Courier New]tools/builder.py[/font], [font=Courier New]tools/rebuild.py[/font]).[/spoiler]
 
 [b]Does it work with my other mods?[/b]
 [spoiler]AAF and UAP, LooksMenu, Rapport, Silhouette (nipples stay flat under heavy armour it marks), Overture and Ivy (arousal sources), CBBE HeadRear Absolute Fix, any OCBPC physics config, and BodyTalk4 men.[/spoiler]
