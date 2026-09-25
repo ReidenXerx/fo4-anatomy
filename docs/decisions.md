@@ -1283,3 +1283,19 @@ scenes, the AAF menu's too.
     A finger opens only the middle; two things together get lips round both.
   - tests/lips: 9 cases, 10/10 mutations. tests/face: the lip path.
 - **Open:** tune clearance and the inside cost by the owner's look; the log prints each mouth's first fit.
+
+## A-33 — Rapport's MCM drives the fork's knobs; the deep face follows genital depth too (the owner, 2026-09-25)
+
+- **Ask:** "yeah u can do mcm menu with rapport", and "can we also trigger something similar when penis deep
+  in vagina/anus too?".
+- **One hub:** Rapport's MCM page sends 'RFAK' (32 bytes: version, enabled bits aim / shape / lip fit /
+  reaction / deep, then lip clearance, lip speed, shaft, head min, head max, reaction scale) after the hello
+  and on every change. The fork clamps each value to a sane range. The ini's values stand until a message
+  arrives, and a knob only switches off what the ini turned on. Hello bit 5 says the knobs are applied.
+- **Genital depth:** while a shaft is locked, Aim measures the tip past the entrance along the opening's
+  axis: his depth in any opening, and hers in her vagina or anus (a mouth's stays the contact mouth's). A held
+  face's Deep face blends by the larger of the oral depth and this one, full at 6 units. Rapport's deep
+  faces are Pleasure_1..3. Hello bit 6. It needs [Aim] on.
+- **Built:** fork 5217f05. tests/face covers the decode, the clamps and the store; 21 of 21 authority
+  mutations are caught.
+- **Open:** verify in game: the knobs from the MCM page, and her brows by vaginal depth.
