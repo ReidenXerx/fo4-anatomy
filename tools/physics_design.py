@@ -194,13 +194,16 @@ FACE = dict(authority=1, react=1)   # react: the busy mouth's reaction rises abo
 # quarter-turn off ("his head on perfect 12 h then her gaze is somewhere 8-10 h"). The eyes sit eyeRise up the face from the
 # mouth's point and eyeBack into it (a human face's proportions in game units; an error of a unit is ~1 degree
 # at a partner's distance). probe= and test= are a tester's (release.py refuses them).
-# The sweep (2026-09-26): the four fixed offsets u-, v-, u+, v+ showed, seen from the front, in order
-# "left, center, up, center, right, center, bottom" - and the engine's own tracking had already turned v
-# NEGATIVE toward a player at her right (your left, facing her). So v- is her right and u+ is UP: u is
-# vertical with the opposite sign to the one read from +0x9BE800, which is why her glance landed at
-# "13-15 hr instead of 12". And "when up and bottom we can try push gaze more": u at 1.4 x the engine's gain,
-# to 0.18 (the engine's own edge is 0.16). glances=1: the owner has seen the eyes turn (hello bit 4).
-EYES = dict(enabled=1, glances=1, signUp=1, signSide=-1, axes='1.4,0,0,-1', uMax=0.18, eyeRise=4.8, eyeBack=0.8)
+# The sweep (2026-09-26): the four fixed offsets u-, v-, u+, v+ showed, in order, "left, center, up, center,
+# right, center, bottom". Read first as the viewer's left, that gave u+ = up - and the owner's next look,
+# "she glances only in her left", says it was HER left: then v- is her right (as the engine's own tracking had
+# turned v negative toward a player at her right) and u- is UP, which is also what +0x9BE800 computes
+# (u = -0.25 x the vertical part) and what the engine did for a target above her (u -0.15, the probe). So
+# u = -1.4 x 0.25 x up (more reach up and down, as asked: "push gaze more up and more bottom"), to 0.18; v =
+# -0.25 x side. rollMax: how far up the eyes roll (RFAG's roll flag; the owner: "rolling eyes ... its very
+# sexy"). glances=1: the owner has seen the eyes turn (hello bit 4).
+EYES = dict(enabled=1, glances=1, signUp=-1, signSide=-1, axes='-1.4,0,0,-1', uMax=0.18, rollMax=0.24,
+            eyeRise=4.8, eyeBack=0.8)
 # The fork's [Tube] (2026-09-26, fork Tube.h, tools/tube_check.py): every penis chain collides as ONE tube instead
 # of its bones' balls. OCBPC collides sphere against sphere and ADDS every overlap; five balls ~3 apart made a lip
 # ride 0.8 in and out along the shaft, stand 0.6 .. 1.4 ahead of the glans, and a ball in two grid cells push twice.
