@@ -1,6 +1,6 @@
 """Anatomy Builder: the Anatomy body, made from the player's own CBBE and skin (decisions A-21, A-23).
 
-    AnatomyBuilder.exe                   (from Data/Tools/AnatomyBuilder; MO2: run it from MO2)
+    AnatomyBuilder.exe                   (anywhere; it finds the game. MO2: run it from MO2)
     AnatomyBuilder.exe --data <Data> [--out <folder>] [--keep-work]
 
 It reads, as the game would load them (loose files first, then archives in load order):
@@ -66,14 +66,8 @@ class Tee(io.TextIOBase):
 
 
 def find_data(arg):
-    if arg:
-        data = pathlib.Path(arg)
-    else:
-        data = HERE.parent.parent                      # Data/Tools/AnatomyBuilder
-    if not (data / 'Fallout4.esm').exists():
-        raise SystemExit(f'{data} is not Fallout 4\'s Data folder. Put the builder in Data/Tools/AnatomyBuilder '
-                         f'(the Anatomy download does), or run it with --data "<your Fallout 4>/Data".')
-    return data
+    import gamedata
+    return gamedata.find_data(arg, HERE, 'AnatomyBuilder.exe')
 
 
 def sha(blob):
@@ -109,7 +103,8 @@ def run_stage(label, fn):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--data', help='Fallout 4 Data folder (default: two folders above the builder)')
+    ap.add_argument('--data', help='Fallout 4 Data folder (default: Data/Tools/<here>, else the game the '
+                                   'registry names)')
     ap.add_argument('--out', help='write the results here instead of into Data')
     ap.add_argument('--keep-work', action='store_true', help='keep the work folder (for a bug report)')
     args = ap.parse_args()

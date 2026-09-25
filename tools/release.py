@@ -1,24 +1,31 @@
-"""Assemble the release archives (release-plan.md): the engine, Anatomy, and Anatomy Rebuild.
+"""Assemble the release archives (release-plan.md): the engine, Anatomy, and its two tools.
 
-    python tools/release.py [--version 1.0.0] [--what all|engine|anatomy|rebuild]
+    python tools/release.py [--version 1.0.1] [--what all|engine|anatomy|builder|rebuild]
         -> build/release/fo4-ocbpc-<version>.7z        the engine: cbp.dll, its own Nexus page
-           build/release/Anatomy-<version>.7z          Anatomy (requires the engine)
-           build/release/AnatomyRebuild-<version>.7z   the optional tool (A-36, A-37 on the player's builds)
+           build/release/Anatomy-<version>.7z          Anatomy's GAME files (requires the engine): Nexus
+           build/release/AnatomyBuilder-<version>.zip  the builder, alone: GitHub releases only
+           build/release/AnatomyRebuild-<version>.zip  Anatomy Rebuild, alone: GitHub releases only
+    ("all" is the last three; the engine is released on its own.)
+
+The tools live on GitHub only (the owner's poll, 2026-09-26): Nexus's automated check quarantined
+Anatomy 1.0.0 and its Rebuild file for "executables and similar file types" (the PyInstaller exes and
+their _internal .pyd/.dll). So the Nexus archive carries no .exe, .dll or .pyd anywhere, and refuses to
+build if one gets in. The tools find the game themselves (gamedata.find_data), wherever they are put.
 
 Two mods since the owner's release call (2026-09-26: "separately our upgraded cbp engine and
 anatomy"): the engine is the ONLY archive carrying cbp.dll, so a player never resolves two copies of it
 and Anatomy never ships a DLL older than the engine's page.
 
-Anatomy ships (nothing of anyone else's but Nahka's own work, with her page's permission, A-23):
+Anatomy (the Nexus archive) ships:
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
     Scripts/AnatomyAim.pex                                             the aim's scene list (A-28)
     F4SE/Plugins/F4EE/Overlays/Anatomy.esp, Materials|Textures/Overlays/Anatomy   the glans colour (A-31)
     F4SE/Plugins/Anatomy/ocbp.ini, OCBPCollisionConfig.txt             our physics lines and [Bones]
-    Tools/AnatomyBuilder/AnatomyBuilder.exe (+ _internal)              the builder
-    Tools/AnatomyBuilder/data/nahka_patch.json.gz, data/tex/*          her genitals, as a patch and her
-                                                                       texture island
     fomod/info.xml, fomod/ModuleConfig.xml                             one page: what to do next
-    Anatomy - README.txt                                               install, credits, licences
+    Anatomy - README.txt, Anatomy - LICENSE.txt                        install, credits, licences
+The builder's zip carries AnatomyBuilder.exe (+ _internal), data/nahka_patch.json.gz and data/tex/* (her
+genitals, as a patch and her texture island: nothing of anyone else's but Nahka's own work, with her
+page's permission, A-23) and the Python and Pillow licences.
 Every file is checked present, and the archive must list every one of them back.
 
 Both binaries are built from source on every run, so an archive never carries one older than its
@@ -42,14 +49,18 @@ AUTHOR = 'ReidenXerx'
 FORK_URL = 'https://github.com/ReidenXerx/fo4-ocbpc'      # its public source, F4SE's rule
 ANATOMY_URL = 'https://github.com/ReidenXerx/fo4-anatomy'
 ENGINE = 'fo4-ocbpc'                                        # the engine's archive name
+TOOLS_URL = 'https://github.com/ReidenXerx/fo4-anatomy/releases'   # the builder and Rebuild zips
+BINARIES = ('.exe', '.dll', '.pyd')                         # never in the Nexus archive (Nexus quarantine)
 
-NEXT_STEPS = """Anatomy needs the fo4-ocbpc engine (its cbp.dll), a separate download.
+NEXT_STEPS = f"""Anatomy needs the fo4-ocbpc engine (its cbp.dll), a separate download.
 After this installs:
-1. Run Data\\Tools\\AnatomyBuilder\\AnatomyBuilder.exe once (MO2: add it to MO2's executables and run it
-   from there, like BodySlide). It builds the body from YOUR CBBE and skin and writes only new files.
+1. Get AnatomyBuilder-<version>.zip from
+   {TOOLS_URL}
+   extract it into a folder of its own and run AnatomyBuilder.exe once. It finds your game by itself. MO2: add it to MO2's
+   executables and run it from there, like BodySlide. It builds the body from YOUR CBBE and skin.
 2. Open BodySlide, choose "Anatomy Body", your preset, and Build.
 Re-run the builder whenever you change your CBBE or your skin mod.
-Optional: Anatomy Rebuild (its own download) after every BodySlide build."""
+Optional: Anatomy Rebuild (AnatomyRebuild-<version>.zip, same page) after every BodySlide build."""
 
 README = f"""{TITLE}
 Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
@@ -62,10 +73,13 @@ WHAT YOU NEED
 
 INSTALL
   1. Install the fo4-ocbpc engine, then this archive, with your mod manager. Nothing of this archive
-     overlaps another mod.
-  2. Run Data\\Tools\\AnatomyBuilder\\AnatomyBuilder.exe once. MO2: add it to MO2's executables and
-     run it from MO2, as you do BodySlide. It reads your CBBE, your skeleton and your skin (as the
-     game loads them), checks every step, and writes only new files:
+     overlaps another mod, and it holds no program: the tools are on GitHub.
+  2. Download AnatomyBuilder-<version>.zip from
+       {TOOLS_URL}
+     extract it into a folder of its own (anywhere; Data\\Tools works too) and run AnatomyBuilder.exe once. It finds your game by
+     itself (or run it with --data "<your Fallout 4>\\Data"). MO2: add it to MO2's executables and run
+     it from MO2, as you do BodySlide; outside MO2 it cannot see MO2's mods. It reads your CBBE, your
+     skeleton and your skin (as the game loads them), checks every step, and writes only new files:
        Tools\\BodySlide\\SliderSets\\Anatomy.osp and ShapeData\\Anatomy\\*, the "Anatomy Body" set
        Textures\\Anatomy\\*, Materials\\Anatomy\\*, the genitals' own texture and material
      Its log is AnatomyBuilder.log next to it.
@@ -73,8 +87,8 @@ INSTALL
      has "Opening, front": extra opening toward the front, on top of the built-in one (0% leaves
      it as designed).
   Re-run the builder after changing your CBBE or skin mod.
-  4. Optional, Anatomy Rebuild (its own download): run it after every BodySlide build. It gives your
-     built outfits the body's hip handover and the body's neck its seam fix, which BodySlide itself
+  4. Optional, Anatomy Rebuild (AnatomyRebuild-<version>.zip, same page): run it after every
+     BodySlide build. It gives your built outfits the body's hip handover and the body's neck its seam fix, which BodySlide itself
      cannot carry.
 
 WHAT IT DOES
@@ -94,12 +108,11 @@ CREDITS
   maximusmaxy - Screen Archer Menu's source, which documented the face data the mouth uses.
 
 LICENCES
-  Anatomy is distributed under the GNU General Public License, version 3
-  (Tools\\AnatomyBuilder\\licences\\Anatomy - LICENSE.txt).
+  Anatomy is distributed under the GNU General Public License, version 3 (Anatomy - LICENSE.txt).
   Its source: {ANATOMY_URL}
   The engine's source: {FORK_URL} (this release was made with commit @FORK_COMMIT@).
-  The builder is our own code, run by Python and Pillow, which are packed inside it under their own
-  licences (Tools\\AnatomyBuilder\\licences). The plugin, scripts, MCM and configs are our own work.
+  The plugin, scripts, MCM and configs are our own work. The builder and Rebuild are our own code, run
+  by Python (and Pillow, for the builder), packed inside them with their licences.
 """
 
 
@@ -138,9 +151,31 @@ CREDITS
   data the mouth uses.
 """
 
+BUILDER_README = f"""Anatomy Builder (for Anatomy - CBBE Genitals, Physics and Arousal)
+Builds the Anatomy body on your PC from YOUR CBBE, skin and skeleton. Nexus carries Anatomy's game
+files; its tools are here, on GitHub ({TOOLS_URL}).
+
+INSTALL AND RUN
+  1. Install the fo4-ocbpc engine and Anatomy with your mod manager.
+  2. Extract this zip into a folder of its own (anywhere; <your Fallout 4>\\Data\\Tools works too).
+  3. Vortex, or no mod manager: double-click AnatomyBuilder\\AnatomyBuilder.exe.
+     MO2: add AnatomyBuilder.exe to MO2's executables and run it from MO2, like BodySlide. Run
+     outside MO2, it cannot see the mods MO2 manages.
+     It finds the game by itself: the Data folder it sits in, else the folder the game's installer
+     recorded (Steam or GOG). If it cannot, run it with --data "<your Fallout 4>\\Data".
+     It reads CBBE's BodySlide set, your skeleton and your skin as the game loads them, checks every
+     stage, and writes only new files into Data (MO2: into its overwrite folder): the "Anatomy Body"
+     BodySlide set and the genitals' own texture and material. Its log is AnatomyBuilder.log beside it.
+  4. BodySlide: choose "Anatomy Body", your preset, and Build.
+  Re-run it after changing your CBBE or your skin mod.
+
+LICENCES
+  GNU General Public License, version 3 (licences\\Anatomy - LICENSE.txt). Source: {ANATOMY_URL}
+  It runs on Python and Pillow, packed inside it under their own licences (licences\\). data\\ holds
+  Nahka's genitals as a patch against your CBBE, with her permission ("up for adoption").
+"""
+
 REBUILD_TITLE = 'Anatomy Rebuild'
-REBUILD_STEPS = """Run Data\\Tools\\AnatomyRebuild\\AnatomyRebuild.exe after every BodySlide build (MO2: add it to
-MO2's executables and run it from there, like BodySlide). --undo puts your builds back."""
 REBUILD_README = f"""{REBUILD_TITLE} (optional, for Anatomy)
 Your BodySlide builds get the two fixes BodySlide cannot carry.
 
@@ -154,9 +189,11 @@ WHAT IT DOES
 HOW TO USE
   1. Anatomy installed and its builder run; build "Anatomy Body" and your outfits in BodySlide as
      usual, with any preset.
-  2. Run Data\\Tools\\AnatomyRebuild\\AnatomyRebuild.exe (MO2: from MO2, like BodySlide). The log is
-     AnatomyRebuild.log next to it.
-  3. After every BodySlide build, run it again: BodySlide writes its meshes whole.
+  2. Extract this zip into a folder of its own and KEEP it there: its backup\\ (for --undo) lives
+     beside it. Anywhere works; it finds your game by itself, or takes --data "<your Fallout 4>\\Data".
+  3. Vortex, or no mod manager: run AnatomyRebuild\\AnatomyRebuild.exe. MO2: add it to MO2's
+     executables and run it from MO2, like BodySlide. The log is AnatomyRebuild.log beside it.
+  4. After every BodySlide build, run it again: BodySlide writes its meshes whole.
   --undo puts back every mesh it changed that BodySlide has not rebuilt since.
 
 WHY IT IS SAFE
@@ -242,20 +279,15 @@ def face_section(ini):
 
 
 def files(version):
-    dist = BUILD / 'dist/AnatomyBuilder'
-    out = {
+    """Anatomy's game files (the Nexus archive): no program of any kind."""
+    return {
         'Anatomy.esp': BUILD / 'plugin/Anatomy.esp',
         'Scripts/Anatomy/Arousal.pex': BUILD / 'papyrus/Anatomy/Arousal.pex',
         'Scripts/AnatomyAim.pex': BUILD / 'papyrus/AnatomyAim.pex',
         'MCM/Config/Anatomy/config.json': BUILD / 'mcm/MCM/Config/Anatomy/config.json',
         'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm/MCM/Config/Anatomy/settings.ini',
-        'Tools/AnatomyBuilder/licences/Anatomy - LICENSE.txt': ROOT / 'LICENSE',
-        # the builder runs on Python and Pillow, packed inside it: their notices go with them
-        'Tools/AnatomyBuilder/licences/Python LICENSE.txt': pathlib.Path(sys.base_prefix) / 'LICENSE.txt',
-        'Tools/AnatomyBuilder/licences/Pillow LICENSE.txt': pillow_licence(),
         'F4SE/Plugins/Anatomy/ocbp.ini': BUILD / 'config/Anatomy/ocbp.ini',
         'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt': BUILD / 'config/Anatomy/OCBPCollisionConfig.txt',
-        'Tools/AnatomyBuilder/data/nahka_patch.json.gz': BUILD / 'patch/nahka_patch.json.gz',
         # the men's glans colour (A-31, MCM "Glans colour"): our own mask in BodyTalk4's UV. Until the
         # release gathering (2026-09-26) it was never listed, and the switch would have found no template
         'F4SE/Plugins/F4EE/Overlays/Anatomy.esp/overlays.json':
@@ -263,12 +295,24 @@ def files(version):
         'Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem': BUILD / 'overlays/Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem',
         'Textures/Overlays/Anatomy/GlansFlush.dds': BUILD / 'overlays/Textures/Overlays/Anatomy/GlansFlush.dds',
     }
+
+
+def builder_files():
+    """The builder's zip: AnatomyBuilder/ with the exe, its data (Nahka's patch) and the licences."""
+    dist = BUILD / 'dist/AnatomyBuilder'
+    out = {
+        'AnatomyBuilder/licences/Anatomy - LICENSE.txt': ROOT / 'LICENSE',
+        # the builder runs on Python and Pillow, packed inside it: their notices go with them
+        'AnatomyBuilder/licences/Python LICENSE.txt': pathlib.Path(sys.base_prefix) / 'LICENSE.txt',
+        'AnatomyBuilder/licences/Pillow LICENSE.txt': pillow_licence(),
+        'AnatomyBuilder/data/nahka_patch.json.gz': BUILD / 'patch/nahka_patch.json.gz',
+    }
     for p in sorted((BUILD / 'patch/tex').iterdir()):
-        out[f'Tools/AnatomyBuilder/data/tex/{p.name}'] = p
+        out[f'AnatomyBuilder/data/tex/{p.name}'] = p
     for p in sorted(dist.rglob('*')):
         if p.is_file() and p.parent.name != 'data' and 'data' not in p.relative_to(dist).parts[:1] \
                 and p.name != 'AnatomyBuilder.log':
-            out[f'Tools/AnatomyBuilder/{p.relative_to(dist).as_posix()}'] = p
+            out[f'AnatomyBuilder/{p.relative_to(dist).as_posix()}'] = p
     return out
 
 
@@ -281,14 +325,15 @@ def engine_files():
 
 
 def rebuild_files():
+    """Rebuild's zip: AnatomyRebuild/ with the exe and the licences."""
     dist = BUILD / 'dist/AnatomyRebuild'
     out = {
-        'Tools/AnatomyRebuild/licences/Python LICENSE.txt': pathlib.Path(sys.base_prefix) / 'LICENSE.txt',
-        'Tools/AnatomyRebuild/licences/Anatomy - LICENSE.txt': ROOT / 'LICENSE',
+        'AnatomyRebuild/licences/Python LICENSE.txt': pathlib.Path(sys.base_prefix) / 'LICENSE.txt',
+        'AnatomyRebuild/licences/Anatomy - LICENSE.txt': ROOT / 'LICENSE',
     }
     for p in sorted(dist.rglob('*')):
         if p.is_file() and p.name != 'AnatomyRebuild.log' and 'backup' not in p.relative_to(dist).parts:
-            out[f'Tools/AnatomyRebuild/{p.relative_to(dist).as_posix()}'] = p
+            out[f'AnatomyRebuild/{p.relative_to(dist).as_posix()}'] = p
     return out
 
 
@@ -322,8 +367,41 @@ def fomod(version, title=TITLE, steps=NEXT_STEPS, entry='Run the Anatomy Builder
     return info, config
 
 
-def pack(name, version, wanted, readme_name, readme, fomod_args=None):
-    """One archive: every file present, a README, a FOMOD page if asked, and every file listed back."""
+def sha256(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for block in iter(lambda: f.read(1 << 20), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def pack_zip(name, version, wanted, readme_name, readme):
+    """A tool's zip for the GitHub release: its folder, a README beside it, every entry read back."""
+    import zipfile
+    missing = [str(src) for src in wanted.values() if not src.exists()]
+    if missing:
+        raise SystemExit(f'{name}: missing {missing}')
+    archive = BUILD / 'release' / f'{name}-{version}.zip'
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    if archive.exists():
+        archive.unlink()
+    with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        z.writestr(readme_name, readme.replace('\n', '\r\n'))
+        for rel, src in wanted.items():
+            z.write(src, rel)
+    with zipfile.ZipFile(archive) as z:
+        names = set(z.namelist())
+        bad = z.testzip()
+    if bad or names != set(wanted) | {readme_name}:
+        raise SystemExit(f'{name}: the zip does not read back as written ({bad or "entries differ"})')
+    print(f'{archive} ({archive.stat().st_size // 1024} KB): {len(names)} entries\n  sha256 {sha256(archive)}')
+    return archive
+
+
+def pack(name, version, wanted, readme_name, readme, fomod_args=None, extras=None, no_binaries=False):
+    """One archive: every file present, a README, a FOMOD page if asked, and every file listed back.
+    extras: {name at the archive's root: source}. no_binaries: refuse any .exe/.dll/.pyd anywhere in it."""
     missing = [str(src) for src in wanted.values() if not src.exists()]
     if missing:
         raise SystemExit(f'{name}: missing {missing}')
@@ -343,6 +421,12 @@ def pack(name, version, wanted, readme_name, readme, fomod_args=None):
         ET.parse(stage / 'fomod/info.xml')
         ET.parse(stage / 'fomod/ModuleConfig.xml')             # both must at least be well-formed
     (stage / readme_name).write_text(readme.replace('\n', '\r\n'), encoding='utf-8')
+    for rel, src in (extras or {}).items():
+        shutil.copy2(src, stage / rel)
+    if no_binaries:
+        found = [str(q.relative_to(stage)) for q in stage.rglob('*') if q.suffix.lower() in BINARIES]
+        if found:
+            raise SystemExit(f'{name}: a program in the Nexus archive (Nexus quarantines these): {found}')
     archive = stage.parent / f'{name}-{version}.7z'
     if archive.exists():
         archive.unlink()
@@ -354,37 +438,47 @@ def pack(name, version, wanted, readme_name, readme, fomod_args=None):
     print(f'{archive} ({size} KB): {len(all_files)} files ({len(wanted)} in Data), {back} listed back')
     if back != len(all_files):
         raise SystemExit(f'{name}: the archive does not list every file')
+    if no_binaries:                                      # and the archive itself, as Nexus will read it
+        rows = [line.split()[-1] for line in listed.splitlines() if len(line.split()) >= 6]
+        found = [r for r in rows if r.lower().endswith(BINARIES)]
+        if found:
+            raise SystemExit(f'{name}: the built archive lists a program: {found}')
+    print(f'  sha256 {sha256(archive)}')
     return archive
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--version', default='1.0.0')
-    ap.add_argument('--what', choices=('all', 'engine', 'anatomy', 'rebuild'), default='all')
+    ap.add_argument('--version', default='1.0.1')
+    ap.add_argument('--what', choices=('all', 'engine', 'anatomy', 'builder', 'rebuild'), default='all')
     args = ap.parse_args()
     commit = build_dll()                                       # every archive names the engine commit
     print(f'engine: cbp.dll from fork commit {commit}')
-    if args.what in ('all', 'engine'):
+    if args.what == 'engine':
         pack(ENGINE, args.version, engine_files(), f'{ENGINE} - README.txt',
              ENGINE_README.replace('@FORK_COMMIT@', commit))
     if args.what in ('all', 'anatomy'):
-        build_exe()
         wanted = files(args.version)
-        if not any(k.endswith('AnatomyBuilder.exe') for k in wanted):
-            raise SystemExit('PyInstaller ran but left no AnatomyBuilder.exe in build/dist/AnatomyBuilder')
         sys.path.insert(0, str(ROOT / 'tools'))
         import make_esp
         print(make_esp.verify(wanted['Anatomy.esp']))    # a keyword-less Anatomy.esp would move our layer into bodies
         print(face_section(wanted['F4SE/Plugins/Anatomy/ocbp.ini'].read_text(encoding='utf-8')))
-        pack(NAME, args.version, wanted, f'{NAME} - README.txt', README.replace('@FORK_COMMIT@', commit),
-             (TITLE, NEXT_STEPS, 'Run the Anatomy Builder, then BodySlide'))
+        pack(NAME, args.version, wanted, f'{NAME} - README.txt',
+             README.replace('@FORK_COMMIT@', commit).replace('<version>', args.version),
+             (TITLE, NEXT_STEPS.replace('<version>', args.version), 'Get the Anatomy Builder, run it, then BodySlide'),
+             extras={f'{NAME} - LICENSE.txt': ROOT / 'LICENSE'}, no_binaries=True)
+    if args.what in ('all', 'builder'):
+        build_exe()
+        wanted = builder_files()
+        if not any(k.endswith('AnatomyBuilder.exe') for k in wanted):
+            raise SystemExit('PyInstaller ran but left no AnatomyBuilder.exe in build/dist/AnatomyBuilder')
+        pack_zip('AnatomyBuilder', args.version, wanted, 'Anatomy Builder - README.txt', BUILDER_README)
     if args.what in ('all', 'rebuild'):
         build_exe('AnatomyRebuild', 'tools/rebuild.py', REBUILD_MODULES)
         wanted = rebuild_files()
         if not any(k.endswith('AnatomyRebuild.exe') for k in wanted):
             raise SystemExit('PyInstaller ran but left no AnatomyRebuild.exe in build/dist/AnatomyRebuild')
-        pack('AnatomyRebuild', args.version, wanted, f'{REBUILD_TITLE} - README.txt', REBUILD_README,
-             (REBUILD_TITLE, REBUILD_STEPS, 'Run Anatomy Rebuild after every BodySlide build'))
+        pack_zip('AnatomyRebuild', args.version, wanted, f'{REBUILD_TITLE} - README.txt', REBUILD_README)
 
 
 if __name__ == '__main__':

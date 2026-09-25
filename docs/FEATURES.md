@@ -125,7 +125,7 @@ seconds, for women within about 43 m, arousal moves toward the strongest source 
 
 Without MCM, the same defaults apply.
 
-## 7. Outfits: Anatomy Rebuild (optional download)
+## 7. Outfits: Anatomy Rebuild (optional, from the GitHub releases)
 
 - **Every CBBE outfit gets the body's hip handover**, so outfits no longer part from the skin at the
   groin in legs-up poses (up to 3.8 units before; a combat-armour leg in doggy: worst gap 5.10 ->
@@ -146,6 +146,10 @@ Without MCM, the same defaults apply.
   in one step (a crash never leaves half a file), with a log.
 - **The release checks itself**: the plugin's records, no developer keys in the shipped ini, every
   file listed back from the archive, and the engine built from the public commit it names.
+- **No program in the Nexus download**: the builder and Anatomy Rebuild are zips on the GitHub
+  releases page, and the release refuses to build a Nexus archive holding any .exe, .dll or .pyd.
+- **The tools find the game by themselves**: the Data folder they sit in, else the folder the game's
+  Steam or GOG installer recorded; `--data` overrides both.
 - **Works with MO2 and Vortex** (MO2: run the builder and Anatomy Rebuild from MO2, like BodySlide).
 - **Steam and GOG** 1.10.163 alike.
 

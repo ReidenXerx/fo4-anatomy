@@ -16,11 +16,17 @@ Requirements: Fallout 4 1.10.163 (Steam or GOG, not next-gen), F4SE 0.6.23, the 
 CBBE with its BodySlide files, BodySlide. LooksMenu (nipples, glans colour), AAF (scenes) and MCM
 (settings) for the parts that use them.
 
-1. Install the engine, then Anatomy.
-2. Run `Data\Tools\AnatomyBuilder\AnatomyBuilder.exe` once (MO2: run it from MO2, like BodySlide).
+1. Install the engine, then Anatomy (Nexus). The Nexus archive holds game files only.
+2. Download `AnatomyBuilder-<version>.zip` from this repository's
+   [releases](https://github.com/ReidenXerx/fo4-anatomy/releases), extract it into a folder of its own
+   and run `AnatomyBuilder.exe` once. It finds the game by itself: the Data folder it sits in, else the
+   folder the game's Steam or GOG installer recorded; `--data "<your Fallout 4>\Data"` overrides both.
+   MO2: add it to MO2's executables and run it from MO2, like BodySlide; outside MO2 it cannot see the
+   mods MO2 manages.
 3. BodySlide: "Anatomy Body", your preset, Build.
-4. Optional: after every BodySlide build, run `Data\Tools\AnatomyRebuild\AnatomyRebuild.exe` (its own
-   download) for the outfit hip fix and the neck seam fix.
+4. Optional: after every BodySlide build, run `AnatomyRebuild.exe` (`AnatomyRebuild-<version>.zip`, same
+   releases page; keep its folder, the `--undo` backups live there) for the outfit hip fix and the neck
+   seam fix.
 
 Re-run the builder after changing your CBBE or skin mod.
 
@@ -30,7 +36,7 @@ Re-run the builder after changing your CBBE or skin mod.
 | --- | --- |
 | `tools/builder.py` | the Anatomy Builder (packed as `AnatomyBuilder.exe`): every stage proves itself or stops |
 | `tools/rebuild.py` | Anatomy Rebuild (packed as `AnatomyRebuild.exe`): outfit hip handover and neck seam on the player's builds |
-| `tools/release.py` | builds the three archives: the engine, Anatomy, Anatomy Rebuild |
+| `tools/release.py` | builds the release: the engine and Anatomy's game files (Nexus), the builder and Rebuild zips (GitHub releases) |
 | `papyrus/` | `Anatomy:Arousal` (arousal, nipples, glans colour, the aim's scene list) and `AnatomyAim` |
 | `tools/make_esp.py`, `tools/build_mcm.py` | `Anatomy.esp` and the MCM page, generated and verified |
 | `tools/physics_design.py`, `tools/physics_config.py` | Anatomy's `ocbp.ini` and collision lines |

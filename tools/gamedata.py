@@ -27,6 +27,45 @@ BASE_MASTERS = ['Fallout4.esm', 'DLCRobot.esm', 'DLCworkshop01.esm', 'DLCCoast.e
                 'DLCworkshop03.esm', 'DLCNukaWorld.esm', 'DLCUltraHighResolution.esm']
 INI_KEYS = ('sResourceIndexFileList', 'SResourceArchiveList', 'SResourceArchiveList2')
 
+# Where the game says it is installed. Steam and GOG both write Bethesda's key (GOG measured 2026-09-26);
+# GOG also writes its own (1998527297 is Fallout 4 GOTY).
+REGISTRY = ((r'SOFTWARE\WOW6432Node\Bethesda Softworks\Fallout4', 'installed path'),
+            (r'SOFTWARE\Bethesda Softworks\Fallout4', 'installed path'),
+            (r'SOFTWARE\WOW6432Node\GOG.com\Games\1998527297', 'path'))
+
+
+def installed_game():
+    """The game folders the registry names, in REGISTRY's order (none off Windows)."""
+    try:
+        import winreg
+    except ImportError:
+        return []
+    out = []
+    for key, value in REGISTRY:
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key) as k:
+                out.append(pathlib.Path(str(winreg.QueryValueEx(k, value)[0]).strip()))
+        except OSError:
+            continue
+    return out
+
+
+def find_data(arg=None, here=None, tool='this tool'):
+    """Fallout 4's Data folder: --data when given; else the one this tool sits in (Data/Tools/<tool>);
+    else the game's install folder from the registry. The Nexus download carries no exe (2026-09-26: Nexus
+    quarantined the archive that did), so a tool now lives wherever the player extracted it, and the game
+    has to be found rather than assumed. Under MO2 the tool must still be launched FROM MO2: only then does
+    the Data folder it reads show the mods MO2 manages."""
+    tried = []
+    candidates = [pathlib.Path(arg)] if arg else \
+        ([pathlib.Path(here).parent.parent] if here else []) + [g / 'Data' for g in installed_game()]
+    for c in candidates:
+        if (c / 'Fallout4.esm').exists():
+            return c
+        tried.append(str(c))
+    raise SystemExit(f'Fallout 4\'s Data folder was not found (looked at: {", ".join(tried) or "nothing"}). '
+                     f'Run {tool} with --data "<your Fallout 4>\\Data", or put it in Data\\Tools.')
+
 
 def norm(path):
     return str(path).replace('/', '\\').lower().lstrip('\\')

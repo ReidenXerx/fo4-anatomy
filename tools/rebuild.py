@@ -1,6 +1,6 @@
 """Anatomy Rebuild: your BodySlide builds get the two fixes BodySlide cannot carry (A-36, A-37).
 
-    AnatomyRebuild.exe                      (from Data/Tools/AnatomyRebuild; MO2: run it from MO2)
+    AnatomyRebuild.exe                      (anywhere; it finds the game. MO2: run it from MO2)
     AnatomyRebuild.exe --data <Data> [--built <folder>] [--only garments|neck] [--undo]
 
 Run it after BodySlide, every time you build (BodySlide writes its meshes whole, and each build
@@ -61,11 +61,8 @@ class Tee(io.TextIOBase):
 
 
 def find_data(arg):
-    data = pathlib.Path(arg) if arg else HERE.parent.parent            # Data/Tools/AnatomyRebuild
-    if not (data / 'Fallout4.esm').exists():
-        raise SystemExit(f'{data} is not Fallout 4\'s Data folder. Put this tool in Data/Tools/AnatomyRebuild '
-                         f'(the download does), or run it with --data "<your Fallout 4>/Data".')
-    return data
+    import gamedata
+    return gamedata.find_data(arg, HERE, 'AnatomyRebuild.exe')
 
 
 def built_root(data, bs, arg):
@@ -331,7 +328,7 @@ def neck(data, root, ledger, report):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--data', help='Fallout 4 Data folder (default: two folders above this tool)')
+    ap.add_argument('--data', help='Fallout 4 Data folder (default: Data/Tools/<here>, else the game the registry names)')
     ap.add_argument('--built', help="BodySlide's output folder (default: its Config.xml's, else Data)")
     ap.add_argument('--only', choices=('garments', 'neck'), help='one of the two fixes only')
     ap.add_argument('--undo', action='store_true', help='put back every file it changed that BodySlide has '

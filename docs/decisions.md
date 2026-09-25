@@ -1468,3 +1468,18 @@ scenes, the AAF menu's too.
   fresh "Anatomy Body" build: 14.4/37.5 -> 0.0/0.3 deg, 137 vertices, byte-identical to the staged body
   52a79f4b7255; a second run does nothing. The packed exe gives the same results.
 - **Shipped:** `AnatomyRebuild-<version>.7z` (release.py), an optional file on Anatomy's page.
+
+## A-40 — The tools leave the Nexus download (Nexus quarantine; the owner's poll, 2026-09-26)
+
+- **What happened:** the owner published 1.0.0, and Nexus's automated check quarantined the Main file and the
+  Rebuild file ("executables and similar file types"): AnatomyBuilder.exe and AnatomyRebuild.exe with their
+  PyInstaller `_internal` .pyd/.dll. The engine (one F4SE .dll) passed.
+- **Decision (the owner's poll, "split permanently"):** the tools live on GitHub only; Nexus carries game
+  files. release.py builds `Anatomy-<v>.7z` (game files, no Data/Tools) and refuses any .exe/.dll/.pyd in it,
+  twice: in the staged files and in the built archive's listing. `AnatomyBuilder-<v>.zip` and
+  `AnatomyRebuild-<v>.zip` are for the GitHub release. 1.0.1, because the archive changed.
+- **Finding the game:** a tool can now sit anywhere, so `gamedata.find_data` looks at `--data`, then the
+  Data folder the tool sits in (Data/Tools/<tool>, as before), then the registry: Bethesda's
+  `Fallout4\installed path` (Steam and GOG both write it; measured on the owner's GOG install) and GOG's own
+  `GOG.com\Games\1998527297\path`. Under MO2 the tool must still be launched from MO2, because only then does the
+  Data folder show the mods MO2 manages.
