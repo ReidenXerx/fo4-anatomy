@@ -42,8 +42,8 @@ PAGES = [
         ('Sources', 'bNaked', 'Being naked', 'Nothing worn in the body slot: a little, slowly.',
          None, None, None),
         ('section', 'Men'),
-        ('Men', 'bGlans', 'Glans colour and gloss', 'Every man\'s glans a little redder and glossy (two '
-         'LooksMenu overlays). Off takes them off every man they were given to.', None, None, None),
+        ('Men', 'bGlans', 'Glans colour', 'Every man\'s glans a little redder (a LooksMenu overlay). Off '
+         'takes it off every man it was given to.', None, None, None),
     ]),
 ]
 

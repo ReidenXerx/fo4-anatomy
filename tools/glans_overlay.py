@@ -56,6 +56,10 @@ NORMAL = r'Actors\Character\BaseHumanMale\BaseMaleBody_n.dds'
 PLUGIN = 'Anatomy.esp'
 TEX = r'Overlays\Anatomy'
 FLUSH_ID, GLOSS_ID = 'AnatomyGlansFlush', 'AnatomyGlansGloss'
+# The gloss is dropped (the owner, 2026-09-25: "lets just drop this gloss thing its minor, penis even without
+# this gloss looks greeat"): three tries (a glass shell, pink chrome, and a man gone black at some angles).
+# Its code stays for a later try; Anatomy:Arousal takes any gloss overlay off the men who have one.
+GLOSS_ON = False
 
 
 def smoothstep(a, b, x):
@@ -245,9 +249,10 @@ def main():
         raise SystemExit('almost nothing painted: the UVs or the bone are not what was measured')
     tex = args.out / 'Textures' / TEX.replace('\\', '/')
     dds(tex / 'GlansFlush.dds', [tuple(round(255 * (1 - v * (1 - f))) for f in FLUSH) for v in mask])
-    dds(tex / 'GlansSpec.dds', [(round(255 * v * SPEC), round(255 * v * GLOSS), 0) for v in mask])
-    from PIL import Image
-    write_mipped(tex / 'GlansGlossBase.dds', Image.new('RGBA', (4, 4), (0, 0, 0, 0)), 'DXT5')
+    if GLOSS_ON:
+        dds(tex / 'GlansSpec.dds', [(round(255 * v * SPEC), round(255 * v * GLOSS), 0) for v in mask])
+        from PIL import Image
+        write_mipped(tex / 'GlansGlossBase.dds', Image.new('RGBA', (4, 4), (0, 0, 0, 0)), 'DXT5')
     mats = args.out / 'Materials' / TEX.replace('\\', '/')
     mats.mkdir(parents=True, exist_ok=True)
     flush = bgem(TEX + r'\GlansFlush.dds', src=4, dst=1)                    # dest colour x ours
@@ -256,21 +261,27 @@ def main():
         raise SystemExit(f'{FLUSH_ID}: read back src {src} dst {dst} envmap {env}')
     (mats / f'{FLUSH_ID}.bgem').write_bytes(flush)
     print(f'{FLUSH_ID}.bgem: blend {src}/{dst}, textures {[t for t in texs if t]}')
-    import gamedata
-    skin = gamedata.Game(args.data).read(SKIN)
-    gloss, skin_tex = gloss_bgsm(skin)
-    if len(gloss) - len(skin) != sum(len(t) for t in (TEX + r'\GlansGlossBase.dds', TEX + r'\GlansSpec.dds')) - \
-            sum(len(t) for t in (skin_tex[0], skin_tex[2])):
-        raise SystemExit(f'{GLOSS_ID}: the lighting fields did not carry over whole')
-    (mats / f'{GLOSS_ID}.bgsm').write_bytes(gloss)
-    old = mats / f'{GLOSS_ID}.bgem'
-    if old.exists():
-        old.unlink()
-    print(f'{GLOSS_ID}.bgsm: the men\'s skin material ({len(skin)} B), normal {skin_tex[1]}, specular map ours, '
-          f'one + one, specular x{SPEC_MULT}')
+    kinds = [(FLUSH_ID, 'Anatomy - glans colour', '.bgem')]
+    if GLOSS_ON:
+        import gamedata
+        skin = gamedata.Game(args.data).read(SKIN)
+        gloss, skin_tex = gloss_bgsm(skin)
+        if len(gloss) - len(skin) != sum(len(t) for t in (TEX + r'\GlansGlossBase.dds', TEX + r'\GlansSpec.dds')) - \
+                sum(len(t) for t in (skin_tex[0], skin_tex[2])):
+            raise SystemExit(f'{GLOSS_ID}: the lighting fields did not carry over whole')
+        (mats / f'{GLOSS_ID}.bgsm').write_bytes(gloss)
+        print(f'{GLOSS_ID}.bgsm: the men\'s skin material ({len(skin)} B), normal {skin_tex[1]}, specular map ours, '
+              f'one + one, specular x{SPEC_MULT}')
+        kinds.append((GLOSS_ID, 'Anatomy - glans gloss', '.bgsm'))
+    else:                                   # dropped: nothing of it stays in the output
+        for stale in (mats / f'{GLOSS_ID}.bgsm', mats / f'{GLOSS_ID}.bgem', tex / 'GlansSpec.dds',
+                      tex / 'GlansGlossBase.dds', tex / 'GlansSheen.dds', tex / 'GlansMask.dds'):
+            if stale.exists():
+                stale.unlink()
+        print(f'{GLOSS_ID}: dropped (GLOSS_ON False)')
     templates = [dict(id=i, name=n, slots=[dict(slot=3, material='Overlays\\Anatomy\\' + i + ext)], playable=False,
                       transformable=False, sort=0, gender=0)
-                 for i, n, ext in ((FLUSH_ID, 'Anatomy - glans colour', '.bgem'), (GLOSS_ID, 'Anatomy - glans gloss', '.bgsm'))]
+                 for i, n, ext in kinds]
     tj = args.out / 'F4SE/Plugins/F4EE/Overlays' / PLUGIN / 'overlays.json'
     tj.parent.mkdir(parents=True, exist_ok=True)
     tj.write_text(json.dumps(templates, indent=4), encoding='utf-8')

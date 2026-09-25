@@ -56,6 +56,7 @@ Bool bGlans = True               ; A-31: every man's glans a little redder and g
 Bool _mcm = False
 Bool _looksMenu = False          ; LooksMenu's Overlays natives are there
 Actor[] _glans                   ; the men given our overlays (checked once each, then remembered)
+Int _glansVersion = 0            ; 2: the gloss is dropped, so every man is checked again once (GlansOn)
 String GLANS_FLUSH = "AnatomyGlansFlush"
 String GLANS_GLOSS = "AnatomyGlansGloss"
 Float _appliedStrength = -1.0    ; the strength the shown layers were written with
@@ -166,8 +167,9 @@ Function Setup()
 	; asked once per load, not every tick: without MCM.pex the call fails (and logs) and answers False
 	_mcm = MCM.IsInstalled()
 	_looksMenu = Game.IsPluginInstalled("LooksMenu.esp")
-	If _glans == None
-		_glans = new Actor[0]
+	If _glans == None || _glansVersion < 2
+		_glans = new Actor[0]                    ; checked again: the gloss comes off whoever has it
+		_glansVersion = 2
 	EndIf
 	LoadSettings()
 	Debug.Trace("[Anatomy] arousal: layer " + (_layer != None) + ", AAF busy keyword " + (_busy != None) \
@@ -377,26 +379,26 @@ Function Glans(Actor[] people)
 	EndWhile
 EndFunction
 
+; The colour only: the gloss is dropped (the owner, 2026-09-25, after three looks), and taken off a man who has it.
 Function GlansOn(Actor a)
 	Bool flush = False
-	Bool gloss = False
+	Bool changed = False
 	Overlays:Entry[] had = Overlays.GetAll(a, False)
 	Int j = 0
 	While had != None && j < had.Length
 		If had[j] != None && had[j].template == GLANS_FLUSH
 			flush = True
 		ElseIf had[j] != None && had[j].template == GLANS_GLOSS
-			gloss = True
+			Overlays.Remove(a, False, had[j].uid)
+			changed = True
 		EndIf
 		j += 1
 	EndWhile
 	If !flush
 		Overlays.Add(a, False, GlansEntry(GLANS_FLUSH))
+		changed = True
 	EndIf
-	If !gloss
-		Overlays.Add(a, False, GlansEntry(GLANS_GLOSS))
-	EndIf
-	If !flush || !gloss
+	If changed
 		Overlays.Update(a)
 	EndIf
 EndFunction
