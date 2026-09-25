@@ -1,0 +1,52 @@
+=== STICKY: How Anatomy works inside ===
+[b]How Anatomy works inside, part 1: the body[/b]
+
+For players and modders who want the mechanism rather than the feature list. The source is public: [url=https://github.com/ReidenXerx/fo4-anatomy]github.com/ReidenXerx/fo4-anatomy[/url]. Every number below comes from the code or from the measurements recorded in its decisions log.
+
+[b]1. No body ships: it is built on your PC[/b]
+The download carries Nahka's genital work only as a patch against CBBE. The Anatomy Builder reads your files as the game loads them (loose files first, then archives in load order): CBBE's "CBBE Body Physics" BodySlide set, your skeleton, and your skin's material and textures. Then it runs six stages. Each stage proves its result or stops the build.
+[list]
+[*][b]The patch.[/b] Nahka's topology and vertex order are kept, so her sliders stay valid. The 22,488 vertices she shares with CBBE take CBBE's own record, weights and all 84 slider offsets exactly. Her 2,811 new or changed vertices keep her data, with an inverse-distance correction so every slider meets the surrounding skin without a seam (worst 0.46 units, on AppleCheeks). A rebuild from the patch equals the direct build across all 96 sliders to 7x10^-8.
+[*][b]Bones and weights.[/b] The genital region is weighted to the bones the engine adds at run time. The breasts' weights move onto LBreast_skin and RBreast_skin only if your own ocbp.ini [font=Courier New][Attach][/font] drives both bones; otherwise CBBE's own breast physics keeps them.
+[*][b]The hip fold.[/b] See section 2.
+[*][b]Verification.[/b] Every check has a planted-fault test that proves it fails when it should.
+[*][b]Their own shape.[/b] The 4,913 genital triangles move into a separate shape with their own material, so they render with a texture matched to your skin without overwriting your skin mod. BodySlide builds the split set identically on all 48,215 triangles.
+[*][b]Your texture.[/b] The colour is matched in linear light, with per-channel gains measured on the ring of skin around the genitals in both textures. The specular map is matched by offset instead of gain, so the moist surfaces keep their shine on a matte skin. Along the island's 116 seam points the colour is feathered into your skin, which cut the seam step from 9.0/4.0/8.1 to 2.3/1.1/1.9 (of 255). Only the 4x4 compression blocks the genital mask reaches are re-encoded, on every mip level; every other block keeps your bytes, and the stage checks that it did.
+[/list]
+Everything is written to new paths only (the Anatomy slider set, ShapeData, textures and material), each file in one atomic step, with a log beside the builder.
+
+[b]2. The hip fold[/b]
+CBBE hands the groin's vertices from Pelvis_skin to the thigh over a thin band. With a leg raised, that band stretched up to 11.1x. The builder averages only the [i]core[/i] bones' split (Pelvis, Pelvis_Rear, Spine1, both thighs) with the neighbours across the band. The core total on each vertex is kept, every other bone's weight is untouched, and no vertex moves. Worst edge stretch: legs up 11.1x -> 4.0x, sitting 10.3x -> 3.8x, walking 3.5x -> 2.0x.
+
+[b]3. Anatomy Rebuild (optional)[/b]
+BodySlide writes its meshes whole, so two fixes cannot live in BodySlide's own source files. The tool applies them to what you already built:
+[list]
+[*][b]Outfits.[/b] For every CBBE outfit a woman wears in your load order, the new core split is computed on the outfit's BodySlide source (the unmorphed shape the body fix was made on): within 1.0 unit of the body's changed hip vertices it takes the body's split in full, fading out by 2.5. The result is written onto your built mesh by vertex index, only after proving the two are the same mesh: every shape's name, UVs and non-hip weights. A zap slider removes vertices but keeps the rest in order, so each built vertex is matched to the next source vertex that agrees. Measured on 24 outfits: identical to a BodySlide build of patched sources, to 0.0000.
+[*][b]The neck.[/b] Where the body's neck ring touches the head (or the rear-head piece of CBBE HeadRear Absolute Fix) within 0.05 units, the whole tangent frame (normal, tangent, bitangent) is turned onto the head's normal, fading out over 1.5 units. Median angle 14.4 deg -> 0.0, worst 37.5 -> 0.3.
+[/list]
+Positions, morphs and sliders are never touched. Originals go to a backup with a ledger, and [font=Courier New]--undo[/font] restores only files BodySlide has not rebuilt since.
+
+=== STICKY: How Anatomy works inside (part 2) ===
+[b]How Anatomy works inside, part 2: physics config and arousal[/b]
+
+[b]4. The physics lines[/b]
+Anatomy's lines live in their own folder, [font=Courier New]Data\F4SE\Plugins\Anatomy\[/font], so they never replace your physics mod's files. The engine reads your ocbp.ini first, then Anatomy's. Its engine sections ([font=Courier New][Props] [Mouth] [Face] [Bones] [Aim] [Eyes] [Tube][/font]) come from Anatomy's file, and the collision files are appended. What Anatomy ships:
+[list]
+[*]the genital bones on springs: stiffness 60 to 150, damping 3 to 6, a 0.02 time step;
+[*]collision spheres on the inner lips (1.7), the outer lips (0.8) and the anal ring (0.3 to 0.6);
+[*]penis colliders of 2.0 on Penis_01..04 and 1.8 on the tip, read as one tube;
+[*]held props on the six AnimObject nodes, as spheres of 1.6 every 1.5 units, allowed to push only the genital bones;
+[*]two stretch groups on the inner lips and the anal ring, with knee, gain and a 1.5 cap. The large-object case is built, not yet seen in game.
+[/list]
+
+[b]5. Arousal's loop[/b]
+A quest script ([font=Courier New]Anatomy:Arousal[/font]) ticks every 3 seconds. For each woman within 3000 units (about 43 m) of the player:
+[list]
+[*]it finds her strongest cause, never a sum: in an AAF scene 1.0 (half-life 10 s); Ivy's own arousal 0.8 (20 s); a companion's Overture desire times 0.7 (45 s); watching a scene within 1200 units 0.55 (30 s); nothing worn in the body slot 0.3 (45 s);
+[*]her level moves toward that cause exponentially with its half-life, or falls with a 60 s half-life when nothing beats it; the MCM's rise and fade speeds divide those half-lives;
+[*]the level, rounded to tenths, drives four LooksMenu morphs: NippleLength 0.30, NipplePerk2 0.70, NippleTip 0.35, NipplePerkiness 0.40, each times the MCM strength.
+[/list]
+The morphs sit on their own keyword layer ([font=Courier New]Anatomy.esp[/font] 0x801), added on top of the strongest value her other layers already give. LooksMenu keeps the maximum across layers, so a small-nippled woman stays smaller than a big-nippled one. The layer is never written before BodyGen has generated her body, because that would leave her with no body morphs. If Silhouette marks her heavily dressed, the layer goes to 0. Nothing calls into AAF: only its [font=Courier New]AAF_ActorBusy[/font] keyword is read, since a call into AAF can end the calling script's stack. The same tick passes the busy actors to the engine's aim.
+
+[b]6. The glans colour[/b]
+Each man near the player gets one LooksMenu overlay: a multiply pass painted in BodyTalk4's UVs, white everywhere and rose on the head. It deepens the lit skin's hue without replacing its detail. The overlay is applied once and remembered. Switching it off in the MCM removes it from exactly the men it was given to.
