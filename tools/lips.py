@@ -106,12 +106,15 @@ def measure(tri):
         lo, hi = ends(morphs[name])
         d = morphs[name]
         ends_move = (lo - rest_ends[0], hi - rest_ends[1])
+        ups, lows = filled([a - b for a, b in zip(u, u0)]), filled([a - b for a, b in zip(l, l0)])
         if name in ('LLipCornerIn', 'RLipCornerIn'):
-            # its extremes move only by the neighbour's 0.11 bulge: to the fork's clearance that is a free
-            # widening, which it took (Corner In at 0.6 with a head passing). It is the hug's knob, nothing else.
+            # the hug's knob and nothing else. Its extremes move only by the neighbour's 0.11 bulge, which the
+            # fork's clearance took as a free widening (Corner In 0.6 with a head passing); and its lips move
+            # <= 0.09, which a mouth too small for the shaft took too - the owner's photo from inside the shaft
+            # (2026-09-26, Photo223-224): Corner In and Out both at 1.0 on one side, the corner in the shaft.
             ends_move = (0.0, 0.0)
-        table[mid] = (filled([a - b for a, b in zip(u, u0)]), filled([a - b for a, b in zip(l, l0)]),
-                      ends_move, (d[cl][0], d[cr][0]))
+            ups, lows = [0.0] * len(ups), [0.0] * len(lows)
+        table[mid] = (ups, lows, ends_move, (d[cl][0], d[cr][0]))
     return table, rest_gap, len(upper), len(lower), rest_ends, (verts[cl][0], verts[cr][0])
 
 
