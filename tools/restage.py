@@ -54,6 +54,10 @@ def main():
     if lab.build('AnatomyFinalLab', 'Anatomy Zero', ZERO, 600):
         raise SystemExit('BodySlide build failed')
     run(['compare_builds.py', str(CURRENT), str(ZERO)])
+    # the neck seam (A-37), on the BUILT body: BodySlide recalculates every normal on build, so a fix in
+    # ShapeData never reaches the game, and LockNormals would ship the crotch's unrecalculated ShapeData
+    # normals (2,526 vertices 20-180 deg off, measured). Only the neck ring and FADE around it change here.
+    run(['neck_seam.py', '--built', str(ZERO / 'Meshes/Actors/Character/CharacterAssets/FemaleBody.nif')])
     stage = package.main()
     if build_only:
         print(f'built and packaged ({stage}); body {sha(ZERO / "Meshes/Actors/Character/CharacterAssets/FemaleBody.nif")}; '

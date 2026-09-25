@@ -1385,3 +1385,44 @@ scenes, the AAF menu's too.
     144 outfits whose body copy had NO morphs. BodySlide said nothing; verify's .tri check caught it.
 - **Open:** the install needs a closed-game window and the owner's go-ahead. Also open: folding the stage into
   the frozen builder for other players.
+
+## A-37 — The neck seam: the body's neck ring faces the way the head does (the owner, 2026-09-26)
+
+- **Ask:** "we have some mod about cbbe rear fix ... that supposed to fix rears on waists, necks, and
+  [the back of the head] but i think we overwrite it". Photos: Photo229-231.
+- **Checked:** nothing of ours overrides CBBE HeadRear Absolute Fix (CBBEHolyFix.esp).
+  - Its records win the load order: TXST SkinBodyFemale_1/Dirty_1 -> custombody textures, and the HDPT
+    FemaleHeadHumanRearTEMP -> a rear-head piece.
+  - Its textures win in Data.
+  - Our body mesh equals CBBE's at every seam (UV splits and normals).
+  - No body slider moves the neck or wrist edges.
+- **The neck, measured:** the head (BaseFemaleHead.nif) and the rear piece meet our body's neck ring on
+  coinciding vertices, 0.008 apart. Their normals differ by a median 14.4 deg, 37.5 worst: 22 ring points,
+  11 at the front against the head, 9 at the back against the rear piece. The engine lights each mesh with
+  its own normals, which gives a line at the join.
+- **Built (tools/neck_seam.py, restage):**
+  - Each ring point that coincides with the head or the rear piece gets the rotation that turns its
+    normal onto theirs. Vertices within 1.5 take the nearest one's rotation, faded, so no crease forms.
+  - The whole tangent frame turns (normal, tangent, and the bitangent spread over the position, normal
+    and tangent w), so the normal maps read the same way.
+  - Result: median 14.4 -> 0.0 deg, worst 37.5 -> 0.3.
+  - Only 137 neck vertices' normals change. Positions, weights, the .tri and the genitals are identical;
+    the sharpest neighbouring edge in the neck goes 34.3 -> 37.1 deg.
+  - Body 52a79f4b7255, staged 2026-09-26.
+- **Where it runs, and why:** in restage, on the BUILT body, after BodySlide.
+  - BodySlide recalculates every normal on build, so the fix in ShapeData never reached the game.
+  - LockNormals on the shape kept it, but it also shipped the crotch's unrecalculated ShapeData normals:
+    2,526 vertices 20-180 deg off (measured). Rejected.
+  - The first design interpolated a target between the head's ring points. It turned the back of the neck
+    97 deg toward a head 7 units away, because the rear piece, not the head, meets the back. Now a point
+    follows only a piece it coincides with.
+- **Checked and not the cause:**
+  - The wrist: diffuse identical at the seam, vertex normals identical, normal maps within 3 deg. The
+    hands' specular map is glossier: 32/90 against the body's 23/69.
+  - The "UNIQUE" hands material string is unused.
+  - The ghoul rear piece samples ordinary ghoul skin (no purple at its UVs).
+- **Open:**
+  - The wrist's specular mismatch (feather the body's spec toward the hands').
+  - The purple ghoul rear: which NPC; Point Lookout ghouls have their own rear part.
+  - Players build their own body in BodySlide, which drops a post-build fix. For the release: a builder
+    step after their build, or a shipped patcher.
