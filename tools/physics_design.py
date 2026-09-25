@@ -216,7 +216,11 @@ AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss
 # at 0.85, the head 1.89 today (narrower than the shaft: a bullet) -> 2.14 / 2.33 / 2.52 at 1.2 / 1.3 / 1.4,
 # the crown just behind the tip (the tip bone pivots at the tip), the length +0.2..0.4. The colliders on
 # those bones scale with them (Collision.cpp), so the thinner shaft also pushes her open less.
-SHAPE = dict(enabled=1, shaft=0.85, headMin=1.2, headMax=1.4)
+# headMax was 1.4. With the crown where the mesh has it (GLANS_PROFILE), the widest mouth the face morphs make
+# (A-32: the rim's ends -2.39 .. 2.26 at full stretch) still held a x1.3 crown 0.1 short a side and x1.4 0.3; the
+# owner's poll (2026-09-25): "Narrow the range". At x1.25 the right corner is ~0.05-0.1 short (the mouth opens
+# less to the right), practically flush; x1.2 is flush.
+SHAPE = dict(enabled=1, shaft=0.85, headMin=1.2, headMax=1.25)
 # The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
 # by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the
 # vagina (the lips open there anyway), 1.46 four units in, then 2.5 to 5.9 -- past the shaft's 1.55 from
