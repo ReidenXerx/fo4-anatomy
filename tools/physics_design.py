@@ -160,7 +160,15 @@ FACE_DEPTH, FACE_STROKE = 6.0, 20.0
 # its widest points, the ridge, and its mean radius (x0.85) is ~1.51; 0.2 gives 1.50 for the shaft, 2.14 for the
 # head (x1.3). And the lips now ease at lipOpenRate / lipCloseRate, not the jaw's slow close (6), so they close
 # back onto the shaft between strokes instead of staying as wide as the head that just passed.
+# The glans as the mouth sees it (the fork's Glans.h; tools/glans_profile.py measures it). The mouth reads a penis
+# as its collider spheres, the radius straight from one bone's to the next, and that put the mushroom's widest
+# point ON the tip bone. On the mesh the crown is 0.6 R behind it (R = the tip sphere's radius, 1.8 x the head):
+# at head x1.4 the spheres gave 1.75 where the crown is 2.52, so the lips opened for a head 0.76 thinner and its
+# rim showed past both corners (the owner's Photo212, 2026-09-25). Steps: (along, radius) in R, from the tip bone
+# back (along < 0); the same in R at head 1.2, 1.3 and 1.4 (to +-0.03). The last is the bone itself.
+GLANS_PROFILE = ((-0.85, 0.90), (-0.60, 1.00), (-0.35, 0.93), (-0.12, 0.81), (0.0, 0.73))
 MOUTH = dict(enabled=1, chains='/'.join('|'.join(c) for c in MOUTH_CHAINS), props=0,
+             glans=SHAFT[-1], glansProfile=','.join(f'{a}:{r}' for a, r in GLANS_PROFILE),
              femaleX=-1.80, femaleY=8.12, femaleZ=0.0, maleX=-1.84, maleY=7.78, maleZ=0.0,
              facingX=0.065, facingY=0.998, facingZ=0.0, upX=0.998, upY=-0.065, upZ=0.0,
              femaleGap=2.97, maleGap=2.30, halfWidth=2.9, below=3.0, above=1.5, skin=0.2, lipOpenRate=60.0, lipCloseRate=50.0,
