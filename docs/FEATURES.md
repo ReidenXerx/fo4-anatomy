@@ -84,7 +84,7 @@ In AAF scenes only (never two people just standing close).
 - **Rapport's face is the one that shows in every AAF scene**, including closing eyelids and a jaw an
   animation opened; spoken lines keep their lip sync; faces ease in and out. Works in AAF scenes
   started from anywhere, not only from our mods. (A-27)
-- **Glances**: she looks up into her partner's eyes now and then, for a second or two. (A-34)
+- **Glances**: she looks up into her partner's eyes now and then, for 4-7 seconds. (A-34)
 - **Rapport's MCM tunes the physics side live** (lip clearance and speed, shaft and head size,
   reaction strength, deep face). (A-33)
 
