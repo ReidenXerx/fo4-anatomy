@@ -251,17 +251,18 @@ def lip_keys():
            ' and of the rim\'s left,right end (lipRim: the ends at rest)',
            'lipXs=' + ','.join(f'{x:g}' for x in lips.XS)]
     for sex, head in (('F', 'BaseFemaleHead'), ('M', 'BaseMaleHead')):
-        table, gap, _, _, _ = lips.measure(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))
+        table, gap, _, _, _, corner = lips.measure(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))
         if gap > 0.1:
             raise SystemExit(f'{head}: the lips do not meet at rest ({gap:.3f}): not the head lips.py measured')
         rest = lips.measure(game.read(f'Meshes/Actors/Character/CharacterAssets/{head}.tri'))[4]
         if not rest[0] < 0 < rest[1]:
             raise SystemExit(f'{head}: the rim does not straddle the middle ({rest})')
         out.append(f'lipRim{sex}={rest[0]:.3f},{rest[1]:.3f}')
+        out.append(f'lipCorner{sex}={corner[0]:.3f},{corner[1]:.3f}')   # where the lips meet (the hug)
         for mid, _ in lips.MORPHS:
-            u, lo, (dl, dr) = table[mid]
+            u, lo, (dl, dr), (cl, cr) = table[mid]
             out.append(f'lip{sex}{mid}=' + ','.join(f'{v:.3f}' for v in u) + ';' + ','.join(f'{v:.3f}' for v in lo)
-                       + f';{dl:.3f},{dr:.3f}')
+                       + f';{dl:.3f},{dr:.3f};{cl:.3f},{cr:.3f}')
     return out
 
 

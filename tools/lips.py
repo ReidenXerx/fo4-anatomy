@@ -21,10 +21,16 @@ XS = (-1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2)
 # (id in the engine's 54, name in the head's .tri): what can move a lip's inner edge (Rapport's make_mfg order)
 MORPHS = ((2, 'JawOpen'), (22, 'LwrLipFunnel'), (46, 'UprLipFunnel'), (21, 'LUprLipUp'), (44, 'RUprLipUp'),
           (11, 'LLwrLipDn'), (34, 'RLwrLipDn'), (20, 'LUprLipDn'), (43, 'RUprLipDn'), (12, 'LLwrLipUp'),
-          (35, 'RLwrLipUp'), (8, 'LLipCornerOut'), (31, 'RLipCornerOut'))
+          (35, 'RLwrLipUp'), (8, 'LLipCornerOut'), (31, 'RLipCornerOut'), (7, 'LLipCornerIn'), (30, 'RLipCornerIn'))
 # ACROSS: every morph also moves the rim's two ends (the mouth's inner corners), the head's horizontal
 # room (the owner, 2026-09-25: "fit head of penis IN HORIZONTAL AXIS"). Jaw Open widens it 0.27 / 0.22,
 # each funnel narrows it 0.08 a side, Corner Out takes its own end out 0.40 / 0.34 and the other 0.11.
+# THE CORNERS THEMSELVES (2026-09-26, the owner: "the corner of mouth still kinda static"): the rim's ends
+# are its extremes, and they are not the corners. The vertex where the lips meet (the rest extreme) is:
+# Jaw Open takes it IN 0.26 / 0.18 while the opening's widest point (lower, on the dropped lip) goes out;
+# Lip Corner In (7 / 30) takes its own corner in 0.32 / 0.38, which the extremes do not show (a neighbour
+# bulges 0.11 out, with every corner morph: the 'other end 0.11' above is that vertex, not a corner). So
+# each morph also carries its move of the two corner vertices, for the fork's hug of the shaft's sides.
 
 
 def read_tri(data):
@@ -78,8 +84,19 @@ def measure(tri):
             out.append(z)
         return out
 
+    def filled(vals):
+        """a sample the rim does not reach (a corner morph moves the corner past it): its nearest one's"""
+        out = list(vals)
+        for k, v in enumerate(out):
+            if math.isnan(v):
+                near = sorted((abs(j - k), vals[j]) for j in range(len(vals)) if not math.isnan(vals[j]))
+                out[k] = near[0][1] if near else 0.0
+        return out
+
     zero = [(0.0, 0.0, 0.0)] * len(verts)
     u0, l0 = edge(upper, zero), edge(lower, zero)
+    cl = min(rim, key=lambda i: verts[i][0])     # the corners: where the lips meet, the rest extremes
+    cr = max(rim, key=lambda i: verts[i][0])
     rest_gap = max(abs(a - b) for a, b in zip(u0, l0))
     ends = lambda d: (min(verts[i][0] + d[i][0] for i in rim), max(verts[i][0] + d[i][0] for i in rim))
     rest_ends = ends(zero)
@@ -87,9 +104,15 @@ def measure(tri):
     for mid, name in MORPHS:
         u, l = edge(upper, morphs[name]), edge(lower, morphs[name])
         lo, hi = ends(morphs[name])
-        table[mid] = ([a - b for a, b in zip(u, u0)], [a - b for a, b in zip(l, l0)],
-                      (lo - rest_ends[0], hi - rest_ends[1]))
-    return table, rest_gap, len(upper), len(lower), rest_ends
+        d = morphs[name]
+        ends_move = (lo - rest_ends[0], hi - rest_ends[1])
+        if name in ('LLipCornerIn', 'RLipCornerIn'):
+            # its extremes move only by the neighbour's 0.11 bulge: to the fork's clearance that is a free
+            # widening, which it took (Corner In at 0.6 with a head passing). It is the hug's knob, nothing else.
+            ends_move = (0.0, 0.0)
+        table[mid] = (filled([a - b for a, b in zip(u, u0)]), filled([a - b for a, b in zip(l, l0)]),
+                      ends_move, (d[cl][0], d[cr][0]))
+    return table, rest_gap, len(upper), len(lower), rest_ends, (verts[cl][0], verts[cr][0])
 
 
 def corners(tri):
@@ -116,12 +139,13 @@ def main():
     ap.add_argument('--data', type=pathlib.Path, default=DATA)
     args = ap.parse_args()
     import gamedata
-    table, gap, nu, nl, span = measure(gamedata.Game(args.data).read(HEAD_TRI))
+    table, gap, nu, nl, span, corner = measure(gamedata.Game(args.data).read(HEAD_TRI))
     print(f'rim: upper {nu}, lower {nl} vertices, x {span[0]:.2f} .. {span[1]:.2f}; closed mouth gap {gap:.3f}')
     print(f'{"":14}' + ''.join(f'{x:+7.1f}' for x in XS))
+    print(f'the corners (where the lips meet) at x {corner[0]:.2f} / {corner[1]:.2f}')
     for mid, name in MORPHS:
-        u, l, (dl, dr) = table[mid]
-        print(f'{name:12} U' + ''.join(f'{v:+7.2f}' for v in u) + f'   ends {dl:+.2f} / {dr:+.2f}')
+        u, l, (dl, dr), (cl, cr) = table[mid]
+        print(f'{name:12} U' + ''.join(f'{v:+7.2f}' for v in u) + f'   ends {dl:+.2f} / {dr:+.2f}   corners {cl:+.2f} / {cr:+.2f}')
         print(f'{"":12} L' + ''.join(f'{v:+7.2f}' for v in l))
     lo, hi, ml, mr = corners(gamedata.Game(args.data).read(HEAD_TRI))
     print(f'corners: rim {lo:.2f} .. {hi:.2f}; Left Lip Corner Out takes the left end {ml:.2f} out, Right {mr:.2f}')
