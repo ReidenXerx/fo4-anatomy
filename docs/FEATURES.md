@@ -47,8 +47,8 @@ Each item names its decision in [`decisions.md`](decisions.md) (A-#), where the 
 - **Toys and props collide**: anything an animation hangs on a hand (dildos, a bat) pushes the body
   instead of clipping; a held rifle or a mug does not. (A-17)
 - **Contact is one smooth tube, not a string of balls**, for a penis and for a toy: no more lips
-  riding in and out between collision balls, no opening parting before the tip arrives. Anus "through"
-  rate 72% -> 27%, thrust wobble roughly halved. (A-35, A-38)
+  riding in and out between collision balls. Thrust wobble measured on the real mesh: anus 0.69 ->
+  0.21, vagina 0.26 -> 0.13. (A-35, A-38)
 - **Super mutants' and other creatures' penis bones collide too.**
 
 ## 3. The penis: aim and shape
