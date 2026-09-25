@@ -528,6 +528,9 @@ EndFunction
 
 ; Put tracked woman k's nipples where her arousal says, in tenths (each change rebuilds her morphs).
 Function Show(Int k)
+	If !_looksMenu
+		Return                                   ; no LooksMenu, no morphs to write (release review, 2026-09-26)
+	EndIf
 	Actor a = _who[k]
 	Float stepped = Math.Floor(_level[k] * 10.0 + 0.5) / 10.0
 	; heavily dressed (Silhouette's refit marker): her nipples stay flat under the armour. Our layer
@@ -593,7 +596,7 @@ EndFunction
 
 Function Forget(Int k)
 	Actor a = _who[k]
-	If a != None && _shown[k] != 0.0             ; shown, or -1: a layer may be on her
+	If _looksMenu && a != None && _shown[k] != 0.0   ; shown, or -1: a layer may be on her
 		BodyGen.RemoveMorphsByKeyword(a, True, _layer)
 		If a.Is3DLoaded()
 			BodyGen.UpdateMorphs(a)

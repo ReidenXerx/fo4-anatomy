@@ -35,7 +35,7 @@ import xml.etree.ElementTree as ET
 import garments as g
 import nif
 
-SILHOUETTE_TOOLS = pathlib.Path(r'C:\Users\DuduPhudu\Documents\Projects\fo4-silhouette\tools')
+SILHOUETTE_TOOLS = pathlib.Path(__file__).resolve().parents[2] / 'fo4-silhouette' / 'tools'   # a sibling checkout
 OUT = pathlib.Path(r'D:\F4Output\Rebuild')
 INTO = pathlib.Path(r'D:\Vortex\fallout4\mods\bodyslides_f4_sd')
 ZEROS = {'woman': 'CBBE Zeroed Sliders', 'man': 'BT - Zero'}
