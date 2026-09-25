@@ -268,8 +268,15 @@ ANUS_PATH = ((0.0, -0.36, -51.33), (0.0, 0.08, -48.39), (0.0, 0.67, -45.47), (0.
 # HEAD's frame (THROAT), the neck part in Neck's (THROAT_NECK), so the path bends where her neck bends.
 # Both are offsets from the mouth ([Mouth]'s point) in the standing body's frame (y forward, z up);
 # physics_config places them in each skeleton's own bones.
-THROAT = ((0.0, -3.0, -0.12), (0.0, -6.0, -0.3), (0.0, -9.0, -0.7), (0.0, -10.1, -3.2))
-THROAT_NECK = ((0.0, -10.5, -6.2), (0.0, -10.6, -9.2), (0.0, -10.3, -12.2))
+# The owner's lying blowjob (2026-09-26, Photo225, him on his back, her head bent down over his hips): "penis
+# start bending not when he closer to back of neck inside throat but on the front wall of neck -> clipping".
+# The head turns about its bone's origin, the top of the spine: 8.12 behind the female mouth point and 1.8 above
+# it ([Mouth] femaleMouth). The pharynx points (back 9 and 10.1) sit BELOW that pivot, 2.5 and 5.0 down, i.e.
+# in the neck, but hung from HEAD: a head bent 60 degrees down swings a point 2.5 below the pivot ~2.2 forward,
+# to the neck's front wall. So only the mouth's own points (in front of the pivot) hang from HEAD now; from
+# the pharynx down, the path is the neck's, and the bend happens where the neck is, whatever the head does.
+THROAT = ((0.0, -3.0, -0.12), (0.0, -6.0, -0.3))
+THROAT_NECK = ((0.0, -9.0, -0.7), (0.0, -10.1, -3.2), (0.0, -10.5, -6.2), (0.0, -10.6, -9.2), (0.0, -10.3, -12.2))
 
 # gain: the fitted layer's target beyond Nahka's drawing scaled to the shaft. The owner's first look at
 # A-14 (2026-09-23 19:10): "it works ... only 1 thing we need to widen vagina slightly more". Simulated
