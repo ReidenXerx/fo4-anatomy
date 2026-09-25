@@ -234,7 +234,7 @@ def face_section(ini):
             keys[section][key.strip()] = value.strip()
     face = keys.get('[Face]', {})
     testers = {f'{sec} {k}': v for sec, vals in keys.items() for k, v in vals.items()
-               if k in ('probe', 'test') and v not in ('', '0')}
+               if k in ('probe', 'test', 'discover') and v not in ('', '0')}
     if face.get('authority') != '1' or testers:
         raise SystemExit(f'Anatomy/ocbp.ini is not what players get: [Face] {face}, tester keys {testers}. Rerun '
                          'tools/physics_config.py (a dev ini with probe= or test= must not ship)')
