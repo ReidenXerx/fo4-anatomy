@@ -1345,3 +1345,43 @@ scenes, the AAF menu's too.
     drawn +27 is best. The entry POINT matters far more (0.3 off: 57-68%).
 - **Open:** the owner's look (tube on, lips 1.7); the region's p99 edge stretch rises 3.7 -> 4.7 with the
   lips; stale: field-notes' "anus knee 1.8" (the code has 0.65 since 09-24).
+
+## A-36 — Every CBBE garment gets the body's hip handover, rebuilt unattended (the owner's poll, 2026-09-26)
+
+- **Ask:** A-30's cost was that garments over the naked body kept CBBE's handover and could part from the skin.
+  - First poll: a builder stage per player, auto-detecting the pieces worn over the body.
+  - The survey then showed that 126 of the 164 over-body pieces are armour, usually worn over a slot-33 outfit.
+    Fixing them alone would part the armour from the outfit.
+  - Second poll: "I agree with recommendation", so EVERY CBBE garment, "and we need full auto script that will do
+    all machinery for bodyslides regeneration assuming it will work with our silhouette and other our mods".
+- **Built (tools/garments.py):** `plan | build | regen | verify | install`, or `all`.
+  - Selection: an active plugin's ARMA wears the output as a woman's model (MOD3), and the set was not made on
+    BodyTalk or Fusion Girl. The CBBE group alone missed 399 CBBE garments that sit in no group.
+    BuildSelection.xml decides between sets that build one mesh.
+    Result: 964 sets, 603 of them on the hip band.
+  - Per garment vertex:
+    - only the core bones' SPLIT moves, and only next to a body vertex whose split the fold changed;
+    - the change is full within 1.0 of the body and fades out by 2.5;
+    - the vertex's core total, its other bones, and its own weight sum stay as the author made them.
+      441 vertices of a vanilla outfit sum to 0.74, and BodySlide ships them that way.
+  - It rebuilds in a private BodySlide copy, headless, "CBBE Zeroed Sliders" with --trimorphs, into a folder of
+    its own. Nothing in Data/Tools/BodySlide changes.
+  - `verify` checks every rebuild against the build it replaces: the same vertices, byte-identical .tri, and no
+    weight changed except the core bones'. So LooksMenu BodyGen and Silhouette see exactly what they saw before.
+  - `install` writes in place into the BodySlide output mod (hardlinked into Data). It refuses while
+    Fallout4.exe runs and backs up what it replaces.
+  - nif.py: `with_bones` reuses a node the file already has, and `set_skin_weights` can keep a vertex's sum.
+- **Measured:**
+  - 603/603 built, 0 BodySlide errors, and verify is clean against the live builds.
+  - Pose gaps (garment vertex against its nearest body vertex, LBS), on 26 sampled sets x 7 poses: 100 rows
+    better, 68 the same, and 14 with one worst vertex +0.15 .. +0.9 while p95 improved or held.
+    Examples: combat-armour leg in doggy, worst 5.10 -> 2.25; a panty in a spine bend, p95 2.46 -> 0.54.
+- **Scars (each caught before anything shipped):**
+  - The thigh side rule was reversed (LLeg is x < 0): a leg piece parted 7.8 where it had parted 0.25.
+  - hip_fold.fit's torso merge put a garment's pelvis share on Spine1: +3.5 in a spine bend. The garment fit now
+    drops the smallest share into its nearest neighbour.
+  - Dropping the last torso bone: a midline vertex parted 8.2.
+  - A `<Shape DataFolder=...>` reads its sliders from another folder. Copying only the set's own folder built
+    144 outfits whose body copy had NO morphs. BodySlide said nothing; verify's .tri check caught it.
+- **Open:** the install needs a closed-game window and the owner's go-ahead. Also open: folding the stage into
+  the frozen builder for other players.

@@ -179,7 +179,7 @@ def main():
         print('\nFAIL - ' + '\n       '.join(problems))
         sys.exit(1)
     print(f'\nPASS - geometry and sliders unchanged, {len(pd.REST)} genital bones of our own bound where the design '
-          f'puts them and present in the women\'s skeleton, CBBE skin untouched outside the mask but for the hip fold's pelvis/thigh split (A-30).')
+          f'puts them and present in the women\'s skeleton, CBBE skin untouched outside the mask but for the hip fold\'s pelvis/thigh split (A-30).')
 
 
 if __name__ == '__main__':

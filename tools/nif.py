@@ -102,15 +102,17 @@ class Shape:
         s = struct.unpack_from('<4B', self.nif.b, o + 8)
         return [(s[k], float(w[k])) for k in range(4) if w[k] > 0]
 
-    def set_skin_weights(self, i, pairs):
-        """At most 4 (slot, weight) pairs; weights are renormalised to sum to 1 and stored as halves."""
+    def set_skin_weights(self, i, pairs, total=1.0):
+        """At most 4 (slot, weight) pairs; weights are rescaled to sum to `total` (1 unless the vertex's own
+        sum is kept: 441 vertices of a vanilla outfit sum to 0.74, and BodySlide ships them so) and stored
+        as halves."""
         if not self.flags & VA_SKINNED:
             raise ValueError(f'{self.name}: not skinned')
         pairs = sorted(((s, w) for s, w in pairs if w > 0), key=lambda sw: -sw[1])[:4]
-        total = sum(w for _, w in pairs)
-        if not pairs or total <= 0:
+        have = sum(w for _, w in pairs)
+        if not pairs or have <= 0:
             raise ValueError(f'{self.name} vertex {i}: no weight left')
-        pairs = [(s, w / total) for s, w in pairs] + [(0, 0.0)] * (4 - len(pairs))
+        pairs = [(s, w * total / have) for s, w in pairs] + [(0, 0.0)] * (4 - len(pairs))
         o = self.data_at + i * self.stride + self.skin_at
         struct.pack_into('<4e', self.nif.b, o, *(w for _, w in pairs))
         struct.pack_into('<4B', self.nif.b, o + 8, *(s for s, _ in pairs))
@@ -299,19 +301,29 @@ class Nif:
         node_type = self.type_index[tmpl]
         new_strings = list(self.strings)
         new_blocks = []
+        # a bone another shape of this file already skins to keeps its one node (garments, A-36: a panty's
+        # ribbon skinned to Pelvis_skin while its panty lacked it); two nodes of one name would be two bones
+        by_name = {n['name']: i for i, n in self.nodes.items() if n['name']}
+        new_refs = []
         for k, bdef in enumerate(bones):
+            if bdef['name'] in by_name:
+                new_refs.append(by_name[bdef['name']])
+                continue
             if bdef['name'] in new_strings:
-                raise ValueError(f'{bdef["name"]} is already a string in the file')
-            new_strings.append(bdef['name'])
+                name_index = new_strings.index(bdef['name'])
+            else:
+                new_strings.append(bdef['name'])
+                name_index = len(new_strings) - 1
             to, _ = self.offsets[tmpl]
             blk = bytearray(self.b[to:to + 76])
-            struct.pack_into('<i', blk, 0, len(new_strings) - 1)              # name
+            struct.pack_into('<i', blk, 0, name_index)                        # name
             struct.pack_into('<3f', blk, 16, *bdef['node_t'])                 # after name, extras 0, ctrl, flags
             struct.pack_into('<9f', blk, 28, *bdef['node_rot'])
             struct.pack_into('<f', blk, 64, 1.0)
             struct.pack_into('<I', blk, 72, 0)                                # children
+            new_refs.append(nb + len(new_blocks))
             new_blocks.append(bytes(blk))
-        new_refs = list(range(nb, nb + len(bones)))
+        new_nodes = list(range(nb, nb + len(new_blocks)))
 
         # root node: children count + refs grow
         ro, rs = self.offsets[root]
@@ -320,9 +332,9 @@ class Nif:
         kids_at = rc.o
         kids = rc.take('I')
         tail = ro + rs
-        root_blk = (bytes(self.b[ro:kids_at]) + struct.pack('<I', kids + len(bones))
+        root_blk = (bytes(self.b[ro:kids_at]) + struct.pack('<I', kids + len(new_nodes))
                     + bytes(self.b[kids_at + 4:kids_at + 4 + 4 * kids])
-                    + b''.join(struct.pack('<i', r) for r in new_refs)
+                    + b''.join(struct.pack('<i', r) for r in new_nodes)
                     + bytes(self.b[kids_at + 4 + 4 * kids:tail]))
         # skin instance: bone count + refs grow
         inst_blk = (bytes(self.b[o:o + 8]) + struct.pack('<I', n_old + len(bones))
@@ -344,9 +356,9 @@ class Nif:
         footer = bytes(self.b[last_end:])
 
         raw = [s.encode('latin1') for s in new_strings]
-        header = (bytes(self.b[:self.nblocks_at]) + struct.pack('<I', nb + len(bones))
+        header = (bytes(self.b[:self.nblocks_at]) + struct.pack('<I', nb + len(new_blocks))
                   + bytes(self.b[self.nblocks_at + 4:self.type_index_at])
-                  + b''.join(struct.pack('<H', t) for t in self.type_index + [node_type] * len(bones))
+                  + b''.join(struct.pack('<H', t) for t in self.type_index + [node_type] * len(new_blocks))
                   + b''.join(struct.pack('<I', len(b)) for b in blocks)
                   + struct.pack('<II', len(raw), max(len(r) for r in raw))
                   + b''.join(struct.pack('<I', len(r)) + r for r in raw)
