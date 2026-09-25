@@ -386,6 +386,9 @@ def patch_nif(body, src, dst):
             s.set_skin_weights(i, [(slot[b], x) for b, x in w.items()], total=sums[i])
         report[name] = len(after)
     dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists():
+        dst.unlink()                                 # a workspace may HARDLINK the original: writing through
+                                                     # the link would rewrite another mod's ShapeData
     n.save(dst)
     return report
 
@@ -476,6 +479,11 @@ def workspace(bs, work, target):
     text, k = re.subn(r'<OutputDataPath>[^<]*</OutputDataPath>', lambda m: want, text)
     if k != 1:
         raise SystemExit('BodySlide Config.xml: no single OutputDataPath to point at the target')
+    # BodySlide checks it may write the game's Data at start and, when it may not, waits on a dialog even in
+    # a headless group build (2026-09-26: both builds sat behind "No read/write permission for game data
+    # path!"). A headless build reads nothing there, so the workspace itself is its game data path.
+    game = '<GameDataPath>' + str(work).rstrip('\\') + '\\</GameDataPath>'
+    text = re.sub(r'<GameDataPath>[^<]*</GameDataPath>', lambda m: game, text)
     cfg.write_text(text, encoding='utf-8')
     for sub in ('ShapeData', 'SliderSets', 'SliderGroups'):
         (home / sub).mkdir()
