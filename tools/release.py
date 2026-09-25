@@ -234,15 +234,74 @@ BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', '
 REBUILD_MODULES = ('gamedata', 'garments', 'hip_fold', 'neck_seam', 'align_body', 'nif', 'osd')
 
 
-def build_exe(name='AnatomyBuilder', script='tools/builder.py', modules=BUILDER_MODULES):
+# Microsoft Defender's cloud ML flagged the 1.0.1 exes "Trojan:Win32/Wacatac.B!ml" on VirusTotal (3/75; the
+# 1.0.0 ones were 2/75 without Microsoft; the owner's scans, 2026-09-26). The usual trigger is PyInstaller's
+# stock, prebuilt bootloader, shared by countless packed malware samples. So the release's exes get a
+# bootloader compiled here from PyInstaller's own source (MSVC, into build/pyi-venv) and a version-info
+# resource saying what they are. Local Defender flagged neither version: only a VirusTotal scan decides.
+PYI_VERSION = '6.22.3'
+PYI_VENV = BUILD / 'pyi-venv'
+VCVARS = r'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat'
+DESCRIPTIONS = {'AnatomyBuilder': 'Anatomy Builder: builds the Anatomy body from your own CBBE and skin',
+                'AnatomyRebuild': 'Anatomy Rebuild: the hip and neck fixes on your BodySlide builds'}
+
+
+def source_bootloader_python():
+    """The Python of a venv whose PyInstaller carries a bootloader compiled from source (made once)."""
+    py = PYI_VENV / 'Scripts/python.exe'
+    marker = PYI_VENV / f'pyinstaller-{PYI_VERSION}-source-bootloader'
+    if marker.exists():
+        return py
+    subprocess.run([sys.executable, '-m', 'venv', str(PYI_VENV)], check=True)
+    subprocess.run([str(py), '-m', 'pip', 'install', '-q', 'pillow'], check=True)
+    script = PYI_VENV / 'build-bootloader.bat'
+    script.write_text(f'@call "{VCVARS}" >nul || exit /b 1\r\n'
+                      f'@set PYINSTALLER_COMPILE_BOOTLOADER=1\r\n'
+                      f'@"{py}" -m pip install --no-binary pyinstaller --no-cache-dir pyinstaller=={PYI_VERSION}\r\n',
+                      encoding='utf-8')
+    subprocess.run(['cmd', '/c', str(script)], check=True, stdout=subprocess.DEVNULL)
+    marker.write_text('PyInstaller installed from source with PYINSTALLER_COMPILE_BOOTLOADER=1\n', encoding='utf-8')
+    return py
+
+
+def version_file(name, version):
+    """A VS_VERSIONINFO resource for the exe: who made it and what it is (PyInstaller --version-file)."""
+    nums = [int(x) for x in (version.split('.') + ['0', '0', '0'])[:4]]
+    v = '.'.join(map(str, nums))
+    f = BUILD / 'pyi' / f'{name}-version.txt'
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(f"""VSVersionInfo(
+  ffi=FixedFileInfo(filevers={tuple(nums)}, prodvers={tuple(nums)}, mask=0x3f, flags=0x0, OS=0x40004,
+                    fileType=0x1, subtype=0x0, date=(0, 0)),
+  kids=[
+    StringFileInfo([StringTable('040904B0', [
+      StringStruct('CompanyName', '{AUTHOR}'),
+      StringStruct('FileDescription', '{DESCRIPTIONS[name]}'),
+      StringStruct('FileVersion', '{v}'),
+      StringStruct('InternalName', '{name}'),
+      StringStruct('LegalCopyright', 'GNU GPL v3; source: {ANATOMY_URL}'),
+      StringStruct('OriginalFilename', '{name}.exe'),
+      StringStruct('ProductName', 'Anatomy for Fallout 4'),
+      StringStruct('ProductVersion', '{v}')])]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
+""", encoding='utf-8')
+    return f
+
+
+def build_exe(name='AnatomyBuilder', script='tools/builder.py', modules=BUILDER_MODULES, version='0.0.0',
+              bootloader='source'):
     """PyInstaller one-folder build of a tool into build/dist/<name> (wiped first). The tools import
     their stages by name at run time, so each is named here as a hidden import."""
+    python = source_bootloader_python() if bootloader == 'source' else pathlib.Path(sys.executable)
     hidden = [arg for m in modules for arg in ('--hidden-import', m)]
     # no network, so no OpenSSL in the bundle: urllib and http.client take ssl as optional, and hashlib
     # falls back to Python's built-in SHA-1. (socket stays: xml.sax.saxutils -> urllib -> email.utils
     # imports it at load, and without it the builder fails at once; tried 2026-09-23.)
     excluded = [arg for m in ('ssl', '_ssl', '_hashlib') for arg in ('--exclude-module', m)]
-    subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', '--console',
+    subprocess.run([str(python), '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', '--console',
+                    '--noupx', '--version-file', str(version_file(name, version)),
                     '--name', name, '--paths', 'tools', *hidden, *excluded,
                     '--distpath', 'build/dist', '--workpath', 'build/pyi', '--specpath', 'build/pyi',
                     script], cwd=ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -451,6 +510,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--version', default='1.0.1')
     ap.add_argument('--what', choices=('all', 'engine', 'anatomy', 'builder', 'rebuild'), default='all')
+    ap.add_argument('--bootloader', choices=('source', 'prebuilt'), default='source',
+                    help="the tools' PyInstaller bootloader: compiled here from source (default) or the stock one")
     args = ap.parse_args()
     commit = build_dll()                                       # every archive names the engine commit
     print(f'engine: cbp.dll from fork commit {commit}')
@@ -468,13 +529,13 @@ def main():
              (TITLE, NEXT_STEPS.replace('<version>', args.version), 'Get the Anatomy Builder, run it, then BodySlide'),
              extras={f'{NAME} - LICENSE.txt': ROOT / 'LICENSE'}, no_binaries=True)
     if args.what in ('all', 'builder'):
-        build_exe()
+        build_exe(version=args.version, bootloader=args.bootloader)
         wanted = builder_files()
         if not any(k.endswith('AnatomyBuilder.exe') for k in wanted):
             raise SystemExit('PyInstaller ran but left no AnatomyBuilder.exe in build/dist/AnatomyBuilder')
         pack_zip('AnatomyBuilder', args.version, wanted, 'Anatomy Builder - README.txt', BUILDER_README)
     if args.what in ('all', 'rebuild'):
-        build_exe('AnatomyRebuild', 'tools/rebuild.py', REBUILD_MODULES)
+        build_exe('AnatomyRebuild', 'tools/rebuild.py', REBUILD_MODULES, args.version, args.bootloader)
         wanted = rebuild_files()
         if not any(k.endswith('AnatomyRebuild.exe') for k in wanted):
             raise SystemExit('PyInstaller ran but left no AnatomyRebuild.exe in build/dist/AnatomyRebuild')
