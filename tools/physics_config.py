@@ -70,7 +70,7 @@ SECTIONS = {
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
-from physics_design import (AFFECTED, AIM, AIM_CHAIN, COLLIDERS, CREATURE_COLLIDERS, FACE, MOUTH,  # noqa: E402
+from physics_design import (AFFECTED, AIM, AIM_CHAIN, COLLIDERS, CREATURE_COLLIDERS, EYES, FACE, MOUTH,  # noqa: E402
                             MOUTH_CHAINS, PARENT, PROPS, SHAPE, STRETCH)
 
 
@@ -275,6 +275,8 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
     lines += ['', '[Props]'] + [f'{k}={v}' for k, v in PROPS.items()]
     lines += ['', '[Mouth]'] + [f'{k}={v}' for k, v in MOUTH.items()] + lip_keys()
     lines += ['', '[Face]'] + [f'{k}={v}' for k, v in FACE.items()]
+    lines += ['', '; glances (A-34): who looks at whom is Rapport\'s, the eye turns here',
+              '[Eyes]'] + [f'{k}={v}' for k, v in EYES.items()]
     lines += ['', '; the penis finds its opening (A-28): openings in Pelvis_skin\'s frame, angles in degrees',
               '[Aim]'] + [f'{k}={v}' for k, v in aim_keys(pelvis_world, head_f, head_m, neck_f, neck_m).items()]
     lines += ['', '; every man\'s penis: the shaft this thin, the head this big (one size per man) (A-31)',

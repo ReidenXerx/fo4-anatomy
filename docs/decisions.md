@@ -1299,3 +1299,23 @@ scenes, the AAF menu's too.
 - **Built:** fork 5217f05. tests/face covers the decode, the clamps and the store; 21 of 21 authority
   mutations are caught.
 - **Open:** verify in game: the knobs from the MCM page, and her brows by vaginal depth.
+
+## A-34 — Glances: into the partner's eyes for a second or two (the owner, 2026-09-25)
+
+- **Ask:** "its glance in the partnet eyes. for ex during blowjob time to time glances on 1-2 seconds maybe in
+  another poses / if u know people love it during sex".
+- **Split with Rapport:** Rapport decides who looks at whom, when and for how long, and sends 'RFAG' (24 bytes:
+  looker, target, duration, how open the lids are). The fork turns the eye and opens the lids.
+- **How FO4 turns an eye (measured, GOG 1.10.163):** it has no eye bones and no eye morphs. The eye's texture
+  slides: a UV offset on the eye mesh's material, the same one Screen Archer Menu sets. The engine's eye update
+  (+0x9C0410) eases every tracked actor's offset toward 0.25 x the look direction's sideways and up parts, at
+  2.0 a second, and past about 40 degrees it looks straight ahead. The fork hooks that update's two calls and,
+  after the engine, writes the glancing actor's eye toward the partner's eyes by the same numbers.
+- **The lids:** a glance holds the upper lids (18/41) open, over Rapport's held face and the blink, as the last
+  layer of FaceCompose. Eyes shut in pleasure open for the look.
+- **Built:** fork 3f33d31 (Eyes.cpp, Glance.h; tests/face covers the decode, the store, the lids and the eye
+  math, and 33 of 33 authority mutations are caught). [Eyes] in Anatomy/ocbp.ini; release.py refuses a dev
+  [Eyes] probe= or test=.
+- **Open:**
+  - Which way +UV turns an eye (signX/signY) is for the dev probe and the owner's look to settle.
+  - glances=1 (hello bit 4) comes only after the owner has seen eyes turn.

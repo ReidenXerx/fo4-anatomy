@@ -137,19 +137,21 @@ def pillow_licence():
 
 def face_section(ini):
     """The fork's [Face] as players get it: the authority on, and nothing a tester sets (A-27)."""
-    face, section = {}, None
+    keys, section = {'[Face]': {}, '[Eyes]': {}}, None
     for line in ini.splitlines():
         s = line.strip()
         if s.startswith('['):
             section = s
-        elif section == '[Face]' and '=' in s and not s.startswith(';'):
+        elif section in keys and '=' in s and not s.startswith(';'):
             key, value = s.split('=', 1)
-            face[key.strip()] = value.strip()
-    testers = {k: v for k, v in face.items() if k in ('probe', 'test') and v not in ('', '0')}
+            keys[section][key.strip()] = value.strip()
+    face = keys['[Face]']
+    testers = {f'{sec} {k}': v for sec, vals in keys.items() for k, v in vals.items()
+               if k in ('probe', 'test') and v not in ('', '0')}
     if face.get('authority') != '1' or testers:
-        raise SystemExit(f'Anatomy/ocbp.ini [Face] is not what players get: {face}. Rerun '
+        raise SystemExit(f'Anatomy/ocbp.ini [Face]/[Eyes] is not what players get: {keys}. Rerun '
                          'tools/physics_config.py (a dev ini with probe= or test= must not ship)')
-    return '[Face]: authority=1, no probe, no self-test'
+    return '[Face]: authority=1; [Face] and [Eyes]: no probe, no self-test'
 
 
 def files(version):
