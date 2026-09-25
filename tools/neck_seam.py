@@ -142,6 +142,9 @@ def apply(nif_path, piece_paths, shape_name=ab.SHAPE):
         fix[i] = (unit(axis), math.radians(a))
     if not want:
         raise SystemExit('neck seam: no body ring point touches the head or the rear piece')
+    if max(before) <= 3.0:                              # already faces them (a second run, AnatomyRebuild)
+        print(f'neck seam: the ring already faces the head (worst {max(before):.1f} deg): nothing to do')
+        return 0
     # every vertex within FADE of a fixed ring point takes the nearest one's rotation, faded
     changed, done = 0, {}
     for j, p in enumerate(pos):

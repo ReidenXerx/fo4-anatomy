@@ -1441,3 +1441,30 @@ scenes, the AAF menu's too.
     always had.
   - Tests: tube 8 cases; mutants 8/8, 3 of them on Reaches.
 - **Open:** the owner's look in a toy scene.
+
+## A-39 — Anatomy Rebuild: the outfit and neck fixes on the player's own builds (the owner's poll, 2026-09-26)
+
+- **Ask:** A-36 (outfits) and A-37 (neck) ran only in the owner's pipeline; a player's own BodySlide
+  build drops both. The owner: "we release today also that separate anatomy-rebuild tool also and pass
+  to publish bud he will upload it in optional files in anatomy mod page".
+- **Design:** patch AFTER BodySlide, not before. The owner's pipeline patches ShapeData, then runs
+  BodySlide headless with a zero preset. A player's preset, zaps and BodySlide location are unknown, so
+  `tools/rebuild.py` (AnatomyRebuild.exe) never runs BodySlide:
+  - the new skinning is computed on the outfit's own ShapeData (unmorphed, where the body fix was
+    made), with garments.py's own transfer and check;
+  - it is written onto the player's BUILT mesh by vertex index, only after proving that each shape is
+    the same mesh: name, UVs and non-core weights. A zap removes vertices and keeps the rest in order,
+    so each built vertex is matched to the next source vertex that agrees (3 of 24 sampled outfits
+    carry an always-on zap in their body copy);
+  - positions, morphs (.tri) and sliders are never touched; a mesh that proves nothing is left as
+    built and logged.
+  - The neck: neck_seam.apply on the built femalebody.nif; a ring already within 3 deg is left alone.
+  - In place (a Vortex hardlink stays one), originals kept in backup/ with a ledger; `--undo` restores
+    only files still holding what it wrote. It refuses while Fallout 4 runs.
+- **Measured (scratchpad rebuild_test/equiv.py):** 24 outfits built headless from the ORIGINAL
+  ShapeData, then patched by the tool, against the verified pipeline's live builds: every weight equal
+  (worst 0.0000 after the rerun tolerance was tightened from 2e-3 to 5e-4), positions identical. A
+  second run: 0 changed, 15 already. `--undo`: byte-identical to the unpatched builds. The neck on a
+  fresh "Anatomy Body" build: 14.4/37.5 -> 0.0/0.3 deg, 137 vertices, byte-identical to the staged body
+  52a79f4b7255; a second run does nothing. The packed exe gives the same results.
+- **Shipped:** `AnatomyRebuild-<version>.7z` (release.py), an optional file on Anatomy's page.
