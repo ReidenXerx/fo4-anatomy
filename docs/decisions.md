@@ -1510,3 +1510,18 @@ scenes, the AAF menu's too.
   every weight, and its .osd, .osp, textures and material byte for byte. (137 records differ: neck normals left
   in the dev ShapeData by the abandoned ShapeData neck fix, A-37; BodySlide recomputes normals on every build.)
 - **Shipped:** AnatomyBuilder 1.0.3. The collection's bundled body is the owner's tested FemaleBody (52a79f4b).
+
+## A-42 — The texture stage reads every skin format (a player's report, 2026-09-26)
+
+- **Found:** khonan2007 on the Anatomy page (NMM, builder 1.0.3): "STOPPED: 6. the genitals' texture and material,
+  from this skin stopped: .../FemaleBody_d.dds: unexpected format b'\x00\x00\x00\x00'". A FourCC of zero is an
+  UNCOMPRESSED texture; genital_texture read only DXT1 and BC5 (the owner's skin) and refused everything else.
+- **Fix:** `genital_texture.Dds` reads legacy FourCC DXT1/DXT3/DXT5/ATI2/BC5U, a DX10 header (BC1/BC2/BC3/BC5,
+  R8G8B8A8, B8G8R8A8), and uncompressed 24/32-bit by its channel masks. Block formats and uncompressed are
+  patched in place (the skin's alpha carried through); anything Pillow reads but cannot write (BC7) is re-encoded
+  whole for OUR copy only, with every mip (DXT5 colour, BC5 normal/specular), and verified on its island instead
+  of byte for byte. A file that is not a DDS at all now says so plainly.
+- **Proven:** the owner's DXT1/ATI2 maps build byte-identical before and after (all three maps, same geometry,
+  separate processes); an uncompressed BGRA skin with mips, DXT5, DX10-wrapped DXT1 and a forced re-encode each
+  build, pass verify and decode (island within 47/255 of the DXT1 result for the uncompressed one).
+- **Shipped:** AnatomyBuilder 1.0.4.

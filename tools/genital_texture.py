@@ -69,30 +69,81 @@ MAPS = [('diffuse', 'FemaleBody_d.dds', 'femalebody_d.dds', 'colour'),
 
 
 # --------------------------------------------------------------------------
-# DDS: legacy FourCC files (DXT1 = BC1, 8 bytes a block; BC5U/ATI2 = BC5, 16 bytes a block)
+# DDS: every format a Fallout 4 skin ships in (a player's report, 2026-09-26: an UNCOMPRESSED diffuse stopped the
+# builder with "unexpected format b'\x00\x00\x00\x00'"; only DXT1 and BC5 were read until then)
+#   block formats Pillow encodes: DXT1, DXT3, DXT5, BC5 (legacy FourCC or a DX10 header) -> patched in place, block
+#       by block, every block outside the island byte for byte the skin's
+#   uncompressed 24/32-bit (legacy RGB masks, or DX10 R8G8B8A8 / B8G8R8A8) -> patched in place, texel by texel
+#   anything else Pillow can read but not write (BC7, ...) -> OUR copy re-encoded whole, with every mip, as DXT5
+#       (colour) or BC5 (normal, specular). Only the genital shape samples our copy, and only on its island, so
+#       the change of format is never seen; the island itself is checked instead of every block.
 # --------------------------------------------------------------------------
+
+DXGI = {71: ('DXT1', 8), 72: ('DXT1', 8), 74: ('DXT3', 16), 75: ('DXT3', 16), 77: ('DXT5', 16), 78: ('DXT5', 16),
+        83: ('BC5', 16), 84: ('BC5', 16)}
+DXGI_RAW = {28: 'RGBA', 29: 'RGBA', 87: 'BGRA', 91: 'BGRA'}
+FOURCC = {b'DXT1': ('DXT1', 8), b'DXT3': ('DXT3', 16), b'DXT5': ('DXT5', 16), b'BC5U': ('BC5', 16),
+          b'ATI2': ('BC5', 16)}
+FALLBACK = {'colour': 'DXT5', 'specular': 'BC5', 'normal': 'BC5'}
+
 
 class Dds:
     def __init__(self, path, data=None):
         """A file, or (a label, the bytes) for a texture read out of an archive (gamedata)."""
         self.path = pathlib.Path(path)
         self.b = bytearray(data if data is not None else self.path.read_bytes())
+        if bytes(self.b[:4]) != b'DDS ':
+            raise SystemExit(f'{path}: not a DDS file (it starts {bytes(self.b[:4])!r}); the skin mod ships a broken '
+                             f'texture, or another mod replaces it with one')
         self.h, self.w = struct.unpack_from('<II', self.b, 12)
         self.mips = max(1, struct.unpack_from('<I', self.b, 28)[0])
-        self.fourcc = bytes(self.b[84:88])
+        pf_flags, self.fourcc, bits = struct.unpack_from('<I4sI', self.b, 80)
+        masks = struct.unpack_from('<4I', self.b, 92)
+        self.data_off = 128
+        self.pil_format, self.block, self.bw, self.raw, self.fallback = None, None, 4, None, False
+        self.name = self.fourcc.decode('latin-1')
         if self.fourcc == b'DX10':
-            raise SystemExit(f'{path}: DX10 header not handled')
-        self.block = 8 if self.fourcc == b'DXT1' else 16 if self.fourcc in (b'BC5U', b'ATI2') else None
-        if self.block is None:
-            raise SystemExit(f'{path}: unexpected format {self.fourcc}')
-        self.pil_format = 'DXT1' if self.block == 8 else 'BC5'
+            self.data_off = 148
+            dxgi = struct.unpack_from('<I', self.b, 128)[0]
+            self.name = f'DX10 format {dxgi}'
+            if dxgi in DXGI:
+                self.pil_format, self.block = DXGI[dxgi]
+            elif dxgi in DXGI_RAW:
+                self.raw, self.block, self.bw = DXGI_RAW[dxgi], 4, 1
+            else:
+                self.fallback = True
+        elif self.fourcc in FOURCC:
+            self.pil_format, self.block = FOURCC[self.fourcc]
+        elif self.fourcc == b'\x00\x00\x00\x00' and pf_flags & 0x40 and bits in (24, 32):
+            # uncompressed, the channels where its masks say: the byte each 8-bit mask sits in
+            order = {}
+            for ch, m in zip('RGBA', masks):
+                if m in (0xFF, 0xFF00, 0xFF0000, 0xFF000000):
+                    order[ch] = {0xFF: 0, 0xFF00: 1, 0xFF0000: 2, 0xFF000000: 3}[m]
+            if not all(ch in order for ch in 'RGB'):
+                raise SystemExit(f'{path}: an uncompressed texture with channel masks {[hex(m) for m in masks]} '
+                                 f'is not handled')
+            self.raw, self.block, self.bw, self.name = order, bits // 8, 1, f'uncompressed {bits}-bit'
+        else:
+            self.fallback = True
+        if self.fallback:
+            try:
+                self.top()
+            except Exception as e:
+                raise SystemExit(f'{path}: its format ({self.name}) cannot be read ({e})')
+        if isinstance(self.raw, str):                      # DX10 R8G8B8A8 / B8G8R8A8 -> byte order
+            self.raw = {'R': 0, 'G': 1, 'B': 2, 'A': 3} if self.raw == 'RGBA' else {'B': 0, 'G': 1, 'R': 2, 'A': 3}
 
     def level(self, L):
-        """(width, height, blocks across, blocks down, byte offset) of mip level L."""
-        off = 128
+        """(width, height, units across, units down, byte offset) of mip level L; a unit is a 4x4 block, or a
+        texel for an uncompressed texture."""
+        off = self.data_off
         for k in range(L + 1):
             w, h = max(1, self.w >> k), max(1, self.h >> k)
-            bx, by = max(1, (w + 3) // 4), max(1, (h + 3) // 4)
+            if self.bw == 1:
+                bx, by = w, h
+            else:
+                bx, by = max(1, (w + 3) // 4), max(1, (h + 3) // 4)
             if k == L:
                 return w, h, bx, by, off
             off += bx * by * self.block
@@ -100,13 +151,32 @@ class Dds:
     def top(self):
         return Image.open(io.BytesIO(bytes(self.b))).convert('RGB')
 
+    def top_alpha(self):
+        im = Image.open(io.BytesIO(bytes(self.b)))
+        return im.getchannel('A') if 'A' in im.getbands() else Image.new('L', im.size, 255)
+
 
 def encode_blocks(img, pil_format):
     """Pillow's encoder, stripped of its header: the image's 4x4 blocks in raster order."""
     buf = io.BytesIO()
+    if pil_format == 'BC5':
+        img = img.convert('RGB')
     img.save(buf, 'DDS', pixel_format=pil_format)
     data = buf.getvalue()
     return data[148:] if pil_format == 'BC5' else data[128:]
+
+
+def reencoded(levels, pil_format):
+    """A whole DDS with every mip: Pillow's header for level 0 (it writes one level), its mip count and flags set,
+    then each level's blocks."""
+    buf = io.BytesIO()
+    first = levels[0].convert('RGB') if pil_format == 'BC5' else levels[0]
+    first.save(buf, 'DDS', pixel_format=pil_format)
+    head = bytearray(buf.getvalue()[:148 if pil_format == 'BC5' else 128])
+    struct.pack_into('<I', head, 8, struct.unpack_from('<I', head, 8)[0] | 0x20000)     # DDSD_MIPMAPCOUNT
+    struct.pack_into('<I', head, 28, len(levels))
+    struct.pack_into('<I', head, 108, struct.unpack_from('<I', head, 108)[0] | 0x400008)  # COMPLEX | MIPMAP
+    return bytes(head) + b''.join(encode_blocks(im, pil_format) for im in levels)
 
 
 # --------------------------------------------------------------------------
@@ -233,6 +303,22 @@ def build(src, nahka_name, kind, geometry):
     raw = seam_difference(own, patched, src.w)
     patched = feather_seam(patched, mask, kind, src.w)
     report['seam'] = dict(raw, feathered=seam_difference(own, patched, src.w)['after'])
+    alpha = src.top_alpha()
+    if src.fallback:                                   # our copy, whole, in a format Pillow writes (see Dds)
+        fmt = FALLBACK[kind]
+        levels, L = [], 0
+        while True:
+            w, h = max(1, src.w >> L), max(1, src.h >> L)
+            im = patched if L == 0 else patched.resize((w, h), Image.BOX)
+            if fmt != 'BC5':
+                im = im.convert('RGBA')
+                im.putalpha(alpha if L == 0 else alpha.resize((w, h), Image.BOX))
+            levels.append(im)
+            if w == 1 and h == 1 or L + 1 >= max(src.mips, 1) and src.mips > 1:
+                break
+            L += 1
+        report['reencoded_as'] = f'{fmt}, {len(levels)} mips (the skin is {src.name}, which Pillow cannot write)'
+        return src, bytearray(reencoded(levels, fmt)), report, mask
     out = bytearray(src.b)
     changed = 0
     for L in range(src.mips):
@@ -241,6 +327,20 @@ def build(src, nahka_name, kind, geometry):
         m = mask if L == 0 else mask.reduce(f) if src.w % f == 0 else mask.resize((w, h), Image.BOX)
         target = patched if L == 0 else patched.reduce(f) if src.w % f == 0 else patched.resize((w, h), Image.BOX)
         mp = m.load()
+        if src.bw == 1:                                # uncompressed: the texels themselves, the skin's alpha kept
+            tp = target.load()
+            for j in range(h):
+                for i in range(w):
+                    if mp[i, j]:
+                        at = off + (j * w + i) * src.block
+                        for ch, v in zip('RGB', tp[i, j]):
+                            out[at + src.raw[ch]] = v
+                        changed += 1
+            continue
+        if src.pil_format in ('DXT3', 'DXT5'):          # carry the skin's alpha through the re-encoded blocks
+            a_lvl = alpha if L == 0 else alpha.reduce(f) if src.w % f == 0 else alpha.resize((w, h), Image.BOX)
+            target = target.convert('RGBA')
+            target.putalpha(a_lvl)
         blocks = [(x, y) for y in range(by) for x in range(bx)
                   if any(mp[i, j] for j in range(4 * y, min(h, 4 * y + 4)) for i in range(4 * x, min(w, 4 * x + 4)))]
         if not blocks:
@@ -345,7 +445,10 @@ def feather_seam(img, mask, kind, size):
 
 
 def verify(src, out, mask):
-    """Every block the padded mask does not reach, on every level, is the owner's byte for byte."""
+    """Every block (or texel) the padded mask does not reach, on every level, is the owner's byte for byte. A copy
+    re-encoded whole (src.fallback) has no bytes of the skin's to keep: its island is checked instead (verify_island)."""
+    if src.fallback:
+        return verify_island(src, out, mask)
     bad = 0
     for L in range(src.mips):
         w, h, bx, by, off = src.level(L)
@@ -354,11 +457,31 @@ def verify(src, out, mask):
         mp = m.load()
         for y in range(by):
             for x in range(bx):
-                hit = any(mp[i, j] for j in range(4 * y, min(h, 4 * y + 4)) for i in range(4 * x, min(w, 4 * x + 4)))
+                if src.bw == 1:
+                    hit = bool(mp[x, y])
+                else:
+                    hit = any(mp[i, j] for j in range(4 * y, min(h, 4 * y + 4)) for i in range(4 * x, min(w, 4 * x + 4)))
                 a = off + (y * bx + x) * src.block
                 if not hit and src.b[a:a + src.block] != out[a:a + src.block]:
                     bad += 1
     return bad
+
+
+def verify_island(src, out, mask):
+    """A re-encoded copy: its top level decodes, its size is the skin's, and outside the island it stays within the
+    encoder's error of the skin (it is sampled only on the island, but a gross error means a broken copy)."""
+    img = Image.open(io.BytesIO(bytes(out))).convert('RGB')
+    if img.size != (src.w, src.h):
+        return 1
+    own = src.top()
+    step = max(1, src.w // 256)
+    worst = 0
+    mp = mask.load()
+    for y in range(0, src.h, step):
+        for x in range(0, src.w, step):
+            if not mp[x, y]:
+                worst = max(worst, max(abs(a - b) for a, b in zip(own.getpixel((x, y)), img.getpixel((x, y)))))
+    return 0 if worst <= 48 else 1
 
 
 def main(data=None):
@@ -390,7 +513,7 @@ def main(data=None):
         src, out, report, mask = build(src, nahka_name, kind, geometry)
         bad = verify(src, out, mask)
         (ANATOMY_OUT / ours).write_bytes(out)
-        print(f'{ours} from {game.describe(rel)} ({src.w}x{src.h} {src.fourcc.decode()} {src.mips} mips, {kind}): '
+        print(f'{ours} from {game.describe(rel)} ({src.w}x{src.h} {src.name} {src.mips} mips, {kind}): '
               f'{report}; blocks outside the patch that differ from the skin\'s: {bad}')
         if bad:
             problems.append(ours)
