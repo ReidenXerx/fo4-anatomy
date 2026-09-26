@@ -290,10 +290,54 @@ def version_file(name, version):
     return f
 
 
+NUITKA_VERSION = '4.2.2'
+NUITKA_VENV = BUILD / 'nuitka-venv'
+
+
+def nuitka_python():
+    """A venv holding Nuitka and the tools' own dependencies (made once)."""
+    py = NUITKA_VENV / 'Scripts/python.exe'
+    if not py.exists():
+        subprocess.run([sys.executable, '-m', 'venv', str(NUITKA_VENV)], check=True)
+        subprocess.run([str(py), '-m', 'pip', 'install', '-q', f'nuitka=={NUITKA_VERSION}', 'pillow', 'ordered-set',
+                        'zstandard'], check=True)
+    return py
+
+
+def build_nuitka(name, script, modules, version):
+    """Nuitka standalone build of a tool into build/dist/<name> (wiped first): the Python compiled to C with
+    MSVC, so there is no PyInstaller bootloader at all. Microsoft's cloud ML flagged the PyInstaller builds
+    "Wacatac.B!ml" with the stock bootloader AND with one compiled from source (candidate B, 2026-09-26)."""
+    nums = '.'.join((version.split('.') + ['0', '0', '0'])[:4])
+    out = BUILD / 'nuitka' / name
+    if out.exists():
+        shutil.rmtree(out)
+    stem = pathlib.Path(script).stem
+    subprocess.run([str(nuitka_python()), '-m', 'nuitka', '--standalone', '--assume-yes-for-downloads',
+                    '--msvc=latest', '--windows-console-mode=force', f'--output-dir={out}',
+                    f'--output-filename={name}.exe', f'--company-name={AUTHOR}',
+                    '--product-name=Anatomy for Fallout 4', f'--file-version={nums}', f'--product-version={nums}',
+                    f'--file-description={DESCRIPTIONS[name]}',
+                    f'--copyright=GNU GPL v3; source: {ANATOMY_URL}',
+                    # no network: no OpenSSL in the bundle (as the PyInstaller builds; _ssl pulled libssl/libcrypto in)
+                    *[f'--nofollow-import-to={m}' for m in ('ssl', '_ssl', '_hashlib')],
+                    *[f'--include-module={m}' for m in modules], script],
+                   cwd=ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    dist = BUILD / 'dist' / name
+    if dist.exists():
+        shutil.rmtree(dist)
+    shutil.move(str(out / f'{stem}.dist'), str(dist))
+    if not (dist / f'{name}.exe').exists():
+        raise SystemExit(f'Nuitka ran but left no {name}.exe')
+
+
 def build_exe(name='AnatomyBuilder', script='tools/builder.py', modules=BUILDER_MODULES, version='0.0.0',
-              bootloader='source'):
-    """PyInstaller one-folder build of a tool into build/dist/<name> (wiped first). The tools import
-    their stages by name at run time, so each is named here as a hidden import."""
+              bootloader='nuitka'):
+    """One-folder build of a tool into build/dist/<name> (wiped first). bootloader: 'nuitka' (the default:
+    compiled, no bootloader), 'source' (PyInstaller, bootloader compiled here) or 'prebuilt' (stock PyInstaller).
+    The tools import their stages by name at run time, so each is named here as a hidden import."""
+    if bootloader == 'nuitka':
+        return build_nuitka(name, script, modules, version)
     python = source_bootloader_python() if bootloader == 'source' else pathlib.Path(sys.executable)
     hidden = [arg for m in modules for arg in ('--hidden-import', m)]
     # no network, so no OpenSSL in the bundle: urllib and http.client take ssl as optional, and hashlib
@@ -510,8 +554,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--version', default='1.0.1')
     ap.add_argument('--what', choices=('all', 'engine', 'anatomy', 'builder', 'rebuild'), default='all')
-    ap.add_argument('--bootloader', choices=('source', 'prebuilt'), default='source',
-                    help="the tools' PyInstaller bootloader: compiled here from source (default) or the stock one")
+    ap.add_argument('--bootloader', choices=('nuitka', 'source', 'prebuilt'), default='nuitka',
+                    help="how the tools are packed: Nuitka (default, no bootloader), or PyInstaller with its "
+                         "bootloader compiled here from source, or its stock one")
     args = ap.parse_args()
     commit = build_dll()                                       # every archive names the engine commit
     print(f'engine: cbp.dll from fork commit {commit}')

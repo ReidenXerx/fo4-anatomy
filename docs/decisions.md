@@ -1483,3 +1483,12 @@ scenes, the AAF menu's too.
   `Fallout4\installed path` (Steam and GOG both write it; measured on the owner's GOG install) and GOG's own
   `GOG.com\Games\1998527297\path`. Under MO2 the tool must still be launched from MO2, because only then does the
   Data folder show the mods MO2 manages.
+- **Microsoft's flag (the owner's VirusTotal scans):** the 1.0.1 exes came back 3/75, Microsoft among them
+  with "Trojan:Win32/Wacatac.B!ml" (1.0.0: 2/75, no Microsoft). Local Defender flags none of them, so only a
+  scan decides. A PyInstaller build with a bootloader compiled here from source plus a version-info resource
+  still drew Microsoft (2/75). So the tools are now compiled with Nuitka (release.py's default,
+  `--bootloader nuitka`, in build/nuitka-venv): C via MSVC, no PyInstaller bootloader, the same version
+  info, and no OpenSSL (ssl, _ssl and _hashlib not followed, as the PyInstaller builds excluded them).
+  Checked from the zips, outside Data: the builder's nine outputs are byte-identical to 1.0.1's, and
+  Rebuild's outfit weights equal the verified pipeline's (worst 0.0000 on 24 outfits). The PyInstaller
+  routes stay behind `--bootloader source|prebuilt`.

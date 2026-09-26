@@ -39,7 +39,9 @@ import tempfile
 import time
 import traceback
 
-FROZEN = getattr(sys, 'frozen', False)
+# packed: PyInstaller sets sys.frozen; Nuitka (the release's compiler since 2026-09-26) marks its compiled
+# modules with __compiled__ instead, and its sys.executable is the exe itself
+FROZEN = bool(getattr(sys, 'frozen', False)) or '__compiled__' in globals()
 HERE = pathlib.Path(sys.executable).parent if FROZEN else pathlib.Path(__file__).resolve().parent
 if not FROZEN:
     sys.path.insert(0, str(HERE))
