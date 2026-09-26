@@ -1542,3 +1542,22 @@ scenes, the AAF menu's too.
   each, elsewhere through the registry, `--data` unquoted / stray quote / game folder / 8.3 / wrong), and a fake
   Steam root with a second library found through libraryfolders.vdf with no other key present.
 - **Shipped:** AnatomyBuilder 1.0.5, AnatomyRebuild 1.0.3.
+
+## A-44 — Our bones on every loaded actor, not only the player's cell's (a player's report, 2026-09-26)
+
+- **Found:** Jpiet9711 on the Anatomy page: "when i kill an npc ... their nether region has been ripped away from
+  their body and when you loot the clothing the unmentionables are floating where they died."
+- **Cause (read in the engine, not yet reproduced in game):** A-21 points a body's skin at our nodes from
+  `EnsureAnatomyBones`, called only for `actorEntries`, and OCBPC builds those from the object list of the cell
+  the PLAYER stands in (scan.cpp). In the open world a woman one cell over was never repointed: her genital
+  vertices stayed on the skin's stranded copies of our nodes, which hang off the actor's root. Near enough while
+  she stands in a pose close to the bind pose; left where she died once the skeleton ragdolls; floating there
+  again when her body is re-equipped as she is looted (a new skin, never repointed).
+- **Fix (fo4-ocbpc d3a9921):** a sink on the game's `TESObjectLoadedEvent` (F4SE 0.6.23's own 1.10.163
+  dispatcher, no new address) keeps every ACHR whose 3D loads and drops it when it unloads; `UpdateActors`
+  visits 12 of them per frame (round robin), whatever the player's cell does, with the same `EnsureAnatomyBones`
+  (a skin already repointed returns at once). Physics, collisions and the aim still run on the player's cell
+  only: out there the genitals follow the pelvis rigidly, which is all a distant or dead body needs.
+- **Verified:** builds (MSBuild v143, cbp.dll 232074773e302fc3). NOT yet in game: kill a woman in the next
+  exterior cell, watch her fall, loot her; `anatomy_ocbpc.log` must show "[bones] watching every actor ..." and
+  "[bones] <her id>: created ... pointed ..." without her ever entering the player's cell.
