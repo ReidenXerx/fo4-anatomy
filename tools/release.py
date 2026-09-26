@@ -86,7 +86,7 @@ INSTALL
   3. BodySlide: choose "Anatomy Body", your preset, Build (or Batch Build). The category "Anatomy"
      has "Opening, front": extra opening toward the front, on top of the built-in one (0% leaves
      it as designed).
-  Re-run the builder after changing your CBBE or skin mod.
+  Re-run the builder after changing your CBBE, skin or physics preset (ocbp.ini).
   4. Optional, Anatomy Rebuild (the latest AnatomyRebuild zip, same page): run it after every
      BodySlide build. It gives your built outfits the body's hip handover and the body's neck its seam fix, which BodySlide itself
      cannot carry.

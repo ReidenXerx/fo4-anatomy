@@ -206,7 +206,7 @@ def main():
             print(f'   {rel}  sha1 {sha(target.read_bytes())}')
         ok = True
         print('\nDone. Now open BodySlide, choose the set "Anatomy Body", your preset, and Build (or Batch '
-              'Build with "Anatomy Body" ticked). Re-run this builder after changing your CBBE or skin mod.')
+              'Build with "Anatomy Body" ticked). Re-run this builder after changing your CBBE, skin or physics preset (ocbp.ini).')
     except SystemExit as e:
         print(f'\nSTOPPED: {e.code}')
     except Exception:

@@ -28,7 +28,8 @@ CBBE with its BodySlide files, BodySlide. LooksMenu (nipples, glans colour), AAF
    releases page; keep its folder, the `--undo` backups live there) for the outfit hip fix and the neck
    seam fix.
 
-Re-run the builder after changing your CBBE or skin mod.
+Re-run the builder after changing your CBBE, skin or physics preset (ocbp.ini): it reads the preset
+to decide which bone carries the breasts.
 
 ## What is here
 
