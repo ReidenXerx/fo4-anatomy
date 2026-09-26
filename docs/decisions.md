@@ -1606,3 +1606,11 @@ scenes, the AAF menu's too.
 - **Verified:** engine builds (cbp.dll 194411a3d1af3946); the builder's fallback both ways. NOT yet in game: the
   owner disables MadKita's Actual Jiggle, Jiggle Physics and OCBPC-0.3-CBBE, deploys, and looks (the tilt sign
   especially). Supersedes A-45's "no physics preset = not supported": Anatomy now brings its own.
+
+## A-47 — The default collision only with the default preset (the owner's AE photo, 2026-09-26)
+
+- **Found:** an AE profile with its own ocbp.ini but no OCBPCollisionConfig.txt got Anatomy's default collision (A-46)
+  beside the player's preset: the hands' spheres pushed ButtFat as far as that preset allows, and a cheek showed a
+  flat facet with a seam (reverse cowgirl, his hand on her hip).
+- **Fix (fo4-ocbpc, both builds):** the default collision is read only when the default preset is in use; a player
+  with a preset of their own keeps no collision of ours but Anatomy's genital one.
