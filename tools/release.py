@@ -54,13 +54,13 @@ BINARIES = ('.exe', '.dll', '.pyd')                         # never in the Nexus
 
 NEXT_STEPS = f"""Anatomy needs the fo4-ocbpc engine (its cbp.dll), a separate download.
 After this installs:
-1. Get AnatomyBuilder-<version>.zip from
+1. Get the latest AnatomyBuilder zip from
    {TOOLS_URL}
-   extract it into a folder of its own and run AnatomyBuilder.exe once. It finds your game by itself. MO2: add it to MO2's
-   executables and run it from there, like BodySlide. It builds the body from YOUR CBBE and skin.
+   extract it into a folder of its own and run AnatomyBuilder.exe once. It finds your game by
+   itself. MO2: add it to MO2's executables and run it from there, like BodySlide. It builds the body from YOUR CBBE and skin.
 2. Open BodySlide, choose "Anatomy Body", your preset, and Build.
 Re-run the builder whenever you change your CBBE or your skin mod.
-Optional: Anatomy Rebuild (AnatomyRebuild-<version>.zip, same page) after every BodySlide build."""
+Optional: Anatomy Rebuild (the latest AnatomyRebuild zip, same page) after every BodySlide build."""
 
 README = f"""{TITLE}
 Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
@@ -74,7 +74,7 @@ WHAT YOU NEED
 INSTALL
   1. Install the fo4-ocbpc engine, then this archive, with your mod manager. Nothing of this archive
      overlaps another mod, and it holds no program: the tools are on GitHub.
-  2. Download AnatomyBuilder-<version>.zip from
+  2. Download the latest AnatomyBuilder zip from
        {TOOLS_URL}
      extract it into a folder of its own (anywhere; Data\\Tools works too) and run AnatomyBuilder.exe once. It finds your game by
      itself (or run it with --data "<your Fallout 4>\\Data"). MO2: add it to MO2's executables and run
@@ -87,7 +87,7 @@ INSTALL
      has "Opening, front": extra opening toward the front, on top of the built-in one (0% leaves
      it as designed).
   Re-run the builder after changing your CBBE or skin mod.
-  4. Optional, Anatomy Rebuild (AnatomyRebuild-<version>.zip, same page): run it after every
+  4. Optional, Anatomy Rebuild (the latest AnatomyRebuild zip, same page): run it after every
      BodySlide build. It gives your built outfits the body's hip handover and the body's neck its seam fix, which BodySlide itself
      cannot carry.
 
@@ -570,8 +570,8 @@ def main():
         print(make_esp.verify(wanted['Anatomy.esp']))    # a keyword-less Anatomy.esp would move our layer into bodies
         print(face_section(wanted['F4SE/Plugins/Anatomy/ocbp.ini'].read_text(encoding='utf-8')))
         pack(NAME, args.version, wanted, f'{NAME} - README.txt',
-             README.replace('@FORK_COMMIT@', commit).replace('<version>', args.version),
-             (TITLE, NEXT_STEPS.replace('<version>', args.version), 'Get the Anatomy Builder, run it, then BodySlide'),
+             README.replace('@FORK_COMMIT@', commit),   # the tools version on their own (A-40): the
+             (TITLE, NEXT_STEPS, 'Get the Anatomy Builder, run it, then BodySlide'),   # texts say 'latest'
              extras={f'{NAME} - LICENSE.txt': ROOT / 'LICENSE'}, no_binaries=True)
     if args.what in ('all', 'builder'):
         build_exe(version=args.version, bootloader=args.bootloader)

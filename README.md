@@ -17,14 +17,14 @@ CBBE with its BodySlide files, BodySlide. LooksMenu (nipples, glans colour), AAF
 (settings) for the parts that use them.
 
 1. Install the engine, then Anatomy (Nexus). The Nexus archive holds game files only.
-2. Download `AnatomyBuilder-<version>.zip` from this repository's
+2. Download the latest `AnatomyBuilder` zip from this repository's
    [releases](https://github.com/ReidenXerx/fo4-anatomy/releases), extract it into a folder of its own
    and run `AnatomyBuilder.exe` once. It finds the game by itself: the Data folder it sits in, else the
    folder the game's Steam or GOG installer recorded; `--data "<your Fallout 4>\Data"` overrides both.
    MO2: add it to MO2's executables and run it from MO2, like BodySlide; outside MO2 it cannot see the
    mods MO2 manages.
 3. BodySlide: "Anatomy Body", your preset, Build.
-4. Optional: after every BodySlide build, run `AnatomyRebuild.exe` (`AnatomyRebuild-<version>.zip`, same
+4. Optional: after every BodySlide build, run `AnatomyRebuild.exe` (the latest `AnatomyRebuild` zip, same
    releases page; keep its folder, the `--undo` backups live there) for the outfit hip fix and the neck
    seam fix.
 
