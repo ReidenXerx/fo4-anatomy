@@ -1,7 +1,8 @@
 # Courtesy messages (drafts; sending them is the owner's act)
 
-Both authors' permissions already cover what Anatomy does (release-plan.md, read from their pages
-on 2026-09-23). These are thanks and a heads-up, not requests. Send them before or with the
+Nahka's and ericncream's permissions already cover what Anatomy does (release-plan.md, read from
+their pages on 2026-09-23): those two are thanks and a heads-up, not requests. The CBBE one is a
+request. Send them before or with the
 release, from the owner's own accounts.
 
 ## Nahka (LoversLab, Animated Fannies, 4302)
@@ -20,6 +21,36 @@ release, from the owner's own accounts.
 >
 > Thank you for making them and for letting them be used. If you'd like anything changed in how
 > you're credited, just say.
+
+## Ousnius, for the CBBE team (Nexus 15): a REQUEST, not a courtesy
+
+Unlike the two above, this one asks. CBBE's rule 3: "For uploading a modified body mesh outside of
+sliders, please ask for permission first" (contact Ousnius). Today nothing of CBBE ships (the
+builder makes the body on the player's PC). Uploading a pre-built body, on the Anatomy page or
+bundled in a collection (Ivy bundles "Anatomy Body (built)"), needs this answer first. Send it by
+Nexus private message from the owner's account.
+
+> Hi Ousnius,
+>
+> I've released a Fallout 4 mod, *Anatomy - CBBE Genitals, Physics and Arousal*, built on CBBE.
+> I'd like to ask your permission for one thing your rule 3 covers.
+>
+> Today none of CBBE's files are uploaded. Anatomy ships a builder that reads the player's own CBBE
+> install and adds the genitals (Nahka's vulva and anus, which she put up for adoption) and weights
+> for our physics bones, so the modified body only ever exists on the player's PC.
+>
+> That works, but the builder is the step players stumble on most. I'd like to upload the built
+> body itself: as an optional file on the Anatomy page, and bundled inside a Nexus collection that
+> uses it. It would be CBBE's body mesh with our genital geometry and weights merged in, plus its
+> BodySlide project, so players can still build it to any preset. The builder would stay for anyone
+> who prefers it. CBBE is credited on the page and listed as a requirement.
+>
+> Two things you should know before answering: the Anatomy page is opted into Donation Points, and
+> the file would be a modified version of your mesh. If either is a problem, or you'd want it done
+> differently, I'll follow what you say. If the answer is no, nothing changes: the builder route
+> stays the only one.
+>
+> Thank you for CBBE.
 
 ## ericncream (OCBPC, GitHub ericncream/OpenCBP_FO4)
 
