@@ -31,6 +31,9 @@ import nif
 import osd
 
 
+HINT = " The patch is made for CBBE 2.7.2's Tools/BodySlide/ShapeData/CBBE/CBBEBodyPhysics.nif: update CBBE to 2.7.2, or make sure no other mod replaces that file (MO2: its Data tab shows which mod provides it)."
+
+
 def load(path):
     return json.loads(gzip.decompress(pathlib.Path(path).read_bytes()))
 
@@ -47,11 +50,11 @@ def build(data, patch, out):
     got = dict(vertices=cs.count, triangles=len(ctris), desc=cs.desc)
     want = {k: meta[k] for k in got}
     if got != want:
-        raise SystemExit(f'this CBBE is not the one the patch was made against: {got} vs {want}')
+        raise SystemExit(f'this CBBE is not the one the patch was made against: {got} vs {want}.' + HINT)
     named = sorted({i for i in range(cs.count) if i not in set(patch['replaced'])} |
                    {i for t in patch['remove'] for i in t})
     if make_patch.fingerprint(cs, named) != meta['hash']:
-        raise SystemExit('this CBBE\'s vertices differ from the ones the patch was made against (hash)')
+        raise SystemExit('this CBBE\'s vertices differ from the ones the patch was made against (hash).' + HINT)
 
     # ---- vertices
     replaced = set(patch['replaced'])

@@ -96,6 +96,23 @@ def present(path):
         return False
 
 
+def make_dirs(path):
+    """mkdir -p that MO2's virtual folders answer too. pathlib's mkdir(exist_ok=True) forgives an existing folder only
+    if its own stat-based is_dir() agrees, and under MO2 (usvfs, Python 3.12, Windows 11) that stat misses: a player's
+    builder ran every stage and then died on 'Tools\\BodySlide\\SliderSets' "already exists" (2026-09-27). So each
+    level is created, and an "already exists" is accepted when the folder can be listed."""
+    p = pathlib.Path(path)
+    for level in reversed([p, *p.parents]):
+        try:
+            os.mkdir(level)
+        except FileExistsError:
+            if not present_dir(level):
+                raise
+        except PermissionError:
+            if not present_dir(level):                 # a drive root, or a folder we may only read
+                raise
+
+
 def present_dir(path):
     """present() for a folder: listable (the way usvfs serves MO2's virtual folders)."""
     try:

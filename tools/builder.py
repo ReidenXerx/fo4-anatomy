@@ -221,7 +221,7 @@ def main():
         print(f'\n=== writing to {dest}')
         for rel, src in produced.items():
             target = dest / rel
-            target.parent.mkdir(parents=True, exist_ok=True)
+            gamedata.make_dirs(target.parent)
             tmp = target.with_name(target.name + '.anatomy-new')
             shutil.copyfile(src, tmp)
             os.replace(tmp, target)                     # a crash never leaves half a file

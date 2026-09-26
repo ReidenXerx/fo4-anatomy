@@ -100,7 +100,7 @@ class Ledger:
     def __init__(self, home):
         self.home = home
         self.path = home / 'backup' / 'ledger.json'
-        self.rows = json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {}
+        self.rows = json.loads(self.path.read_text(encoding='utf-8')) if gamedata.present(self.path) else {}
 
     def write(self, dest, new):
         """Put `new` into dest in place, the original kept first. Returns False if dest already holds it."""
@@ -111,7 +111,7 @@ class Ledger:
         keep = self.home / 'backup' / 'files' / sha(key.lower().encode())[:16]
         row = self.rows.get(key)
         if not row or row.get('wrote') != sha(old):     # a fresh BodySlide build: it is the original now
-            keep.parent.mkdir(parents=True, exist_ok=True)
+            gamedata.make_dirs(keep.parent)
             keep.write_bytes(old)
             row = {'backup': str(keep), 'original': sha(old)}
         with open(dest, 'r+b') as f:                     # the same file: a hardlink stays one
@@ -126,7 +126,7 @@ class Ledger:
         done, newer = 0, 0
         for key, row in list(self.rows.items()):
             dest = pathlib.Path(key)
-            if not dest.exists():
+            if not gamedata.present(dest):
                 continue
             if sha(dest.read_bytes()) != row.get('wrote'):
                 newer += 1                               # BodySlide built it again since: not ours to undo
@@ -140,7 +140,7 @@ class Ledger:
         return done, newer
 
     def save(self):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        gamedata.make_dirs(self.path.parent)
         self.path.write_text(json.dumps(self.rows, indent=1), encoding='utf-8')
 
 
@@ -341,7 +341,7 @@ def main():
     import gamedata
     args = gamedata.parse_args(ap, FROZEN)
     home = pathlib.Path(args.home) if args.home else HERE
-    home.mkdir(parents=True, exist_ok=True)
+    gamedata.make_dirs(home)
     log_path = home / 'AnatomyRebuild.log'
     log = open(log_path, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.__stdout__, log)
