@@ -1579,3 +1579,30 @@ scenes, the AAF menu's too.
   game (the owner's test: kill a woman from 50 m+ in the open world, watch her fall, loot her).
 - **Out of scope (the owner, 2026-09-26):** a setup with no physics preset (no Data\F4SE\Plugins\ocbp.ini,
   GoldGary's "cbbe vanilla w/o any jiggle physics") is not supported: Anatomy is pointless without physics.
+
+## A-46 — Anatomy's own default physics preset, for a player who has none (the owner's poll, 2026-09-26)
+
+- **Asked:** the owner: "we can ship the physics preset installed on my side, it's just a text file", then
+  "make our preset different but not less advanced than MadKita's".
+- **Why not theirs (read on the Nexus pages, 2026-09-26):** MadKita's Actual Jiggle (90677, the owner's ocbp.ini)
+  allows modifying and using it without asking, but NOT in a mod that earns Donation Points, and Anatomy and the
+  engine both do. It is a tweak of SQr17's 3BBB Physics (48978): permission needed, no Donation Points either. The
+  owner's collision file is Jiggle Physics' (82699): permission needed. And a file at Data\F4SE\Plugins\ocbp.ini
+  would overwrite every player's own preset.
+- **Ours (tools/default_preset.py -> F4SE\Plugins\Anatomy\ocbp-default.ini, OCBPCollisionConfig-default.txt):**
+  written from targets, each spring found by running tools/ocbpc_sim.py (the engine's update, ported) on a jog
+  (2.0 units at 2.6 Hz) and a landing (a 5-unit drop): run amplitude, swings, settle time, cap.
+  - Every flesh bone plain CBBE weights (measured on the Anatomy body): breasts (moved off the cloth bones, 552
+    each), thigh 559, thigh low 308, belly 182, butt 122, thigh fat 72, upper belly 29: 11 bones, 7 parts.
+  - stiffness2 so the spring doubles at its cap (soft near rest, firm at the limit); a tilt that follows the
+    swing (breasts 6, butt 3 degrees at a jog's peak; rotationalZ, SIGN AND AXIS TO CONFIRM IN GAME);
+  - a calmer profile under clothes ([Attach.A], detectArmor=1: breasts x0.5, butt x0.6, belly x0.6, thighs x0.7);
+  - hands press breasts and butt: spheres in each bone's space measured from the mesh (breast centre 0.42, 4.19,
+    10.56 r 2.5; butt 0.95, -6.53, -2.96 r 4.2), LArm_Hand/RArm_Hand r 2.5.
+  - Measured: every part within 0.05 s of its settle target, its swing count and run exact.
+- **Read only when the player has none (fo4-ocbpc config.cpp):** no Data\F4SE\Plugins\ocbp.ini -> the default;
+  no OCBPCollisionConfig.txt -> the default collision. Logged once. The builder decides the breasts' bone from the
+  same preset (breasts_driven: theirs, else ours).
+- **Verified:** engine builds (cbp.dll 194411a3d1af3946); the builder's fallback both ways. NOT yet in game: the
+  owner disables MadKita's Actual Jiggle, Jiggle Physics and OCBPC-0.3-CBBE, deploys, and looks (the tilt sign
+  especially). Supersedes A-45's "no physics preset = not supported": Anatomy now brings its own.

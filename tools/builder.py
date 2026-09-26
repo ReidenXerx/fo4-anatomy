@@ -76,20 +76,28 @@ def sha(blob):
     return hashlib.sha1(blob).hexdigest()[:12]
 
 
+DEFAULT_PRESET = 'F4SE/Plugins/Anatomy/ocbp-default.ini'
+
+
 def breasts_driven(game):
-    """True when the player's own ocbp.ini simulates LBreast_skin and RBreast_skin (the owner's
-    MadKita setup); then CBBE's cloth-bone breast weights move onto them. Otherwise they stay."""
-    if game.find('F4SE/Plugins/ocbp.ini') is None:
-        return False, 'no ocbp.ini'
+    """True when the preset the engine will run simulates LBreast_skin and RBreast_skin: the player's own
+    ocbp.ini, else Anatomy's default (A-46, read by the engine only when the player has none). Then CBBE's
+    cloth-bone breast weights move onto them. Otherwise they stay."""
+    preset = 'F4SE/Plugins/ocbp.ini'
+    if game.find(preset) is None:
+        if game.find(DEFAULT_PRESET) is None:
+            return False, 'no ocbp.ini, and no Anatomy default preset: is Anatomy installed?'
+        preset = DEFAULT_PRESET
     attach, section = set(), None
-    for line in game.read('F4SE/Plugins/ocbp.ini').decode('utf-8', 'replace').splitlines():
+    for line in game.read(preset).decode('utf-8', 'replace').splitlines():
         line = line.split(';')[0].strip()
         if line.startswith('['):
             section = line.strip('[]').strip().lower()
         elif section == 'attach' and '=' in line:
             attach.add(line.split('=', 1)[0].strip())
     driven = {'LBreast_skin', 'RBreast_skin'} <= attach
-    return driven, f'ocbp.ini [Attach] {"names" if driven else "does not name"} LBreast_skin and RBreast_skin'
+    whose = 'your ocbp.ini' if preset.endswith('/ocbp.ini') else "Anatomy's default preset (you have no ocbp.ini)"
+    return driven, f'{whose}: [Attach] {"names" if driven else "does not name"} LBreast_skin and RBreast_skin'
 
 
 def run_stage(label, fn):

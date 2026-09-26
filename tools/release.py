@@ -391,6 +391,9 @@ def files(version):
         'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm/MCM/Config/Anatomy/settings.ini',
         'F4SE/Plugins/Anatomy/ocbp.ini': BUILD / 'config/Anatomy/ocbp.ini',
         'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt': BUILD / 'config/Anatomy/OCBPCollisionConfig.txt',
+        # A-46: our own default physics preset and collision, read by the engine only when the player has none
+        'F4SE/Plugins/Anatomy/ocbp-default.ini': BUILD / 'config/Anatomy/ocbp-default.ini',
+        'F4SE/Plugins/Anatomy/OCBPCollisionConfig-default.txt': BUILD / 'config/Anatomy/OCBPCollisionConfig-default.txt',
         # the men's glans colour (A-31, MCM "Glans colour"): our own mask in BodyTalk4's UV. Until the
         # release gathering (2026-09-26) it was never listed, and the switch would have found no template
         'F4SE/Plugins/F4EE/Overlays/Anatomy.esp/overlays.json':
