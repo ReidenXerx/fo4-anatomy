@@ -136,8 +136,21 @@ def main():
         import align_body as ab
         osp = data / 'Tools/BodySlide/SliderSets/CBBE.osp'
         if not osp.exists():
-            raise SystemExit('CBBE\'s BodySlide files are missing (Tools/BodySlide/SliderSets/CBBE.osp). Install CBBE '
-                             '(Nexus 15) with its BodySlide files, then run the builder again.')
+            # say what IS there (a player's MO2 setup, 2026-09-27: 609 plugins seen, no CBBE.osp): no BodySlide folder at
+            # all, a SliderSets folder without CBBE's set, or CBBE's set under another name
+            sets = data / 'Tools/BodySlide/SliderSets'
+            if not (data / 'Tools/BodySlide').is_dir():
+                seen = 'there is no Tools\\BodySlide folder in this Data at all'
+            elif not sets.is_dir():
+                seen = 'Tools\\BodySlide is there but has no SliderSets folder'
+            else:
+                names = sorted(p.name for p in sets.glob('*.osp'))
+                cbbe = [n for n in names if 'cbbe' in n.lower()]
+                seen = (f'SliderSets holds {len(names)} slider set file(s); the CBBE-named ones: '
+                        f'{", ".join(cbbe[:12]) or "none"}')
+            raise SystemExit('CBBE\'s BodySlide files are missing (Tools/BodySlide/SliderSets/CBBE.osp): ' + seen + '. '
+                             'Install CBBE (Nexus 15) WITH its BodySlide files (its installer option), make sure it is '
+                             'enabled, then run the builder again (under MO2: from MO2, so it sees MO2\'s mods).')
         cset, csliders = ab.read_set(osp, ab.CBBE_SET)
         folder = 'Tools/BodySlide/ShapeData/' + cset.findtext('DataFolder')
         cbbe_files = ['Tools/BodySlide/SliderSets/CBBE.osp', f'{folder}/{cset.findtext("SourceFile")}'] + \
