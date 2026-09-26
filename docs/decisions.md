@@ -1561,3 +1561,21 @@ scenes, the AAF menu's too.
 - **Verified:** builds (MSBuild v143, cbp.dll 232074773e302fc3). NOT yet in game: kill a woman in the next
   exterior cell, watch her fall, loot her; `anatomy_ocbpc.log` must show "[bones] watching every actor ..." and
   "[bones] <her id>: created ... pointed ..." without her ever entering the player's cell.
+
+## A-45 — Our bones at rest on every actor OCBPC does not simulate (the owner's reading, 2026-09-26)
+
+- **The owner's reading of Jpiet9711's report:** "he was several meters away from the corpse -> physics wasn't
+  calculated -> it froze in a stretched way -> he came close and it started calculating". Checked in the
+  engine: OCBPC moves our bones only for `actorEntries` (the player's cell), and nothing puts an actor's bones
+  back when it leaves them: the last offset physics wrote stays, up to [Labia] maxoffset 20 units and [Anus]
+  12.5, and a death's ragdoll is when they swing hardest. Both readings can happen; A-44 covers the
+  unrepointed skin, this covers the frozen offset.
+- **Fix (fo4-ocbpc):** the A-44 pass moved after the cell scan, so it knows who OCBPC updates this frame; every
+  loaded actor it visits that is NOT among them has our [Bones] nodes under its Pelvis_skin put back at their
+  [Bones] rest (position, identity rotation). The log says so once per actor and size: "[bones] <id>: not
+  simulated (outside the player's cell), our bones put back at rest; they were up to N units off": the
+  owner's theory, measured, in the next test.
+- **Verified:** builds (cbp.dll a2f6b5c7a60991ba), staged into Anatomy-dev in place (deployed). NOT yet in
+  game (the owner's test: kill a woman from 50 m+ in the open world, watch her fall, loot her).
+- **Out of scope (the owner, 2026-09-26):** a setup with no physics preset (no Data\F4SE\Plugins\ocbp.ini,
+  GoldGary's "cbbe vanilla w/o any jiggle physics") is not supported: Anatomy is pointless without physics.
