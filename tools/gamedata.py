@@ -27,27 +27,71 @@ BASE_MASTERS = ['Fallout4.esm', 'DLCRobot.esm', 'DLCworkshop01.esm', 'DLCCoast.e
                 'DLCworkshop03.esm', 'DLCNukaWorld.esm', 'DLCUltraHighResolution.esm']
 INI_KEYS = ('sResourceIndexFileList', 'SResourceArchiveList', 'SResourceArchiveList2')
 
-# Where the game says it is installed. Steam and GOG both write Bethesda's key (GOG measured 2026-09-26);
-# GOG also writes its own (1998527297 is Fallout 4 GOTY).
+# Where the game says it is installed. GOG writes Bethesda's key (measured 2026-09-26) and its own
+# (1998527297 is Fallout 4 GOTY). Steam writes Bethesda's key only when the game's first-run setup ran:
+# a default Steam install reported none (a player, 2026-09-26), so Steam's own records are read too:
+# its uninstall entry for the app (377160), then every Steam library's appmanifest.
 REGISTRY = ((r'SOFTWARE\WOW6432Node\Bethesda Softworks\Fallout4', 'installed path'),
             (r'SOFTWARE\Bethesda Softworks\Fallout4', 'installed path'),
-            (r'SOFTWARE\WOW6432Node\GOG.com\Games\1998527297', 'path'))
+            (r'SOFTWARE\WOW6432Node\GOG.com\Games\1998527297', 'path'),
+            (r'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 377160', 'InstallLocation'),
+            (r'SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 377160',
+             'InstallLocation'))
+STEAM_APP = '377160'
+
+
+def _reg(hive, key, value):
+    import winreg
+    try:
+        with winreg.OpenKey(hive, key) as k:
+            return str(winreg.QueryValueEx(k, value)[0]).strip()
+    except OSError:
+        return None
+
+
+def steam_libraries():
+    """Fallout 4's folder in every Steam library that has its appmanifest (libraryfolders.vdf)."""
+    import winreg
+    roots = [_reg(winreg.HKEY_CURRENT_USER, r'Software\Valve\Steam', 'SteamPath'),
+             _reg(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\WOW6432Node\Valve\Steam', 'InstallPath'),
+             _reg(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Valve\Steam', 'InstallPath')]
+    libraries = []
+    for root in filter(None, roots):
+        root = pathlib.Path(root)
+        libraries.append(root)
+        vdf = root / 'steamapps' / 'libraryfolders.vdf'
+        if vdf.exists():
+            text = vdf.read_text(encoding='utf-8', errors='replace')
+            libraries += [pathlib.Path(m.replace('\\\\', '\\')) for m in re.findall(r'"path"\s+"([^"]+)"', text)]
+    out = []
+    for lib in libraries:
+        manifest = lib / 'steamapps' / f'appmanifest_{STEAM_APP}.acf'
+        if manifest.exists():
+            m = re.search(r'"installdir"\s+"([^"]+)"', manifest.read_text(encoding='utf-8', errors='replace'))
+            out.append(lib / 'steamapps' / 'common' / (m.group(1) if m else 'Fallout 4'))
+    return out
 
 
 def installed_game():
-    """The game folders the registry names, in REGISTRY's order (none off Windows)."""
+    """The game folders the registry and Steam's libraries name, in that order (none off Windows)."""
     try:
         import winreg
     except ImportError:
         return []
-    out = []
-    for key, value in REGISTRY:
-        try:
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key) as k:
-                out.append(pathlib.Path(str(winreg.QueryValueEx(k, value)[0]).strip()))
-        except OSError:
-            continue
+    out = [pathlib.Path(v) for v in (_reg(winreg.HKEY_LOCAL_MACHINE, k, n) for k, n in REGISTRY) if v]
+    try:
+        out += steam_libraries()
+    except OSError:
+        pass
     return out
+
+
+def data_arg(value):
+    """--data as typed: a path with spaces left unquoted arrives as several words (nargs='+'), a quoted
+    path ending in a backslash arrives with a stray quote (Windows' own argument rules)."""
+    if isinstance(value, (list, tuple)):
+        value = ' '.join(value)
+    return value.strip().strip('"').strip() if value else None
 
 
 def find_data(arg=None, here=None, tool='this tool'):
@@ -56,15 +100,39 @@ def find_data(arg=None, here=None, tool='this tool'):
     quarantined the archive that did), so a tool now lives wherever the player extracted it, and the game
     has to be found rather than assumed. Under MO2 the tool must still be launched FROM MO2: only then does
     the Data folder it reads show the mods MO2 manages."""
+    arg = data_arg(arg)
+    if arg:
+        # the Data folder, or the game's folder holding it
+        candidates = [pathlib.Path(arg), pathlib.Path(arg) / 'Data']
+    else:
+        # the folder the tool sits in and every folder above it (Data\Tools\<tool>, the game's own folder,
+        # Data itself...), then what the registry and Steam name. A player put the builder in the game's
+        # folder, not Data\Tools (2026-09-26): only two levels up was ever looked at.
+        up = [pathlib.Path(here), *pathlib.Path(here).parents] if here else []
+        candidates = [c for p in up for c in (p, p / 'Data')] + [g / 'Data' for g in installed_game()]
     tried = []
-    candidates = [pathlib.Path(arg)] if arg else \
-        ([pathlib.Path(here).parent.parent] if here else []) + [g / 'Data' for g in installed_game()]
     for c in candidates:
         if (c / 'Fallout4.esm').exists():
             return c
-        tried.append(str(c))
+        if str(c) not in tried:
+            tried.append(str(c))
     raise SystemExit(f'Fallout 4\'s Data folder was not found (looked at: {", ".join(tried) or "nothing"}). '
-                     f'Run {tool} with --data "<your Fallout 4>\\Data", or put it in Data\\Tools.')
+                     f'Run {tool} with --data "<your Fallout 4>\\Data" (two dashes, no space), or put its '
+                     f'folder in Data\\Tools.')
+
+
+def parse_args(ap, frozen):
+    """ap.parse_args(), but a mistyped command line (a shortcut's "-- data") is shown before the window
+    closes: argparse exits at once, before the tool's own "Press Enter"."""
+    try:
+        return ap.parse_args()
+    except SystemExit as e:
+        if e.code and frozen and sys.stdin is not None and sys.stdin.isatty():
+            try:
+                input('\nThe command line was not understood (see above). Press Enter to close.')
+            except EOFError:
+                pass
+        raise
 
 
 def norm(path):

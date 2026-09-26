@@ -330,13 +330,14 @@ def neck(data, root, ledger, report):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--data', help='Fallout 4 Data folder (default: Data/Tools/<here>, else the game the registry names)')
+    ap.add_argument('--data', nargs='+', help='Fallout 4 Data folder (default: Data/Tools/<here>, else the game the registry names)')
     ap.add_argument('--built', help="BodySlide's output folder (default: its Config.xml's, else Data)")
     ap.add_argument('--only', choices=('garments', 'neck'), help='one of the two fixes only')
     ap.add_argument('--undo', action='store_true', help='put back every file it changed that BodySlide has '
                                                         'not rebuilt since')
     ap.add_argument('--home', help=argparse.SUPPRESS)   # where backup/ and the log live (tests)
-    args = ap.parse_args()
+    import gamedata
+    args = gamedata.parse_args(ap, FROZEN)
     home = pathlib.Path(args.home) if args.home else HERE
     home.mkdir(parents=True, exist_ok=True)
     log_path = home / 'AnatomyRebuild.log'

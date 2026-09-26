@@ -1525,3 +1525,20 @@ scenes, the AAF menu's too.
   separate processes); an uncompressed BGRA skin with mips, DXT5, DX10-wrapped DXT1 and a forced re-encode each
   build, pass verify and decode (island within 47/255 of the DXT1 result for the uncompressed one).
 - **Shipped:** AnatomyBuilder 1.0.4.
+
+## A-43 — The tools find the game from anywhere inside it, and from Steam's own records (a player's report, 2026-09-26)
+
+- **Found:** chaosandsorrow on the Anatomy page, default Steam install: "STOPPED: Fallout 4's Data folder was not
+  found (looked at: C:\PROGRA~2\Steam\STEAMA~1)". The log sat in the game's own folder, so the builder ran from
+  there, not Data\Tools. find_data looked only two levels above the exe, then at the registry, and the registry
+  had no key: Steam writes Bethesda's `installed path` only when the game's first-run setup ran. "--data" from a
+  shortcut failed too (typed "-- data"; argparse exited before the window could show why).
+- **Fix (`gamedata.find_data`, both tools):** the exe's folder and EVERY folder above it, each as Data or as the
+  game folder holding Data; then Bethesda's and GOG's keys, Steam's uninstall entry for app 377160, and every
+  Steam library in `libraryfolders.vdf` that has `appmanifest_377160.acf`. `--data` takes the words of an
+  unquoted path with spaces (`nargs='+'`), drops the stray quote Windows leaves after `"...\Data\"`, and accepts
+  the game folder too. A command line argparse rejects now waits for Enter instead of closing unread.
+- **Proven:** 11 cases on this machine (exe in the game folder, in Data\Tools\X, in Data\X, 8.3 short forms of
+  each, elsewhere through the registry, `--data` unquoted / stray quote / game folder / 8.3 / wrong), and a fake
+  Steam root with a second library found through libraryfolders.vdf with no other key present.
+- **Shipped:** AnatomyBuilder 1.0.5, AnatomyRebuild 1.0.3.

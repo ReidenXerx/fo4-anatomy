@@ -105,11 +105,12 @@ def run_stage(label, fn):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--data', help='Fallout 4 Data folder (default: Data/Tools/<here>, else the game the '
+    ap.add_argument('--data', nargs='+', help='Fallout 4 Data folder (default: Data/Tools/<here>, else the game the '
                                    'registry names)')
     ap.add_argument('--out', help='write the results here instead of into Data')
     ap.add_argument('--keep-work', action='store_true', help='keep the work folder (for a bug report)')
-    args = ap.parse_args()
+    import gamedata
+    args = gamedata.parse_args(ap, FROZEN)
     log_path = HERE / 'AnatomyBuilder.log'
     log = open(log_path, 'w', encoding='utf-8')
     sys.stdout = Tee(sys.__stdout__, log)
