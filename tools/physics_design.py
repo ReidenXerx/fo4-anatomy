@@ -315,10 +315,21 @@ def sphere_centre(bone):
     return (r[0] + ox, r[1] + oy, r[2] + oz)
 
 
+# The radius the genital WEIGHTS are fitted with, apart from the collision radius AFFECTED gives the fork. A-35
+# (2026-09-26) raised the inner lips' collision spheres 1.2 -> 1.7 so the SAME weights push the flesh clear of the
+# thinner shaft; that is what fit_check measured and the owner played (the dev body was re-folded, never re-weighted).
+# But expected_push read AFFECTED, so every fresh build (the public AnatomyBuilder 1.0.0-1.0.2) re-fitted the lips
+# to the bigger sphere: weights x0.80 (0.61 against the tested 0.77), undoing A-35. Found packing the collection's
+# body; the owner's poll: the public builder makes the tested body. Proven: stage 3 on the tested inputs now
+# reproduces the tested weights exactly.
+WEIGHT_FIT_RADIUS = {'AnatLip_L': 1.2, 'AnatLip_R': 1.2}
+
+
 def expected_push(bone, opening, centre=None, axis=None):
     """(unit direction, distance) a bone is pushed when a shaft of collider spheres runs along the
     opening's axis through its centre: straight out from the axis until its sphere clears a
-    collider sphere sitting level with it (the worst case between spheres is the simulator's job)."""
+    collider sphere sitting level with it (the worst case between spheres is the simulator's job).
+    The bone's sphere is the one its weights were fitted with (WEIGHT_FIT_RADIUS), not the collision one."""
     o = OPENINGS[opening]
     c, a = centre or o['centre'], axis or o['axis']
     s = sphere_centre(bone)
@@ -327,5 +338,5 @@ def expected_push(bone, opening, centre=None, axis=None):
     radial = [d[i] - along * a[i] for i in range(3)]
     h = math.sqrt(sum(x * x for x in radial))
     # the SHAFT's spheres: the weights are fitted to a penis, never to the fist's bigger ball (A-17)
-    reach = max(r for name in SHAFT for *_, r in COLLIDERS[name]) + AFFECTED[bone][0][3]
+    reach = max(r for name in SHAFT for *_, r in COLLIDERS[name]) + WEIGHT_FIT_RADIUS.get(bone, AFFECTED[bone][0][3])
     return tuple(x / h for x in radial), max(0.0, reach - h)

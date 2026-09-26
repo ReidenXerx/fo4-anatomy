@@ -1492,3 +1492,21 @@ scenes, the AAF menu's too.
   Checked from the zips, outside Data: the builder's nine outputs are byte-identical to 1.0.1's, and
   Rebuild's outfit weights equal the verified pipeline's (worst 0.0000 on 24 outfits). The PyInstaller
   routes stay behind `--bootloader source|prebuilt`.
+
+## A-41 — The builder undid A-35: lip weights fitted to the collision sphere (found 2026-09-26)
+
+- **Found:** packing the owner's collection body. The public AnatomyBuilder (1.0.0 to 1.0.2) made a body whose inner
+  lips carry x0.80 of the tested weight (0.61 against 0.77 at the worst vertex; a steady 1.256 on 1,588 vertices),
+  so a player's entrance opened about 20% less than the owner's.
+- **Cause:** zex_bones fits the lips' weights to `physics_design.expected_push`, which read the lips' COLLISION
+  sphere. A-35 raised that sphere 1.2 -> 1.7 so the same weights would push the flesh clear of the thinner shaft.
+  The owner's dev body was re-folded in place (hip_fold) but never re-weighted after A-35, so it kept the 1.2 fit:
+  the state fit_check measured and the owner played. Every fresh build re-fitted to 1.7 instead, cancelling A-35.
+  (Traced by elimination: the mask and stage 1 identical; the current stage 3 reproducing the builder; the pre-A-35
+  tools reproducing the tested weights; COLLIDERS unchanged.)
+- **Fix (the owner's poll: "your tested body"):** `physics_design.WEIGHT_FIT_RADIUS` keeps the lips' fit at 1.2,
+  apart from the collision radius. Proven: stage 3 on the tested inputs gives the tested weights exactly (0
+  vertices differ); the whole builder's Anatomy.nif equals the tested ShapeData in positions, UVs, triangles and
+  every weight, and its .osd, .osp, textures and material byte for byte. (137 records differ: neck normals left
+  in the dev ShapeData by the abandoned ShapeData neck fix, A-37; BodySlide recomputes normals on every build.)
+- **Shipped:** AnatomyBuilder 1.0.3. The collection's bundled body is the owner's tested FemaleBody (52a79f4b).
