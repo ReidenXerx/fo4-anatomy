@@ -72,6 +72,44 @@ def steam_libraries():
     return out
 
 
+def present(path):
+    """Does this file (or folder) exist, as the game would see it? Under MO2 the Data folder is virtual (usvfs), and a
+    player's builder could open plugins.txt and list 294 archives through it yet was told CBBE.osp, which MO2 showed
+    in its Data tab, did not exist (2026-09-27). Python 3.12's os.stat asks Windows 11's GetFileInformationByName,
+    which usvfs does not intercept, while opening a file and listing a folder are intercepted. So a "no" from stat
+    is confirmed by opening the file, else by listing its folder; a "yes" stays the fast answer."""
+    p = pathlib.Path(path)
+    try:
+        if p.exists():
+            return True
+    except OSError:
+        pass
+    try:
+        with open(p, 'rb'):
+            return True
+    except OSError:
+        pass
+    try:
+        want = p.name.lower()
+        return any(e.name.lower() == want for e in os.scandir(p.parent))
+    except OSError:
+        return False
+
+
+def present_dir(path):
+    """present() for a folder: listable (the way usvfs serves MO2's virtual folders)."""
+    try:
+        if pathlib.Path(path).is_dir():
+            return True
+    except OSError:
+        pass
+    try:
+        with os.scandir(path):
+            return True
+    except OSError:
+        return False
+
+
 def installed_game():
     """The game folders the registry and Steam's libraries name, in that order (none off Windows)."""
     try:
@@ -112,7 +150,7 @@ def find_data(arg=None, here=None, tool='this tool'):
         candidates = [c for p in up for c in (p, p / 'Data')] + [g / 'Data' for g in installed_game()]
     tried = []
     for c in candidates:
-        if (c / 'Fallout4.esm').exists():
+        if present(c / 'Fallout4.esm'):
             return c
         if str(c) not in tried:
             tried.append(str(c))
@@ -232,14 +270,14 @@ class Game:
 
     # ---- load order ----
     def _load_order(self):
-        order = [m for m in BASE_MASTERS if (self.data / m).exists()]
+        order = [m for m in BASE_MASTERS if present(self.data / m)]
         ccc = self.root / 'Fallout4.ccc'
-        if ccc.exists():
+        if present(ccc):
             for line in ccc.read_text(encoding='utf-8', errors='replace').splitlines():
                 name = line.strip()
-                if name and (self.data / name).exists() and name.lower() not in {p.lower() for p in order}:
+                if name and present(self.data / name) and name.lower() not in {p.lower() for p in order}:
                     order.append(name)
-        if self.plugins_txt.exists():
+        if present(self.plugins_txt):
             for line in self.plugins_txt.read_text(encoding='utf-8', errors='replace').splitlines():
                 line = line.strip()
                 if not line.startswith('*'):
@@ -256,7 +294,7 @@ class Game:
         lists = {}
         for ini in (self.root / 'Fallout4_Default.ini', self.my_games / 'Fallout4.ini',
                     self.my_games / 'Fallout4Custom.ini'):
-            if not ini.exists():
+            if not present(ini):
                 continue
             section = None
             for line in ini.read_text(encoding='utf-8', errors='replace').splitlines():
@@ -277,7 +315,7 @@ class Game:
         lists = self._ini_lists()
         for key in INI_KEYS:
             for name in lists.get(key, []):
-                if (self.data / name).exists() and name.lower() not in {o.name.lower() for o in order}:
+                if present(self.data / name) and name.lower() not in {o.name.lower() for o in order}:
                     order.append(self.data / name)
         if not lists:                                               # no INI: every base archive
             order += sorted(self.data.glob('Fallout4 - *.ba2'))
@@ -304,7 +342,7 @@ class Game:
     def find(self, rel):
         """('loose', path) or ('archive', archive path) for the copy the game would load, or None."""
         loose = self.data / rel
-        if loose.exists():
+        if present(loose):
             return 'loose', loose
         for path in reversed(self.archives):
             try:

@@ -33,6 +33,8 @@ import math
 import os
 import pathlib
 import re
+
+import gamedata
 import subprocess
 import sys
 import tempfile
@@ -72,11 +74,11 @@ def built_root(data, bs, arg):
     if arg:
         return pathlib.Path(arg)
     cfg = bs / 'Config.xml'
-    if cfg.exists():
+    if gamedata.present(cfg):
         m = re.search(r'<OutputDataPath>([^<]*)</OutputDataPath>', cfg.read_text(encoding='utf-8-sig', errors='replace'))
         if m and m.group(1).strip():
             p = pathlib.Path(m.group(1).strip())
-            if p.exists():
+            if gamedata.present_dir(p):
                 return p
     return data
 
@@ -249,9 +251,9 @@ def patch_built(g, body, src_path, built_path):
 def outfits(data, bs, root, ledger, report):
     import garments as g
     g.WORK = pathlib.Path(tempfile.mkdtemp(prefix='AnatomyRebuild-'))
-    if not (bs / 'ShapeData/Anatomy/Anatomy.nif').exists():
+    if not gamedata.present(bs / 'ShapeData/Anatomy/Anatomy.nif'):
         raise SystemExit('Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif is missing: run the Anatomy Builder first')
-    if not (bs / 'ShapeData/CBBE/CBBEBodyPhysics.nif').exists():
+    if not gamedata.present(bs / 'ShapeData/CBBE/CBBEBodyPhysics.nif'):
         raise SystemExit("CBBE's BodySlide files are missing (ShapeData/CBBE/CBBEBodyPhysics.nif): install CBBE with them")
     # every candidate set per built mesh: the build itself says which one it came from (same_mesh)
     member, worn = g.groups(bs), g.worn_female(data)
@@ -265,7 +267,7 @@ def outfits(data, bs, root, ledger, report):
                 or name == 'Anatomy Body' or out not in worn:
             continue
         src = bs / 'ShapeData' / (s.findtext('DataFolder') or '').strip() / (s.findtext('SourceFile') or '').strip()
-        if src.is_file():
+        if gamedata.present(src):
             cands.setdefault(out, []).append((name, src))
     print(f'{len(cands)} CBBE outfit meshes a woman wears in your game; looking for your builds in {root}')
     body = g.Body(bs)
@@ -274,7 +276,7 @@ def outfits(data, bs, root, ledger, report):
     t0 = time.time()
     for k, (out, sets) in enumerate(sorted(cands.items())):
         built = root / 'meshes' / (out + '.nif')
-        if not built.is_file():
+        if not gamedata.present(built):
             skipped.setdefault('not built yet (build it in BodySlide first)', []).append(out)
             continue
         why, matched = None, False
@@ -304,7 +306,7 @@ def neck(data, root, ledger, report):
     import gamedata
     import neck_seam as ns
     built = root / 'meshes' / (BODY + '.nif')
-    if not built.is_file():
+    if not gamedata.present(built):
         print(f'neck: no built body at {built}: build "Anatomy Body" in BodySlide first')
         report['neck'] = 'no body built'
         return

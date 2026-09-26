@@ -135,16 +135,16 @@ def main():
         # ---- what it reads, and from where (CBBE's file names come from its own slider set)
         import align_body as ab
         osp = data / 'Tools/BodySlide/SliderSets/CBBE.osp'
-        if not osp.exists():
+        if not gamedata.present(osp):
             # say what IS there (a player's MO2 setup, 2026-09-27: 609 plugins seen, no CBBE.osp): no BodySlide folder at
             # all, a SliderSets folder without CBBE's set, or CBBE's set under another name
             sets = data / 'Tools/BodySlide/SliderSets'
-            if not (data / 'Tools/BodySlide').is_dir():
+            if not gamedata.present_dir(data / 'Tools/BodySlide'):
                 seen = 'there is no Tools\\BodySlide folder in this Data at all'
-            elif not sets.is_dir():
+            elif not gamedata.present_dir(sets):
                 seen = 'Tools\\BodySlide is there but has no SliderSets folder'
             else:
-                names = sorted(p.name for p in sets.glob('*.osp'))
+                names = sorted(e.name for e in os.scandir(sets) if e.name.lower().endswith('.osp'))
                 cbbe = [n for n in names if 'cbbe' in n.lower()]
                 seen = (f'SliderSets holds {len(names)} slider set file(s); the CBBE-named ones: '
                         f'{", ".join(cbbe[:12]) or "none"}')
@@ -155,7 +155,7 @@ def main():
         folder = 'Tools/BodySlide/ShapeData/' + cset.findtext('DataFolder')
         cbbe_files = ['Tools/BodySlide/SliderSets/CBBE.osp', f'{folder}/{cset.findtext("SourceFile")}'] + \
                      sorted({f'{folder}/{f}' for *_, f in csliders})
-        missing = [f for f in cbbe_files if not (data / f).exists()]
+        missing = [f for f in cbbe_files if not gamedata.present(data / f)]
         if missing:
             raise SystemExit(f'CBBE\'s BodySlide files are incomplete ({missing}): reinstall CBBE (Nexus 15)')
         import genital_texture as gt
