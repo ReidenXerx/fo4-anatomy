@@ -263,8 +263,10 @@ SHAPE = dict(enabled=1, shaft=0.85, headMin=1.2, headMax=1.25)
 # there on. It leads a little along the entrance's axis, then curves BACK toward her middle before rising.
 VAGINA_PATH = ((0.0, 0.93, -53.59), (0.0, -0.27, -51.33), (0.0, 0.08, -48.36), (0.0, 0.68, -45.44),
                (0.0, 1.39, -42.54), (0.0, 2.08, -39.62))
-ANUS_PATH = ((0.0, -0.36, -51.33), (0.0, 0.08, -48.39), (0.0, 0.67, -45.47), (0.0, 1.38, -42.56),
-             (0.0, 2.08, -39.65), (0.0, 2.58, -36.69))
+# A-50 (2026-09-28): the anal canal's own middle (anal_canal.py), angled back toward the tailbone; it used to join
+# the vaginal midline 3 units in, where a penis in the vagina ran right past the anus
+ANUS_PATH = ((0.0, -2.7, -52.0), (0.0, -3.2, -51.0), (0.0, -3.4, -48.5), (0.0, -3.3, -45.8), (0.0, -3.1, -42.8),
+             (0.0, -2.8, -39.8))
 # The throat: offsets from the mouth ([Mouth]'s point), in the standing body's frame (y forward, z up), so
 # it holds for either skeleton. The first design turned down the neck ~2 inside the lips; the owner's look
 # (Photo, 2026-09-24): "mouth needs same treatment". A blowjob keeps 6-8 of the shaft in the mouth, so

@@ -1627,3 +1627,18 @@ scenes, the AAF menu's too.
 - **Staged 2026-09-28:** applied in place to Anatomy-dev and "Anatomy Body (built)" (both 52a79f4b, the tested body)
   and to the owner's BodySlide ShapeData, originals in the session scratchpad (atlas_bak). NOT yet seen in game.
 - **Watch:** a LooksMenu skin overlay that also lands on the genitals' shape would now sample the tile; none known.
+
+## A-50 — A closed anal canal behind the anus (the owner's photos, 2026-09-28)
+
+- **Found:** with a penis in the vagina the anus opens (her sphincter's answer: the owner wants it kept) and the
+  penis showed through it. Measured: the anus was a ~2-unit cup whose floor sat 1.59 from the vaginal path (penis mesh
+  ~1.55, collider 2.0), and the aim's anal path joined the vaginal midline 3 units in (canal.py follows the midline).
+- **Fix (tools/anal_canal.py, builder stage 6b; tools/mucosa.py, stage 8):** the cup is opened from 30% of its depth
+  and a closed canal is stitched to that loop (its first ring IS the loop: positions, weights, slider data), angled
+  back toward the tailbone: (0,-2.7,-52.0) -> (0,-3.2,-51.0) -> (0,-3.4,-48.5) -> (0,-3.3,-45.8), cap at -45.0; as
+  narrow as the opening past the tight spot, radius 1 beyond. Walls clear the vaginal path by 1.86-2.93 (penis 1.55)
+  and the skin by 0.6+. The body stays watertight (same openings as before). Walls face inward (the cup's own winding)
+  and sample a wet mucosa patch painted into the genitals' tile (MUCOSA_UV), toned from the anus rim's own texels.
+  physics_design.ANUS_PATH now runs down the canal.
+- **Staged 2026-09-28:** Anatomy-dev (built body, BodySlide source + osd, maps, OG ini) and "Anatomy Body (built)"
+  (AE) plus the AE ini's anusPath (Anatomy 1.1.0 mod); originals in the session scratchpad (canal_bak). NOT yet seen.

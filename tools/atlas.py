@@ -19,6 +19,7 @@ import struct
 
 MARGIN = 1 / 256          # beyond the island's UVs: 16 texels at 4K, for filtering and the first mips
 SHAPE = 'AnatomyGenitals'
+LAST = (0.0, 0.0, 1.0)    # the tile the last apply() chose
 
 
 def tile_for(uvs, margin=MARGIN):
@@ -103,7 +104,9 @@ def apply(nif_path, texture_dir, names=('FemaleBody_d.dds', 'FemaleBody_n.dds', 
     """The whole step: remap the genitals' UVs in the built Anatomy.nif, crop the three maps; a report line."""
     import io
     from PIL import Image
+    global LAST
     u0, v0, t = remap_uvs(nif_path)
+    LAST = (u0, v0, t)
     if t == 1.0:
         return 'atlas: the genitals\' UVs fill no smaller tile; the full-size maps stay'
     before = after = 0

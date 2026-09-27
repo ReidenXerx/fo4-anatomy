@@ -200,9 +200,14 @@ def main():
         run_stage('4. verification', verify_zex.main)
         run_stage('5. the genitals\' own shape', sg.main)
         run_stage('6. the genitals\' texture and material, from this skin', lambda: gt.main(data))
+        import anal_canal
+        import osd as osd_module
+        run_stage('6b. the anal canal (A-50)', lambda: print(anal_canal.build(
+            ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', ab.OUT / 'ShapeData/Anatomy/Anatomy.osd', osd_module)))
         import atlas
         run_stage('7. the genitals\' own small textures (A-48)', lambda: print(
             atlas.apply(ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', gt.ANATOMY_OUT)))
+        run_stage('8. the anal canal mucosa (A-50)', lambda: print(anal_canal.paint_maps(gt.ANATOMY_OUT, atlas.LAST)))
 
         # ---- publish into Data (or --out): our own paths only
         produced = {
