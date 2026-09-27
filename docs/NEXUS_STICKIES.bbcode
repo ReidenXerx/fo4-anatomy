@@ -1,5 +1,5 @@
-=== STICKY: Every feature in Anatomy 1.0.0: the body and its physics ===
-[b]Every feature in Anatomy 1.0.0: the body and its physics[/b]
+=== STICKY: Every feature in Anatomy 1.1.0: the body and its physics ===
+[b]Every feature in Anatomy 1.1.0: the body and its physics[/b]
 Each item's measurements are in [url=https://github.com/ReidenXerx/fo4-anatomy/blob/master/docs/decisions.md]decisions.md[/url] (A-#).
 
 [b]The body[/b]
@@ -18,6 +18,7 @@ Each item's measurements are in [url=https://github.com/ReidenXerx/fo4-anatomy/b
 [*]The anus opens on its real ring, reproducing 94% of the source's own shape. (A-14, A-28)
 [*]Contact is one smooth tube for a penis: thrust wobble anus 0.69 → 0.21, vagina 0.26 → 0.13. (A-35)
 [*]Held props collide; a rifle or a mug does not. Super mutants' and other creatures' penis bones collide too.
+[*]Anatomy's own physics preset and collision, used only when you have no ocbp.ini of your own; any OCBP/OCBPC preset you install still takes precedence. (A-46, A-47)
 [/list]
 [b]The penis[/b] (AAF scenes only)
 [list]
@@ -56,6 +57,6 @@ Nipples respond on top of her own body (LooksMenu). Under armour Silhouette mark
 
 [b]Anatomy Rebuild[/b] (optional, the latest [font=Courier New]AnatomyRebuild[/font] zip on the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url]): every CBBE outfit gets the body's hip handover (up to 3.8 units of gap before; a combat-armour leg on all fours 5.10 → 2.25), and the neck seam fix. It never runs BodySlide and never moves a vertex, morph or slider. Measured on 24 outfits against our own verified pipeline, weights equal to 0.0000; a second run changes nothing; [i]--undo[/i] puts your builds back. (A-36, A-37, A-39)
 
-[b]Install and safety[/b]: nothing of another mod is overwritten; the builder refuses rather than guesses and writes each file in one step, with a log; the release checks itself (records, no developer keys, every file listed back, the engine built from the public commit it names). MO2 and Vortex, Steam and GOG 1.10.163. The builder finds your game from any folder inside it or from Steam's own records, reads every skin texture format, and when your CBBE isn't 2.7.2 says what to check. (A-42, A-43)
+[b]Install and safety[/b]: nothing of another mod is overwritten; the builder refuses rather than guesses and writes each file in one step, with a log; the release checks itself (records, no developer keys, every file listed back, the engine built from the public commit it names). MO2 and Vortex; Steam and GOG 1.10.163, or the Anniversary Edition 1.11.x with Runtime Database (engine 1.1.0 is tested in game on the Anniversary Edition 1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen 1.10.984 is untested). The builder finds your game from any folder inside it or from Steam's own records, reads every skin texture format, and when your CBBE isn't 2.7.2 says what to check. (A-42, A-43)
 
-[b]Not yet confirmed in game[/b]: fisting and big-toy stretch (A-17), toys as one tube (A-38), Rapport's MCM knobs for the physics, and brows following vaginal and anal depth (A-33). [b]Known limits[/b]: in a two-hole position the aim chooses by geometry alone; men's own openings are not modelled; the wrist can show a faint line against the hands. Tell us what you see.
+[b]Not yet confirmed in game[/b]: the genital bones kept on women outside your cell and put back at rest after a ragdoll (A-44, A-45), fisting and big-toy stretch (A-17), toys as one tube (A-38), Rapport's MCM knobs for the physics, and brows following vaginal and anal depth (A-33). [b]Known limits[/b]: in a two-hole position the aim chooses by geometry alone; men's own openings are not modelled; the wrist can show a faint line against the hands. Tell us what you see.
