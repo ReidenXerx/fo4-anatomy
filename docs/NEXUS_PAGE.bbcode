@@ -51,14 +51,14 @@ Run [font=Courier New]AnatomyRebuild.exe[/font] after every BodySlide build and 
 [*]In BodySlide, pick "Anatomy Body" and your preset, then Build.
 [*]Optional: the latest [font=Courier New]AnatomyRebuild[/font] zip, from the same page, after every BodySlide build. Keep its folder: the backups for [font=Courier New]--undo[/font] live beside it.
 [/list]
-Run the builder again after changing your CBBE or skin mod. [b]Built with an AnatomyBuilder older than 1.0.3?[/b] Run the latest once and rebuild "Anatomy Body": the older builders opened the entrance about 20% less than the tested body. It finds your game by itself; if it can't, run it with [font=Courier New]--data "<your Fallout 4>\Data"[/font].
+Run the builder again after changing your CBBE or skin mod. [b]Built with an AnatomyBuilder older than 1.0.3?[/b] Run the latest once and rebuild "Anatomy Body": the older builders opened the entrance about 20% less than the tested body. It finds your game by itself; if it can't, run it with [font=Courier New]--data "<your Fallout 4>\Data"[/font]. Under Mod Organizer 2, an older builder could stop with "CBBE's BodySlide files are missing" or "...already exists"; get the latest.
 
 [b]Why two downloads?[/b] Nexus quarantines any download that contains a program, so the Nexus file holds the game files only and the two tools live on GitHub, next to their source.
 
 [quote]
-[b]Needs:[/b] Fallout 4 1.10.163 (Steam or GOG, not next-gen), F4SE 0.6.23, the Anatomy Engine (fo4-ocbpc), CBBE with its BodySlide files, BodySlide, and a physics preset for OCBP/OCBPC, one that provides [font=Courier New]Data\F4SE\Plugins\ocbp.ini[/font] (tested with MadKita's Actual Jiggle). Anatomy's genital physics sit on top of it; without one it isn't supported. LooksMenu (nipples, glans colour), AAF (scenes) and MCM (settings) for the parts that use them.
+[b]Needs:[/b] Fallout 4 1.10.163 (Steam or GOG, not next-gen), F4SE 0.6.23, the Anatomy Engine (fo4-ocbpc), CBBE 2.7.2 with its BodySlide files (the builder stops and says what to check on any other version), BodySlide, and a physics preset for OCBP/OCBPC, one that provides [font=Courier New]Data\F4SE\Plugins\ocbp.ini[/font] (tested with MadKita's Actual Jiggle). Anatomy's genital physics sit on top of it; without one it isn't supported. In the next update Anatomy brings its own physics preset, and this becomes optional. LooksMenu (nipples, glans colour), AAF (scenes) and MCM (settings) for the parts that use them.
 
-[b]Body, skeleton and physics preset.[/b] Anatomy is built for CBBE's own 3BBB body (the "CBBE Body Physics" set in BodySlide); other bodies aren't supported. Any skeleton works, 3BBB included: the genital bones are added at run time. Your ocbp.ini and collision file keep working unchanged; only [font=Courier New]cbp.dll[/font] must be this engine's.
+[b]Body, skeleton and physics preset.[/b] Anatomy is built for CBBE's own physics body (the "CBBE Body Physics" set in BodySlide); other bodies, 3BBB bodies included, aren't supported. Any skeleton works, 3BBB included: the genital bones are added at run time. Your ocbp.ini and collision file keep working unchanged; only [font=Courier New]cbp.dll[/font] must be this engine's.
 
 [b]Nothing of another mod is overwritten.[/b] Anatomy's physics lines sit in their own folder and are read after yours; the builder writes only new files, each in one step, and stops with a clear message rather than guess.
 [/quote]
