@@ -71,8 +71,8 @@ README = f"""{TITLE}
 Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
 
 WHAT YOU NEED
-  Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23; or the Anniversary Edition 1.11.x with its
-  F4SE and Runtime Database (Nexus 108394). Engine 1.1.0 is tested in game on the Anniversary
+  Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23, or the Anniversary Edition 1.11.x with its
+  F4SE; on every version, Runtime Database (Nexus 108394). Engine 1.1.0 is tested in game on the Anniversary
   Edition 1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen
   1.10.984 is untested.
   The Anatomy Engine (fo4-ocbpc 1.1.0 or later, its own download), CBBE 2.7.2 (with its BodySlide
@@ -131,8 +131,8 @@ cbp.dll: OCBPC (OpenCBP physics with collisions) for Fallout 4, extended by the 
 Built from {FORK_URL} (commit @FORK_COMMIT@).
 
 WHAT YOU NEED
-  Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23; or the Anniversary Edition 1.11.x with its F4SE
-  and Runtime Database (Nexus 108394). This build is tested in game on the Anniversary Edition
+  Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23, or the Anniversary Edition 1.11.x with its F4SE;
+  on every version, Runtime Database (Nexus 108394). This build is tested in game on the Anniversary Edition
   1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen 1.10.984 is
   untested.
 
