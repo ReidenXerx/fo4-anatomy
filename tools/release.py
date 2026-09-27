@@ -115,6 +115,7 @@ CREDITS
   Ousnius and the CBBE team - CBBE, which this is built on (never included: read from your install).
   ericncream and the OpenCBP authors - OCBPC, which cbp.dll extends.
   maximusmaxy - Screen Archer Menu's source, which documented the face data the mouth uses.
+  hinatashoyokun - testing that found four real bugs (MO2's virtual Data, BC7 skins twice, whitelist presets).
 
 LICENCES
   Anatomy is distributed under the GNU General Public License, version 3 (Anatomy - LICENSE.txt).
