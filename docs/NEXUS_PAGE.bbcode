@@ -69,6 +69,17 @@ Run the builder again after changing your CBBE or skin mod. [b]Built with an Ana
 [b]Nothing of another mod is overwritten.[/b] Anatomy's physics lines sit in their own folder and are read after yours; the builder writes only new files, each in one step, and stops with a clear message rather than guess.
 [/quote]
 
+[size=5][b][color=#ffb547]Incompatibilities[/color][/b][/size]
+
+Known conflicts, from real reports and the code. Found another one? Tell us in the Bugs tab.
+[list]
+[*][b]Animated Fannies (LoversLab 4302)[/b]: both build the same body file (FemaleBody.nif), so the last build wins. Anatomy already includes its vulva and anus, rebuilt; build only "Anatomy Body".[/*]
+[*][b]Other women's bodies (3BBB bodies, BodyTalk women, Fusion Girl, or any mod replacing CBBE's CBBEBodyPhysics.nif)[/b]: the builder refuses them, because the genitals fit CBBE 2.7.2's physics body only. Keep CBBE 2.7.2's own body file.[/*]
+[*][b]3BBB physics presets[/b]: they move the breasts mostly through bones our body doesn't have, so breasts barely bounce (hang50's report). Use Anatomy's own default preset or a CBBE preset (e.g. MadKita's).[/*]
+[*][b][url=https://www.nexusmods.com/fallout4/mods/105699]OCBP LPCE[/url][/b]: its own physics DLL, which replaces the Anatomy Engine, so the genital physics, mouth and aim go dead. Use one or the other.[/*]
+[*][b]BodyTalk3 men[/b]: untested; the redder-glans overlay is drawn for BodyTalk4, so on BodyTalk3 switch "Glans colour" off in MCM.[/*]
+[/list]
+
 [size=5][b][color=#ffb547]FAQ[/color][/b][/size]
 
 [b]Is everything tested in game?[/b]
