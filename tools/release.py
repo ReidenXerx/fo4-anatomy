@@ -13,8 +13,14 @@ their _internal .pyd/.dll). So the Nexus archive carries no .exe, .dll or .pyd a
 build if one gets in. The tools find the game themselves (gamedata.find_data), wherever they are put.
 
 Two mods since the owner's release call (2026-09-26: "separately our upgraded cbp engine and
-anatomy"): the engine is the ONLY archive carrying cbp.dll, so a player never resolves two copies of it
-and Anatomy never ships a DLL older than the engine's page.
+anatomy"). Since 2026-09-27 (the owner: "streamline it into the package") Anatomy ALSO carries the engine's
+cbp.dll, the same file as the engine's archive, so a plain install of Anatomy gives working physics on every
+runtime with no third-party preset (Ivy AE runs with no OCBPC-family mod at all). It is the one program the
+Nexus archive may hold: the engine's single F4SE DLL passed Nexus's check on its own page (2026-09-26); the
+tools' exes and .pyd are what got quarantined.
+
+The engine is the Runtime Database build (fo4-ocbpc build-rd, CommonLibF4RD): one cbp.dll for 1.10.163,
+next-gen 1.10.984 and the Anniversary Edition 1.11.x. Its static libraries' notices ship beside it.
 
 Anatomy (the Nexus archive) ships:
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
@@ -51,8 +57,10 @@ ANATOMY_URL = 'https://github.com/ReidenXerx/fo4-anatomy'
 ENGINE = 'fo4-ocbpc'                                        # the engine's archive name
 TOOLS_URL = 'https://github.com/ReidenXerx/fo4-anatomy/releases'   # the builder and Rebuild zips
 BINARIES = ('.exe', '.dll', '.pyd')                         # never in the Nexus archive (Nexus quarantine)
+ALLOWED_BINARIES = {'Data/F4SE/Plugins/cbp.dll'}            # ...except the engine's own F4SE DLL
+FORK_DLL = FORK / 'build-rd/Release/cbp.dll'                # the Runtime Database build
 
-NEXT_STEPS = f"""Anatomy needs the fo4-ocbpc engine (its cbp.dll), a separate download.
+NEXT_STEPS = f"""This includes the Anatomy Engine (cbp.dll): let it win over any other OCBPC-based mod's.
 After this installs:
 1. Get the latest AnatomyBuilder zip from
    {TOOLS_URL}
@@ -66,14 +74,18 @@ README = f"""{TITLE}
 Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
 
 WHAT YOU NEED
-  Fallout 4 1.10.163 (Steam or GOG, not the next-gen update) with F4SE 0.6.23.
-  The fo4-ocbpc engine (cbp.dll, its own download), CBBE (with its BodySlide files) and BodySlide.
+  Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23; or the Anniversary Edition 1.11.x with its
+  F4SE and Runtime Database (Nexus 108394). Tested in game on 1.10.163 and 1.11.240; next-gen 1.10.984
+  is built for but untested.
+  CBBE 2.7.2 (with its BodySlide files) and BodySlide.
   LooksMenu for the arousal nipples and the glans colour; AAF for scenes; MCM for the settings page.
-  A physics config (e.g. Jiggle Physics / MadKita's) is optional; Anatomy brings its own lines.
+  A physics preset (e.g. MadKita's) is optional: with none, Anatomy uses its own default preset.
+  The engine (cbp.dll) is included: the same file as the Anatomy Engine's own download.
 
 INSTALL
-  1. Install the fo4-ocbpc engine, then this archive, with your mod manager. Nothing of this archive
-     overlaps another mod, and it holds no program: the tools are on GitHub.
+  1. Install this archive with your mod manager. Its cbp.dll must win over any other OCBPC-based
+     mod's (OCBPC, Jiggle Physics, the Anatomy Engine's older copy); nothing else in it overlaps
+     another mod. The tools are on GitHub.
   2. Download the latest AnatomyBuilder zip from
        {TOOLS_URL}
      extract it into a folder of its own (anywhere; Data\\Tools works too) and run AnatomyBuilder.exe once. It finds your game by
@@ -111,6 +123,9 @@ LICENCES
   Anatomy is distributed under the GNU General Public License, version 3 (Anatomy - LICENSE.txt).
   Its source: {ANATOMY_URL}
   The engine's source: {FORK_URL} (this release was made with commit @FORK_COMMIT@).
+  cbp.dll is GPL-3.0 with an additional permission to link with F4SE (F4SE\\Plugins\\fo4-ocbpc - GPL-3.0.txt),
+  carries OCBPC's code under MIT, and the libraries built into it are listed with their licences in
+  F4SE\\Plugins\\fo4-ocbpc - third-party notices.txt.
   The plugin, scripts, MCM and configs are our own work. The builder and Rebuild are our own code, run
   by Python (and Pillow, for the builder), packed inside them with their licences.
 """
@@ -122,7 +137,9 @@ cbp.dll: OCBPC (OpenCBP physics with collisions) for Fallout 4, extended by the 
 Built from {FORK_URL} (commit @FORK_COMMIT@).
 
 WHAT YOU NEED
-  Fallout 4 1.10.163 (Steam or GOG, not the next-gen update) with F4SE 0.6.23.
+  Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23; or the Anniversary Edition 1.11.x with its F4SE
+  and Runtime Database (Nexus 108394). Tested in game on 1.10.163 and 1.11.240; next-gen 1.10.984 is
+  built for but untested.
 
 INSTALL
   Install with your mod manager and let its cbp.dll win over any other OCBPC-based mod's (Jiggle
@@ -143,7 +160,9 @@ WHAT IT ADDS
 LICENCES
   cbp.dll is distributed under the GNU General Public License, version 3 (fo4-ocbpc - GPL-3.0.txt),
   with an additional permission to link with F4SE. It is a fork of OpenCBP_FO4 / OCBPC, whose code
-  it carries under the MIT licence (fo4-ocbpc - MIT (OCBPC).txt).
+  it carries under the MIT licence (fo4-ocbpc - MIT (OCBPC).txt). The libraries built into it
+  (CommonLibF4RD, fmt, spdlog, Boost, Zydis...) are listed with their licences in
+  fo4-ocbpc - third-party notices.txt.
 
 CREDITS
   JS and the OpenCBP authors; ericncream, for OCBPC; the F4SE team; Ian Patterson, for common; the
@@ -219,12 +238,11 @@ def build_dll():
     if dirty.strip():
         raise SystemExit('the fork has uncommitted changes, so no published commit would be the source of '
                          f'this cbp.dll; commit them first:\n{dirty}')
-    # PostBuildEventUseInBuild=false: the fork's post-build copies cbp.dll to $(Fallout4Path), which
-    # is unset here, so it lands at the drive root (C:\cbp.dll). A release copies nothing anywhere.
-    subprocess.run([MSBUILD, 'OpenCBP_FO4.sln', '/t:CBPSSE', '/p:Configuration=Release', '/p:Platform=x64',
-                    '/p:PlatformToolset=v143', '/p:WindowsTargetPlatformVersion=10.0.22621.0',
-                    '/p:PostBuildEventUseInBuild=false', '/v:m'],
+    # The Runtime Database build (2026-09-27): PowerShell, as scripts/build-rd.ps1 asks (Git Bash's vcvars
+    # route builds nothing). The classic MSBuild route (OpenCBP_FO4.sln) made a 1.10.163-only DLL.
+    subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/build-rd.ps1'],
                    cwd=FORK, check=True, stdout=subprocess.DEVNULL)
+    third_party_notices()
     return subprocess.run(['git', 'rev-parse', '--short=12', 'HEAD'], cwd=FORK, capture_output=True,
                           text=True, check=True).stdout.strip()
 
@@ -400,6 +418,8 @@ def files(version):
             BUILD / 'overlays/F4SE/Plugins/F4EE/Overlays/Anatomy.esp/overlays.json',
         'Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem': BUILD / 'overlays/Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem',
         'Textures/Overlays/Anatomy/GlansFlush.dds': BUILD / 'overlays/Textures/Overlays/Anatomy/GlansFlush.dds',
+        # the owner, 2026-09-27: the engine ships inside Anatomy too (a plain install works on every runtime)
+        **engine_files(),
     }
 
 
@@ -422,11 +442,32 @@ def builder_files():
     return out
 
 
+NOTICES = BUILD / 'release/fo4-ocbpc - third-party notices.txt'
+
+
+def third_party_notices():
+    """The notices of every library linked INTO cbp.dll (static): CommonLibF4RD and vcpkg's static-md packages."""
+    share = FORK / 'build-rd/vcpkg_installed/x64-windows-static-md/share'
+    parts = [('CommonLibF4RD (github.com/Zzyxz/CommonLibF4RD)', FORK / 'extern/CommonLibF4RD/LICENSE')]
+    for d in sorted(share.iterdir()):
+        c = d / 'copyright'
+        if c.is_file():
+            parts.append((d.name, c))
+    if len(parts) < 3:
+        raise SystemExit(f'third-party notices: only {len(parts)} found under {share}')
+    text = 'fo4-ocbpc cbp.dll: the libraries built into it, and their licences.\n'
+    for name, path in parts:
+        text += f'\n==== {name} ====\n\n' + path.read_text(encoding='utf-8', errors='replace').strip() + '\n'
+    NOTICES.parent.mkdir(parents=True, exist_ok=True)
+    NOTICES.write_text(text, encoding='utf-8')
+
+
 def engine_files():
     return {
-        'F4SE/Plugins/cbp.dll': FORK / 'x64/Release/cbp.dll',
+        'F4SE/Plugins/cbp.dll': FORK_DLL,
         'F4SE/Plugins/fo4-ocbpc - GPL-3.0.txt': FORK / 'COPYING',            # the DLL's licence
         'F4SE/Plugins/fo4-ocbpc - MIT (OCBPC).txt': FORK / 'LICENSE',        # the notice of the code it carries
+        'F4SE/Plugins/fo4-ocbpc - third-party notices.txt': NOTICES,        # what is linked into it
     }
 
 
@@ -530,7 +571,8 @@ def pack(name, version, wanted, readme_name, readme, fomod_args=None, extras=Non
     for rel, src in (extras or {}).items():
         shutil.copy2(src, stage / rel)
     if no_binaries:
-        found = [str(q.relative_to(stage)) for q in stage.rglob('*') if q.suffix.lower() in BINARIES]
+        found = [q.relative_to(stage).as_posix() for q in stage.rglob('*')
+                 if q.suffix.lower() in BINARIES and q.relative_to(stage).as_posix() not in ALLOWED_BINARIES]
         if found:
             raise SystemExit(f'{name}: a program in the Nexus archive (Nexus quarantines these): {found}')
     archive = stage.parent / f'{name}-{version}.7z'
@@ -546,7 +588,7 @@ def pack(name, version, wanted, readme_name, readme, fomod_args=None, extras=Non
         raise SystemExit(f'{name}: the archive does not list every file')
     if no_binaries:                                      # and the archive itself, as Nexus will read it
         rows = [line.split()[-1] for line in listed.splitlines() if len(line.split()) >= 6]
-        found = [r for r in rows if r.lower().endswith(BINARIES)]
+        found = [r for r in rows if r.lower().endswith(BINARIES) and r.replace('\\', '/') not in ALLOWED_BINARIES]
         if found:
             raise SystemExit(f'{name}: the built archive lists a program: {found}')
     print(f'  sha256 {sha256(archive)}')
