@@ -74,9 +74,11 @@ MAPS = [('diffuse', 'FemaleBody_d.dds', 'femalebody_d.dds', 'colour'),
 #   block formats Pillow encodes: DXT1, DXT3, DXT5, BC5 (legacy FourCC or a DX10 header) -> patched in place, block
 #       by block, every block outside the island byte for byte the skin's
 #   uncompressed 24/32-bit (legacy RGB masks, or DX10 R8G8B8A8 / B8G8R8A8) -> patched in place, texel by texel
-#   anything else Pillow can read but not write (BC7, ...) -> OUR copy re-encoded whole, with every mip, as DXT5
-#       (colour) or BC5 (normal, specular). Only the genital shape samples our copy, and only on its island, so
-#       the change of format is never seen; the island itself is checked instead of every block.
+#   anything else Pillow can read but not write (BC7, ...) -> OUR copy re-encoded whole, with every mip: the colour
+#       map UNCOMPRESSED (32-bit BGRA, lossless), normal and specular as BC5. Only the genital shape samples our
+#       copy, on its island, so the format is never seen; the island itself is checked instead of every block.
+#       The colour map was DXT5 until 2026-09-28: Pillow's encoder darkens red and blue by 2-3 levels on average
+#       (measured on the owner's skin and on a BC7 texture), and a BC7 skin's player saw the genitals' tone differ.
 # --------------------------------------------------------------------------
 
 DXGI = {71: ('DXT1', 8), 72: ('DXT1', 8), 74: ('DXT3', 16), 75: ('DXT3', 16), 77: ('DXT5', 16), 78: ('DXT5', 16),
@@ -84,7 +86,7 @@ DXGI = {71: ('DXT1', 8), 72: ('DXT1', 8), 74: ('DXT3', 16), 75: ('DXT3', 16), 77
 DXGI_RAW = {28: 'RGBA', 29: 'RGBA', 87: 'BGRA', 91: 'BGRA'}
 FOURCC = {b'DXT1': ('DXT1', 8), b'DXT3': ('DXT3', 16), b'DXT5': ('DXT5', 16), b'BC5U': ('BC5', 16),
           b'ATI2': ('BC5', 16)}
-FALLBACK = {'colour': 'DXT5', 'specular': 'BC5', 'normal': 'BC5'}
+FALLBACK = {'colour': 'BGRA', 'specular': 'BC5', 'normal': 'BC5'}
 
 
 class Dds:
@@ -164,6 +166,17 @@ def encode_blocks(img, pil_format):
     img.save(buf, 'DDS', pixel_format=pil_format)
     data = buf.getvalue()
     return data[148:] if pil_format == 'BC5' else data[128:]
+
+
+def uncompressed(levels):
+    """A lossless DDS with every mip: legacy 32-bit A8R8G8B8 (bytes B, G, R, A), which the game and BodySlide read."""
+    w, h = levels[0].size
+    head = bytearray(128)
+    head[0:4] = b'DDS '
+    struct.pack_into('<7I', head, 4, 124, 0x1 | 0x2 | 0x4 | 0x8 | 0x1000 | 0x20000, h, w, w * 4, 1, len(levels))
+    struct.pack_into('<2I4s5I', head, 76, 32, 0x41, b'\0\0\0\0', 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+    struct.pack_into('<I', head, 108, 0x401008)                                         # COMPLEX | TEXTURE | MIPMAP
+    return bytes(head) + b''.join(im.convert('RGBA').tobytes('raw', 'BGRA') for im in levels)
 
 
 def reencoded(levels, pil_format):
@@ -329,7 +342,8 @@ def build(src, nahka_name, kind, geometry):
                 break
             L += 1
         report['reencoded_as'] = f'{fmt}, {len(levels)} mips (the skin is {src.name}, which Pillow cannot write)'
-        return src, bytearray(reencoded(levels, fmt)), report, mask
+        data = uncompressed(levels) if fmt == 'BGRA' else reencoded(levels, fmt)
+        return src, bytearray(data), report, mask
     out = bytearray(src.b)
     changed = 0
     for L in range(src.mips):
@@ -537,7 +551,8 @@ def main(data=None):
     if problems:
         print('\nFAIL - ' + '; '.join(problems))
         sys.exit(1)
-    print(f'\nPASS - wrote {ANATOMY_OUT}; outside the genital patch every block of every mip is the skin\'s.')
+    print(f'\nPASS - wrote {ANATOMY_OUT}; outside the genital patch every block of every mip is the skin\'s '
+          f'(a map re-encoded whole: within its encoder\'s error there, exact for an uncompressed colour map).')
 
 
 if __name__ == '__main__':
