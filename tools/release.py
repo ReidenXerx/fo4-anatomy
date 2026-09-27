@@ -13,11 +13,8 @@ their _internal .pyd/.dll). So the Nexus archive carries no .exe, .dll or .pyd a
 build if one gets in. The tools find the game themselves (gamedata.find_data), wherever they are put.
 
 Two mods since the owner's release call (2026-09-26: "separately our upgraded cbp engine and
-anatomy"). Since 2026-09-27 (the owner: "streamline it into the package") Anatomy ALSO carries the engine's
-cbp.dll, the same file as the engine's archive, so a plain install of Anatomy gives working physics on every
-runtime with no third-party preset (Ivy AE runs with no OCBPC-family mod at all). It is the one program the
-Nexus archive may hold: the engine's single F4SE DLL passed Nexus's check on its own page (2026-09-26); the
-tools' exes and .pyd are what got quarantined.
+anatomy"): the engine is the ONLY archive carrying cbp.dll (the owner's poll again, 2026-09-27: "Engine only
+separate", over Anatomy carrying a copy), so a player never resolves two copies of it.
 
 The engine is the Runtime Database build (fo4-ocbpc build-rd, CommonLibF4RD): one cbp.dll for 1.10.163,
 next-gen 1.10.984 and the Anniversary Edition 1.11.x. Its static libraries' notices ship beside it.
@@ -57,10 +54,10 @@ ANATOMY_URL = 'https://github.com/ReidenXerx/fo4-anatomy'
 ENGINE = 'fo4-ocbpc'                                        # the engine's archive name
 TOOLS_URL = 'https://github.com/ReidenXerx/fo4-anatomy/releases'   # the builder and Rebuild zips
 BINARIES = ('.exe', '.dll', '.pyd')                         # never in the Nexus archive (Nexus quarantine)
-ALLOWED_BINARIES = {'Data/F4SE/Plugins/cbp.dll'}            # ...except the engine's own F4SE DLL
+ALLOWED_BINARIES = set()                                   # none: the engine is its own download
 FORK_DLL = FORK / 'build-rd/Release/cbp.dll'                # the Runtime Database build
 
-NEXT_STEPS = f"""This includes the Anatomy Engine (cbp.dll): let it win over any other OCBPC-based mod's.
+NEXT_STEPS = f"""Anatomy needs the Anatomy Engine (fo4-ocbpc, its cbp.dll), a separate download.
 After this installs:
 1. Get the latest AnatomyBuilder zip from
    {TOOLS_URL}
@@ -75,17 +72,17 @@ Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
 
 WHAT YOU NEED
   Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23; or the Anniversary Edition 1.11.x with its
-  F4SE and Runtime Database (Nexus 108394). Tested in game on 1.10.163 and 1.11.240; next-gen 1.10.984
-  is built for but untested.
-  CBBE 2.7.2 (with its BodySlide files) and BodySlide.
+  F4SE and Runtime Database (Nexus 108394). Engine 1.1.0 is tested in game on the Anniversary
+  Edition 1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen
+  1.10.984 is untested.
+  The Anatomy Engine (fo4-ocbpc 1.1.0 or later, its own download), CBBE 2.7.2 (with its BodySlide
+  files) and BodySlide.
   LooksMenu for the arousal nipples and the glans colour; AAF for scenes; MCM for the settings page.
   A physics preset (e.g. MadKita's) is optional: with none, Anatomy uses its own default preset.
-  The engine (cbp.dll) is included: the same file as the Anatomy Engine's own download.
 
 INSTALL
-  1. Install this archive with your mod manager. Its cbp.dll must win over any other OCBPC-based
-     mod's (OCBPC, Jiggle Physics, the Anatomy Engine's older copy); nothing else in it overlaps
-     another mod. The tools are on GitHub.
+  1. Install the Anatomy Engine, then this archive, with your mod manager. Nothing of this archive
+     overlaps another mod, and it holds no program: the tools are on GitHub.
   2. Download the latest AnatomyBuilder zip from
        {TOOLS_URL}
      extract it into a folder of its own (anywhere; Data\\Tools works too) and run AnatomyBuilder.exe once. It finds your game by
@@ -123,9 +120,6 @@ LICENCES
   Anatomy is distributed under the GNU General Public License, version 3 (Anatomy - LICENSE.txt).
   Its source: {ANATOMY_URL}
   The engine's source: {FORK_URL} (this release was made with commit @FORK_COMMIT@).
-  cbp.dll is GPL-3.0 with an additional permission to link with F4SE (F4SE\\Plugins\\fo4-ocbpc - GPL-3.0.txt),
-  carries OCBPC's code under MIT, and the libraries built into it are listed with their licences in
-  F4SE\\Plugins\\fo4-ocbpc - third-party notices.txt.
   The plugin, scripts, MCM and configs are our own work. The builder and Rebuild are our own code, run
   by Python (and Pillow, for the builder), packed inside them with their licences.
 """
@@ -138,8 +132,9 @@ Built from {FORK_URL} (commit @FORK_COMMIT@).
 
 WHAT YOU NEED
   Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23; or the Anniversary Edition 1.11.x with its F4SE
-  and Runtime Database (Nexus 108394). Tested in game on 1.10.163 and 1.11.240; next-gen 1.10.984 is
-  built for but untested.
+  and Runtime Database (Nexus 108394). This build is tested in game on the Anniversary Edition
+  1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen 1.10.984 is
+  untested.
 
 INSTALL
   Install with your mod manager and let its cbp.dll win over any other OCBPC-based mod's (Jiggle
@@ -418,8 +413,6 @@ def files(version):
             BUILD / 'overlays/F4SE/Plugins/F4EE/Overlays/Anatomy.esp/overlays.json',
         'Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem': BUILD / 'overlays/Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem',
         'Textures/Overlays/Anatomy/GlansFlush.dds': BUILD / 'overlays/Textures/Overlays/Anatomy/GlansFlush.dds',
-        # the owner, 2026-09-27: the engine ships inside Anatomy too (a plain install works on every runtime)
-        **engine_files(),
     }
 
 
