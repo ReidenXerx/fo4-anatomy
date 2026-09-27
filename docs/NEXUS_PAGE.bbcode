@@ -56,6 +56,8 @@ Run [font=Courier New]AnatomyRebuild.exe[/font] after every BodySlide build and 
 [*]In BodySlide, pick "Anatomy Body" and your preset, then Build.
 [*]Optional: the latest [font=Courier New]AnatomyRebuild[/font] zip, from the same page, after every BodySlide build. Keep its folder: the backups for [font=Courier New]--undo[/font] live beside it.
 [/list]
+
+[b]Pre-built bodies (optional files):[/b] if you'd rather not run the Builder, there are two ready-built bodies on the Files tab: [b]Zeroed[/b] (CBBE, all sliders 0) and [b]Ivy[/b] (the shape from [url=https://www.nexusmods.com/games/fallout4/collections/dmt85e]Ivy's Panties[/url]). Their genitals are textured against the vanilla skin: with a skin mod, run the Anatomy Builder instead, so the genitals match your skin. They carry no .tri (CBBE's team asks that players build those in BodySlide): physics, genitals, the anal canal and the aim all work, but for in-game morphs (the arousal nipples, BodyGen/Silhouette shapes) build "Anatomy Body" in BodySlide once with Build Morphs ticked. Still needed: CBBE with its BodySlide files, BodySlide, the Anatomy Engine and Anatomy. Used with the permission of Ousnius and the CBBE team.
 Run the builder again after changing your CBBE or skin mod. [b]Built with an AnatomyBuilder older than 1.0.3?[/b] Run the latest once and rebuild "Anatomy Body": the older builders opened the entrance about 20% less than the tested body. It finds your game by itself; if it can't, run it with [font=Courier New]--data "<your Fallout 4>\Data"[/font]. Under Mod Organizer 2, an older builder could stop with "CBBE's BodySlide files are missing" or "...already exists"; get the latest.
 
 [center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-anatomy@497c254d44fa1fc28df6db8fe1fb50269bb6e963/docs/img/builder-finds.jpg[/img][/center]
@@ -111,6 +113,7 @@ Known conflicts, from real reports and the code. Found another one? Tell us in t
 [*][b]ericncream[/b] and the OpenCBP authors, for the physics the engine is built on.
 [*][b]maximusmaxy[/b], whose Screen Archer Menu source documented the face data the mouth uses.
 [*][b]hinatashoyokun[/b], for patient testing that found four real bugs: the builder not seeing MO2's virtual Data (Builder 1.0.6), BodySlide's preview crashing on BC7 skins (1.0.8), the genitals' tone shifting on BC7 skins (1.0.9), and presets with useWhitelist=1 freezing the genitals (Engine 1.1.1).[/*]
+[*][b]Ousnius[/b] and the CBBE team, for permission to share the pre-built bodies.[/*]
 [/list]
 
 Bugs go to the [b]Bugs[/b] tab, with the builder's log and [font=Courier New]anatomy_ocbpc.log[/font].
