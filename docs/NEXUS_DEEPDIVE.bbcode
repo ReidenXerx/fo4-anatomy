@@ -13,6 +13,8 @@ The download carries Nahka's genital work only as a patch against CBBE. The Anat
 [*][b]Their own shape.[/b] The 4,913 genital triangles move into a separate shape with their own material, so they render with a texture matched to your skin without overwriting your skin mod. BodySlide builds the split set identically on all 48,215 triangles.
 [*][b]Your texture.[/b] The colour is matched in linear light, with per-channel gains measured on the ring of skin around the genitals in both textures. The specular map is matched by offset instead of gain, so the moist surfaces keep their shine on a matte skin. Along the island's 116 seam points the colour is feathered into your skin, which cut the seam step from 9.0/4.0/8.1 to 2.3/1.1/1.9 (of 255). Only the 4x4 compression blocks the genital mask reaches are re-encoded, on every mip level; every other block keeps your bytes, and the stage checks that it did.
 [/list]
+Two last steps (Builder 1.0.10 and 1.0.12): the genitals' textures become just the aligned tile of your skin they sample, their UVs remapped exactly and every mip copied block for block (about 53 MB -> 3 MB at 4K); and the anal cup is opened into a closed canal angled back toward the tailbone, its first ring the cup's own rim, lined with a wet mucosa painted into that tile and toned from the rim's texels. The engine's anal path runs down its middle. (A-48, A-50)
+
 Everything is written to new paths only (the Anatomy slider set, ShapeData, textures and material), each file in one atomic step, with a log beside the builder.
 
 [b]2. The hip fold[/b]
