@@ -167,14 +167,25 @@ def encode_blocks(img, pil_format):
 
 
 def reencoded(levels, pil_format):
-    """A whole DDS with every mip: Pillow's header for level 0 (it writes one level), its mip count and flags set,
-    then each level's blocks."""
+    """A whole DDS with every mip: a legacy 128-byte header (FourCC DXT5, or BC5U for BC5), its mip count, flags
+    and linear size set, then each level's blocks.
+
+    Pillow's own header is not usable as it is (a player's BC7 skin, 2026-09-27: BodySlide's preview died with
+    "Fatal exception" on the re-encoded maps). Pillow 12 writes pitchOrLinearSize 16396 for a 4096x4096 block
+    texture (16777216 is right), and BC5 as a DX10 header with DXGI format 82, BC5_TYPELESS, which nothing can
+    sample. So the header is Pillow's first 128 bytes with the FourCC and the size corrected. BC5U is what the owner's
+    tested maps carry (their _n and _s: flags 0xA1007, linear size, caps 0x401008, the same as this header now)."""
     buf = io.BytesIO()
     first = levels[0].convert('RGB') if pil_format == 'BC5' else levels[0]
     first.save(buf, 'DDS', pixel_format=pil_format)
-    head = bytearray(buf.getvalue()[:148 if pil_format == 'BC5' else 128])
-    struct.pack_into('<I', head, 8, struct.unpack_from('<I', head, 8)[0] | 0x20000)     # DDSD_MIPMAPCOUNT
-    struct.pack_into('<I', head, 28, len(levels))
+    head = bytearray(buf.getvalue()[:128])
+    struct.pack_into('<4s', head, 84, b'BC5U' if pil_format == 'BC5' else b'DXT5')     # DDPF_FOURCC
+    struct.pack_into('<I', head, 80, 0x4)
+    w, h = first.size
+    struct.pack_into('<I', head, 20, max(1, (w + 3) // 4) * max(1, (h + 3) // 4) * 16)  # level 0's size in bytes
+    struct.pack_into('<I', head, 8, (struct.unpack_from('<I', head, 8)[0] & ~0x8) | 0x80000 | 0x20000)
+    struct.pack_into('<I', head, 28, len(levels))                                       # DDSD_LINEARSIZE, MIPMAPCOUNT
+    struct.pack_into('<I', head, 24, 1)                                                 # depth 1, as the tested maps
     struct.pack_into('<I', head, 108, struct.unpack_from('<I', head, 108)[0] | 0x400008)  # COMPLEX | MIPMAP
     return bytes(head) + b''.join(encode_blocks(im, pil_format) for im in levels)
 
