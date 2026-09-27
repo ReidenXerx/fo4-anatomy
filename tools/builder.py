@@ -200,6 +200,9 @@ def main():
         run_stage('4. verification', verify_zex.main)
         run_stage('5. the genitals\' own shape', sg.main)
         run_stage('6. the genitals\' texture and material, from this skin', lambda: gt.main(data))
+        import atlas
+        run_stage('7. the genitals\' own small textures (A-48)', lambda: print(
+            atlas.apply(ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', gt.ANATOMY_OUT)))
 
         # ---- publish into Data (or --out): our own paths only
         produced = {

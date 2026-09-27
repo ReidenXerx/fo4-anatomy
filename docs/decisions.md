@@ -1614,3 +1614,16 @@ scenes, the AAF menu's too.
   flat facet with a seam (reverse cowgirl, his hand on her hip).
 - **Fix (fo4-ocbpc, both builds):** the default collision is read only when the default preset is in use; a player
   with a preset of their own keeps no collision of ours but Anatomy's genital one.
+
+## A-48 — The genitals' own small textures (the owner, 2026-09-28: "Lets try! It would be handy on my steam deck")
+
+- **Why:** only the genitals' shape samples Textures\Anatomy\*, on Nahka's island (under 1% of the texels), yet the
+  builder wrote full copies of the three skin maps: 53.3 MB of VRAM on Ivy's 4K DXT1/BC5 skin.
+- **What (tools/atlas.py, builder stage 7):** the smallest aligned power-of-two tile of the UV grid holding the
+  genitals' UVs plus a 1/256 margin (Ivy: a 1/4 tile at (0.25, 0.75)). The genitals' UVs become (u - u0) / t, exact in
+  half floats (checked: every UV maps back to the texel it sampled); each map becomes that tile, every mip copied block
+  for block (no re-encode), and its decoded top level must equal the full map's texels there.
+- **Measured:** Ivy's skin 53.3 MB -> 3.3 MB; the test game (2K) 32.0 MB -> 2.0 MB.
+- **Staged 2026-09-28:** applied in place to Anatomy-dev and "Anatomy Body (built)" (both 52a79f4b, the tested body)
+  and to the owner's BodySlide ShapeData, originals in the session scratchpad (atlas_bak). NOT yet seen in game.
+- **Watch:** a LooksMenu skin overlay that also lands on the genitals' shape would now sample the tile; none known.
