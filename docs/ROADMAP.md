@@ -36,7 +36,8 @@ HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
 - **The aim**: tolerate extra nodes between Penis_00..05 (erection mods); optionally prefer the scene's own tag.
 - **Built, not yet seen in game**: genitals staying on actors outside your cell and after a ragdoll (A-44/45),
   next-gen 1.10.984, toys as one tube, fisting and big-toy stretch, brows by vaginal and anal depth.
-- **Polish**: the wrist line; the small colour bias of the repainted genital patch on DXT1 skins; more pre-built
+- **Polish**: arousal cools down across a game-time jump (sleep/wait: today it ticks on real time and carries
+  through a long sleep, fading over the next minute; Arousal.psc Tick); the wrist line; the small colour bias of the repainted genital patch on DXT1 skins; more pre-built
   presets if asked.
 
 ## Settled (not on the roadmap)
