@@ -1642,3 +1642,20 @@ scenes, the AAF menu's too.
   physics_design.ANUS_PATH now runs down the canal.
 - **Staged 2026-09-28:** Anatomy-dev (built body, BodySlide source + osd, maps, OG ini) and "Anatomy Body (built)"
   (AE) plus the AE ini's anusPath (Anatomy 1.1.0 mod); originals in the session scratchpad (canal_bak). NOT yet seen.
+
+## A-51..53 — The AE crash family: our run-time nodes freed under the body's skin (the owner's AE crashes, 2026-09-29)
+
+- **Found:** four AE crashes on the player (00002CD1): in cbp's EnsureAnatomyBones, then in the game's skinning job
+  walking a freed node (Fallout4.exe+16BF0B2 <- +16C6EDB <- +217DFE5), during Advanced Needs 76's undress loop, in
+  NPC-NPC scenes and around sleep. A diagnostic engine that watched every node we make caught the cause at creation:
+  reference counts of 2139095041 and 1075650562 where 2 is expected, and AnatAnus_L_Stretch arriving with a base-class
+  vtable and a count of 1, i.e. already destroyed.
+- **Cause:** CommonLibF4RD's NiRefObject() never initialises refCount (nor NiAVObject() its worldBound), so
+  `new NiNode(0)` started with whatever the heap held. A node that came in at 0xFFFFFFFF reached 0 inside
+  AttachChild's own smart-pointer copy and was deleted on the spot, with the body's skin then pointed at it.
+- **Fix (fo4-ocbpc, the Runtime Database build):** A-53 allocates from the game heap, zeroes, then constructs.
+  A-51 (fault guards and a live-skeleton check around EnsureAnatomyBones/RestOurBones) and A-52 (our own reference on
+  each node, and a cached skin redone when its node left the skeleton) stay as defence. The classic build makes its
+  nodes through F4SE's NiNode::Create (the game's constructor) and never had the bug.
+- **Verified:** the owner's AE session on the A-53 build, NPC-NPC scenes, no fault and no crash (the build before it
+  crashed within five minutes). Released as Engine 1.1.4; 1.1.2 and 1.1.3 were never published.
