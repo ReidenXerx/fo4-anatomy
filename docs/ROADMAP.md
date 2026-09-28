@@ -14,6 +14,11 @@ Agreed with the owner on 2026-09-28. Each item names what "done" means; finished
 3. **The inner-thigh crease** (the 4x left after A-30) **and the outfit weights** for garments worn over the body
    (panties, stockings), which must match the body. Done when legs-up poses show no fold and those garments no
    longer part from the skin. Any body re-weight means a fresh .tri for bundled bodies and a garments.py regen.
+4. **3BBB bodies** (the owner moved it here, 2026-09-28): build Anatomy from the 3BBB body when the player has it
+   (the same genitals, canal and bones on a body with three bones per breast and the extra butt/thigh bones), so
+   3BBB presets move it. Our CBBE body stays the default and the lighter one (about half the simulated flesh
+   bones). Done when a 3BBB preset bounces an Anatomy body in game. Add per-frame physics timing to the log then,
+   to put numbers on the CBBE-vs-3BBB cost.
 
 ## Later (low priority)
 
