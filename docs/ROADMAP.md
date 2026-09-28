@@ -19,7 +19,6 @@ Agreed with the owner on 2026-09-28. Each item names what "done" means; finished
 
 - **Men's anus**: a second opening on BodyTalk4 men (geometry, canal, bones at run time, an aim target), built on
   the player's own BodyTalk4. Needs BodyTalk's author's permission first, like CBBE's (Ousnius, 2026-09-28).
-- **3BBB bodies**: build Anatomy from the 3BBB body when the player has it, so 3BBB presets bounce.
 - **The aim**: tolerate extra nodes between Penis_00..05 (erection mods); optionally prefer the scene's own tag.
 - **Built, not yet seen in game**: genitals staying on actors outside your cell and after a ragdoll (A-44/45),
   next-gen 1.10.984, toys as one tube, fisting and big-toy stretch, brows by vaginal and anal depth.
