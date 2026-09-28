@@ -19,6 +19,14 @@ Agreed with the owner on 2026-09-28. Each item names what "done" means; finished
    3BBB presets move it. Our CBBE body stays the default and the lighter one (about half the simulated flesh
    bones). Done when a 3BBB preset bounces an Anatomy body in game. Add per-frame physics timing to the log then,
    to put numbers on the CBBE-vs-3BBB cost.
+5. **Automatic outfit refits** (the owner's idea, 2026-09-28): convert an outfit made for one body to another
+   (vanilla -> CBBE, CBBE -> 3BBB, -> BodyTalk4) with no manual Outfit Studio work, as a BodySlide project. Reshape
+   by the body change under each vertex (BodySlide's conversion sets for vanilla -> CBBE), copy bone weights from
+   the target body (3BBB's extra breast/butt bones included), carry every slider; rigid parts (plates, pouches)
+   move whole. Verified offline: pose-and-preset clipping via our LBS posing tools, physics motion via ocbpc_sim,
+   clipping vertices pushed out and re-tested. Output per outfit: a project plus a measured report. Publishing
+   policy (the owner): the original mod is a requirement and credited; authors who object PM him. Start: one
+   vanilla-body outfit the owner picks -> CBBE, measured, then his look in game.
 
 ## Later (low priority)
 
