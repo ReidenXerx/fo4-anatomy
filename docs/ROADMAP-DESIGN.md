@@ -118,6 +118,15 @@ object PM the owner. We do NOT gate a refit on a per-mod permission check.
    push those outfit vertices out a little and re-test until clean. `ocbpc_sim` checks tops against moving
    breasts/butt (what matters for 3BBB). Output: the project plus a measured report per outfit ("skirt clips
    2 units at the knees in a crouch") so nothing reaches the owner as a blind guess.
+6. **A preview GIF per refit (the owner, settled): users eyeball a sample of the work.** Offline, no game:
+   export the refitted outfit, the body and their textures (`nif.py`; DDS decoded by Pillow) to a web 3D format;
+   a procedural jump cycle on the skeleton (crouch, push off, airborne, landing, where jiggle shows) plus a slow
+   turntable; `ocbpc_sim` drives the breast/butt bones through the jump with the engine's own spring math, so the
+   GIF shows the preset's real bounce and whether the top follows it; three.js skins it frame by frame in the
+   studio's headless browser (`nexus-tools/studio`, render.mjs), frames -> GIF plus an MP4 for the Nexus gallery.
+   Labelled "rendered preview" (simpler lighting than the game). A QA variant paints the clipping report in red on
+   the same frames, for the owner only. FO4's own .hkx animations are out of scope (a bigger job); in-game footage
+   stays possible through the fo4-mcp session but costs the game and time per outfit.
 **Known hard cases.** Long skirts and coats (hanging between the legs needs its own weighting rules), hair or
 accessories inside the outfit, outfits whose source body has no reference file here.
 **Start (settled).** One vanilla-body outfit the owner picks -> CBBE: converted, measured, then his look in game.
