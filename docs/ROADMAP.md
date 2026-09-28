@@ -1,6 +1,7 @@
 # Anatomy + Anatomy Engine roadmap
 
 Agreed with the owner on 2026-09-28. Each item names what "done" means; finished items move to decisions.md.
+HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
 
 ## Now (high priority)
 
