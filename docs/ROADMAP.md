@@ -32,10 +32,11 @@ HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
    furniture creaks) made by the engine from what it measures every frame -- which opening, depth and its change,
    thrust speed, hip/butt impact speed (CollisionHub), arousal as wetness -- instead of the animation packs'
    hand-placed ones. 3D at the pelvis, loudness and pitch from the motion, many variations per kind so nothing
-   repeats; the same set for every pack, OG and AE. Moans and voices stay Rapport's. Ships as its own optional mod,
-   **Anatomy Sex Sound Pack** (the owner, 2026-09-29): installing it switches the whole override system on (the
-   engine stays silent without it), and its MCM toggle turns it off again. The packs' own body sounds are
-   MUTED in scenes while it is on (the owner's poll); first research how the common packs
+   repeats; the same set for every pack, OG and AE. One feature split between two mods (the owner, 2026-09-29): the
+   Anatomy Engine makes the body sounds from its measurements, Rapport keeps the moans and voices, and ONE toggle in
+   **Rapport's MCM** switches the whole sound override on or off across both (coordinate with the rapport session:
+   the toggle reaches the engine over the existing Rapport -> "OCBPC plugin" messaging). The packs' own body sounds
+   are MUTED in scenes while it is on (the owner's poll). Open: which mod ships the clips. First research how the common packs
    fire theirs (animation annotations, their SNDR records). Our own clips (ElevenLabs sound effects, the squelch
    recipe in memory), so no permissions. Done when a scene from two different packs sounds the same and in sync.
 
