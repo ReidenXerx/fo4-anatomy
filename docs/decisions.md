@@ -1760,3 +1760,7 @@ scenes, the AAF menu's too.
   byte-identical; only its collision file changed.
 - **Staged 2026-09-30 (the owner's go):** cbp.dll 2056f805d6c5 (+ pdb; A-55 + A-57) in Anatomy-dev, and the corrected
   CBBE OCBPCollisionConfig-default.txt, both in place; originals in the session scratchpad (dll_bak).
+- **Live 2026-09-30 (the owner's go):** the owner's AE game (Anatomy-dev) runs a 3BBB Anatomy body: the builder's
+  auto choice (no player ocbp.ini) -> lab BodySlide 'Anatomy Zero' --trimorphs -> neck seam (already aligned) ->
+  FemaleBody.nif bc4f7d5aa831 + .tri, ShapeData, maps, ocbp-body.ini (3BBB) + collision; Vortex deployed via Event
+  Horizon. The 3BBB body mod itself stays DISABLED (its ocbp.ini would replace ours). Backups: scratchpad bak3bbb.
