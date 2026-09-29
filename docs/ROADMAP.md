@@ -5,22 +5,15 @@ HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
 
 ## Now (high priority)
 
-1. **The vaginal canal's lining.** The same wet mucosa the anal canal got (A-50): the canal's inner walls take
-   the mucosa tone and folds, blended into the vulva at the entrance. Done when the builder paints it and the owner
-   has looked in game.
-2. **The squeeze jitter.** A hand pressing a breast or the butt makes it twitch: the engine replaces the bone's
-   motion with a kick scaled by 1/linear (Thing.cpp, from OCBPC), so it bounces out and back every frame. Resolve
-   contact as a constraint (out of the sphere, only the inward motion removed, a little friction, frame-rate
-   independent). Reproduce it in ocbpc_sim first; done when a steady squeeze holds still, for any preset.
-3. **The inner-thigh crease** (the 4x left after A-30) **and the outfit weights** for garments worn over the body
-   (panties, stockings), which must match the body. Done when legs-up poses show no fold and those garments no
-   longer part from the skin. Any body re-weight means a fresh .tri for bundled bodies and a garments.py regen.
-4. **3BBB bodies** (the owner moved it here, 2026-09-28): build Anatomy from the 3BBB body when the player has it
+Done 2026-09-30 (decisions.md): 1. the vaginal canal's lining (A-54), 2. the squeeze jitter (A-55); 3. the
+inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-30 is the floor for weights).
+
+1. **3BBB bodies** (the owner moved it here, 2026-09-28): build Anatomy from the 3BBB body when the player has it
    (the same genitals, canal and bones on a body with three bones per breast and the extra butt/thigh bones), so
    3BBB presets move it. Our CBBE body stays the default and the lighter one (about half the simulated flesh
    bones). Done when a 3BBB preset bounces an Anatomy body in game. Add per-frame physics timing to the log then,
    to put numbers on the CBBE-vs-3BBB cost.
-5. **Automatic outfit refits** (the owner's idea, 2026-09-28): convert an outfit made for one body to another
+2. **Automatic outfit refits** (the owner's idea, 2026-09-28): convert an outfit made for one body to another
    (vanilla -> CBBE, CBBE -> 3BBB, -> BodyTalk4) with no manual Outfit Studio work, as a BodySlide project. Reshape
    by the body change under each vertex (BodySlide's conversion sets for vanilla -> CBBE), copy bone weights from
    the target body (3BBB's extra breast/butt bones included), carry every slider; rigid parts (plates, pouches)
@@ -28,7 +21,7 @@ HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
    clipping vertices pushed out and re-tested. Output per outfit: a project plus a measured report. Publishing
    policy (the owner): the original mod is a requirement and credited; authors who object PM him. Start: one
    vanilla-body outfit the owner picks -> CBBE, measured, then his look in game.
-6. **Engine-driven sex sounds** (the owner's idea, 2026-09-29): body sounds (slaps, wet squelch, penetration,
+3. **Engine-driven sex sounds** (the owner's idea, 2026-09-29): body sounds (slaps, wet squelch, penetration,
    furniture creaks) made by the engine from what it measures every frame -- which opening, depth and its change,
    thrust speed, hip/butt impact speed (CollisionHub), arousal as wetness -- instead of the animation packs'
    hand-placed ones. 3D at the pelvis, loudness and pitch from the motion, many variations per kind so nothing
@@ -42,6 +35,8 @@ HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
 
 ## Later (low priority)
 
+- **The inner-thigh crease** (A-56): an engine-driven corrective bone at the lip-thigh fold, moved by the
+  thigh's angle, is the one untried route past A-30's 4x in legs-up poses; over-body garment weights with it.
 - **Men's anus**: a second opening on BodyTalk4 men (geometry, canal, bones at run time, an aim target), built on
   the player's own BodyTalk4. Needs BodyTalk's author's permission first, like CBBE's (Ousnius, 2026-09-28).
 - **The aim**: tolerate extra nodes between Penis_00..05 (erection mods); optionally prefer the scene's own tag.

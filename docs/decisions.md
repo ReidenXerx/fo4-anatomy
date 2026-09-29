@@ -1710,3 +1710,16 @@ scenes, the AAF menu's too.
 - **Staged 2026-09-30 (the owner's go):** cbp.dll b0ff41f0e457 (+ pdb) in Anatomy-dev, in place; the old one in the
   session scratchpad (dll_bak, `stage_dll.py --undo`). The owner played it: no regression (the exact squeeze is hard to
   stage on purpose; normal play is the test).
+
+## A-56 — Roadmap 3 (the inner-thigh crease + over-body garment weights) skipped: A-30 is the floor (2026-09-30)
+
+- **Measured** on the real builder body (stage 3 re-run in scratch; A-30 on it reproduces build/project to 0.0002),
+  linear-blend skinning in poses (pose_check), worst groin edge / edges over 3x, legs up 100:
+  none 11.1x/128; **A-30 4.0x/33**; a wider band (40 rounds, 6 rings) 4.4x on CBBE and 2.2 units further off A-30's
+  skin; a half-angle hip bone 5.3x (with A-30); distance-kernel smoothing 5.2-5.8x (better only on plain CBBE:
+  4.1x); letting the thigh into the outer lips' border 4.1x at the cost of up to 48% of the lips' weight.
+- **Where the 4x is:** the labiocrural fold, where the outer lips (AnatLipOuter, riding the pelvis) meet the thigh,
+  x +-2 (the owner's "<" slivers, 09-27). The pose makes it (those edges are 1.0x at rest), and only legs raised high
+  show it; walking, spread 45 and sitting sit at 1.8-2.1x worst.
+- **The owner's call:** skip item 3 entirely (neither a corrective bone nor the garment re-weight). Left for later: an
+  engine-driven corrective bone at the fold (moved by the thigh's angle) is the one untried route that could beat 4x.
