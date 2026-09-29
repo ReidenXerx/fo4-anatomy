@@ -28,6 +28,14 @@ HOW each item is done (the approaches we settled): ROADMAP-DESIGN.md.
    clipping vertices pushed out and re-tested. Output per outfit: a project plus a measured report. Publishing
    policy (the owner): the original mod is a requirement and credited; authors who object PM him. Start: one
    vanilla-body outfit the owner picks -> CBBE, measured, then his look in game.
+6. **Engine-driven sex sounds** (the owner's idea, 2026-09-29): body sounds (slaps, wet squelch, penetration,
+   furniture creaks) made by the engine from what it measures every frame -- which opening, depth and its change,
+   thrust speed, hip/butt impact speed (CollisionHub), arousal as wetness -- instead of the animation packs'
+   hand-placed ones. 3D at the pelvis, loudness and pitch from the motion, many variations per kind so nothing
+   repeats; the same set for every pack, OG and AE. Moans and voices stay Rapport's. The packs' own body sounds are
+   MUTED in scenes (the owner's poll), with an MCM switch to bring them back; first research how the common packs
+   fire theirs (animation annotations, their SNDR records). Our own clips (ElevenLabs sound effects, the squelch
+   recipe in memory), so no permissions. Done when a scene from two different packs sounds the same and in sync.
 
 ## Later (low priority)
 
