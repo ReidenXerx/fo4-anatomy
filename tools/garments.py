@@ -350,8 +350,10 @@ def check(positions, before, after):
         seen.setdefault(g, i)
 
 
-def patch_nif(body, src, dst):
-    """Patch every skinned shape of one ShapeData .nif into dst. Returns {shape: changed vertices or why not}."""
+def patch_nif(body, src, dst, xfer=None, chk=None):
+    """Patch every skinned shape of one ShapeData .nif into dst. Returns {shape: changed vertices or why not}.
+    xfer/chk: another weight transfer and its proof (tools/refit.py, A-58); the hip fold's by default."""
+    xfer, chk = xfer or transfer, chk or check
     n = nif.Nif(src)
     report, plans = {}, {}
     for s in n.shapes():
@@ -363,10 +365,10 @@ def patch_nif(body, src, dst):
             continue
         pos = s.positions()
         before = [{bones[sl]: w for sl, w in s.skin_weights(i)} for i in range(s.count)]
-        after = transfer(body, pos, before)
+        after = xfer(body, pos, before)
         if not after:
             continue
-        check(pos, before, after)
+        chk(pos, before, after)
         need = sorted({b for w in after.values() for b in w} - set(bones))
         missing = [b for b in need if b not in body.bind]
         if missing:
@@ -490,18 +492,19 @@ def workspace(bs, work, target):
     return home
 
 
-def build(bs, data, work, target, only=None):
+def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None):
+    """body/xfer/chk: another transfer (tools/refit.py, A-58); the hip fold's by default."""
     targets, left = plan(bs, data)
     if only:
         targets = [t for t in targets if any(o.lower() in t['name'].lower() for o in only)]
     home = workspace(bs, work, target)
-    body = Body(bs)
-    print(f"body: {len(body.band)} vertices where the hip fold changed CBBE's split")
+    body = body or Body(bs)
+    print(f"body: {len(body.band)} vertices where our body's weights differ from CBBE's")
     built, off = [], []
     for t in targets:
         src = bs / 'ShapeData' / t['folder'] / t['src']
         dst = home / 'ShapeData' / t['folder'] / t['src']
-        report = patch_nif(body, src, dst)
+        report = patch_nif(body, src, dst, xfer, chk)
         moved = {k: v for k, v in report.items() if isinstance(v, int)}
         if not moved:
             dst.unlink()
@@ -549,9 +552,10 @@ def regen(home, target, preset):
     return run.returncode, ok, errors
 
 
-def verify(target, into):
+def verify(target, into, core_only=True):
     """Every rebuilt garment against the build it will replace: the same vertices to 1e-3, the same morphs
-    (.tri, byte for byte), and no weight but the core bones' changed. (bad, checked, missing) lists."""
+    (.tri, byte for byte), and no weight but the core bones' changed (core_only; a refit, A-58, changes more).
+    (bad, checked, missing) lists."""
     bad, checked, missing = [], 0, []
     for new in sorted(target.rglob('*.nif')):
         rel = new.relative_to(target)
@@ -577,7 +581,7 @@ def verify(target, into):
                 if max(abs(x - y) for x, y in zip(p, q)) > 1e-3:
                     bad.append(f'{rel}/{sb.name}: vertex {i} moved (the preset is not the one the old build used)')
                     break
-            for i in range(sa.count):
+            for i in range(sa.count if core_only else 0):
                 wa = {ba[s]: w for s, w in sa.skin_weights(i)}
                 wb = {bb[s]: w for s, w in sb.skin_weights(i)}
                 if any(abs(wa.get(k, 0) - wb.get(k, 0)) > 0.03 + 0.3 * wa.get(k, 0) for k in set(wa) | set(wb)
