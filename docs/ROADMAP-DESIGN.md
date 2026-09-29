@@ -25,7 +25,11 @@ Shared rules for every item:
 `tools/mucosa.py` paints a procedural mucosa (tone, depth gradient, folds, wet specular) into any DDS the builder
 writes, every mip, block-exact outside its rect. `tools/anal_canal.py` samples its tone from the rim's own texels.
 
-**Approach (settled).** Texture only; no geometry or UV change, so Nahka's detail and every slider stay as they are.
+**Built (A-54, 2026-09-30), superseding the texture-only plan below:** Nahka's canal UVs turned out collapsed onto one
+texel, so a footprint repaint could only tint it flat. The canal got its own UVs instead (the entrance ring split,
+positions and sliders untouched) and a rugae mucosa patch; see decisions.md A-54. Staged in Anatomy-dev on the owner's go.
+
+**Approach (the first plan).** Texture only; no geometry or UV change, so Nahka's detail and every slider stay as they are.
 - Find the canal's triangles: genitals triangles deeper than the introitus along `physics_design.VAGINA_AXIS`
   (past a threshold measured on the reference body), not the outer vulva.
 - Take their UV footprint in the tile and repaint those texels with mucosa, feathered over a few texels toward the

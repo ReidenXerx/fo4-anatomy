@@ -244,7 +244,7 @@ def build_dll():
 
 
 BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', 'mask', 'split_genitals',
-                   'opening', 'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm', 'atlas', 'anal_canal', 'mucosa')
+                   'opening', 'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm', 'atlas', 'anal_canal', 'mucosa', 'vaginal_canal')
 REBUILD_MODULES = ('gamedata', 'garments', 'hip_fold', 'neck_seam', 'align_body', 'nif', 'osd')
 
 

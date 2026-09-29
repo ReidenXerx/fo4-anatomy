@@ -1659,3 +1659,29 @@ scenes, the AAF menu's too.
   nodes through F4SE's NiNode::Create (the game's constructor) and never had the bug.
 - **Verified:** the owner's AE session on the A-53 build, NPC-NPC scenes, no fault and no crash (the build before it
   crashed within five minutes). Released as Engine 1.1.4; 1.1.2 and 1.1.3 were never published.
+
+## A-54 — The vaginal canal's lining: its own UVs and a rugae mucosa (roadmap 1, 2026-09-30)
+
+- **Found:** Nahka's canal is a clean tube inside the genitals' shape (198 vertices, 368 triangles deeper than 0.5 along
+  VAGINA_AXIS; at 0.25 the flood leaks onto the vulva), opening through a ring of 26 vertices. Its UVs are collapsed:
+  every tube vertex samples the one texel (0.2383, 0.8320) of the genitals' tile, 16 square units of wall on ~2 texels.
+  So the settled texture-only plan (repaint the canal's UV footprint) could only have tinted it one flat colour.
+- **Fix (tools/vaginal_canal.py, builder stage 6c; paint at 8b):** as the anal canal (A-50), the canal gets its own
+  UVs in a patch of the genitals' 1/4 tile (PATCH_UV, below the anal patch, checked clear of every other triangle):
+  - the entrance ring is split: the vulva keeps its 26 vertices, the canal gets copies (same position, normal,
+    weights, slider data), so no vulva triangle stretches across the texture. No position or triangle changes;
+  - unwrap: v = the distance down the wall from the ring (Dijkstra over the tube's edges), u = the angle around the
+    canal's own centreline, mirrored (0 front wall, 1 back wall), so the unwrap has no seam;
+  - tangents from the new UVs, in the game's convention measured on CBBE (the 'tangent' field is dp/dv at 0.89, the
+    bitangent dp/du at 0.82);
+  - mucosa.paint(folds='across'): 14 transverse rugae with a slight wave, darkening deeper; the entrance row IS the
+    ring's texel (colour and specular), the rugae and the specular's step to wet (72, 140; the introitus is 51, 23)
+    fading in over the first 15%.
+- **Measured offline (Anatomy-dev's body):** positions byte-identical, 56 triangles rewired (ring -> copies only), all
+  198 tangent frames right-handed with the normal (N.(TxB) >= 0.8), the ring's texel on both sides the same to DXT1
+  rounding ((99,46-48,49) vulva, (99,44,49) canal; specular 51,23 both); source + osd: 788 slider entries copied to
+  the copies, nothing else changed; atlas still picks (0.25, 0.75, 1/4) and its exact remap holds.
+- **tools/tri_sync.py:** a body staged after BodySlide built it keeps its old .tri, which has no entries for vertices a
+  canal step added, so every genital morph would leave them behind (a crack at the entrance). The .tri's deltas equal
+  the osd's (0.0001), so the staged .tri is filled from the osd. It also found A-50's gap: Anatomy-dev's .tri (09-24)
+  had no entries for the anal canal's 191 vertices (AnusPenetrate 336 -> 527 entries). BodySlide writes them itself.

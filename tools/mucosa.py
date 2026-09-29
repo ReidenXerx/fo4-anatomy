@@ -3,6 +3,11 @@ other texel byte for byte the same (see genital_texture.py for the Dds reader an
 
 Pure: no file IO. Used to fill a rect with a placeholder pattern (colour/normal/specular) instead of
 a texture author's paint, e.g. for a preview or a synthetic test fixture.
+
+The rect's v runs down the canal (v0 the entrance), its u around it. folds='along' (the anal canal, A-50):
+folds run down the canal. folds='across' (the vaginal canal's rugae, A-54): ridges ring the canal, and at
+the entrance row the pattern is exactly base (no folds, specular = base), fading in over ENTRANCE, so a
+canal whose first ring sits on a single texel of the vulva shows no line there.
 """
 import math
 
@@ -10,12 +15,37 @@ from PIL import Image
 
 from genital_texture import Dds, encode_blocks
 
+RUGAE = 14            # ridges down the vaginal canal (folds='across')
+ENTRANCE = 0.15       # of the rect's depth: the rugae, and the specular's step to wet, fade in over it
 
-def _pattern_pixel(u, v, kind, base, u0, v0, u1, v1):
+
+def _across_pixel(s, t, kind, base, wet):
+    """folds='across': (r, g, b, a) for rect coords s (around), t (down, 0 = the entrance row)."""
+    tc = max(0.0, min(1.0, t))
+    ramp = min(1.0, tc / ENTRANCE)
+    phase = 2 * math.pi * RUGAE * tc + 0.6 * math.sin(2 * math.pi * s)     # a little wave, 0 at s = 0 and 1
+    if kind == 'colour':
+        b = (1.0 + (0.45 - 1.0) * tc) * (1.0 + 0.10 * ramp * math.sin(phase))
+        return tuple(max(0, min(255, int(round(base[k] * b)))) for k in range(3)) + (255,)
+    if kind == 'normal':
+        ny = max(-1.0, min(1.0, 0.35 * ramp * math.cos(phase)))
+        nz = math.sqrt(max(0.0, 1.0 - ny * ny))
+        return 128, max(0, min(255, int(round(ny * 127.5 + 127.5)))), max(0, min(255, int(round(nz * 127.5 + 127.5)))), 255
+    if kind == 'specular':
+        w = wet or base
+        return (int(round(base[0] + (w[0] - base[0]) * ramp)), int(round(base[1] + (w[1] - base[1]) * ramp)), 0, 255)
+    raise ValueError(f'mucosa.paint: unknown kind {kind!r}')
+
+
+def _pattern_pixel(u, v, kind, base, u0, v0, u1, v1, folds='along', wet=None):
     """(r, g, b, a) 0-255 for one UV sample, per the kind's formula."""
     du, dv = u1 - u0, v1 - v0
     s = (u - u0) / du if du else 0.0
     t = (v - v0) / dv if dv else 0.0
+    if folds == 'across':
+        return _across_pixel(s, t, kind, base, wet)
+    if folds != 'along':
+        raise ValueError(f'mucosa.paint: unknown folds {folds!r}')
     tc = max(0.0, min(1.0, t))                          # depth gradient only makes sense inside the rect
     if kind == 'colour':
         depth = 1.0 + (0.45 - 1.0) * tc                 # 1.0 at v0 -> 0.45 at v1
@@ -37,10 +67,11 @@ def _pattern_pixel(u, v, kind, base, u0, v0, u1, v1):
     raise ValueError(f'mucosa.paint: unknown kind {kind!r}')
 
 
-def paint(dds_bytes: bytes, rect: tuple, kind: str, base: tuple) -> bytes:
+def paint(dds_bytes: bytes, rect: tuple, kind: str, base: tuple, folds: str = 'along', wet: tuple = None) -> bytes:
     """New DDS bytes: identical to dds_bytes everywhere except the texels of rect (0..1 UV, u across, v
     down, v=0 the top row) on every mip level, replaced by a procedural wet-mucosa pattern (kind =
-    'colour' | 'normal' | 'specular', base an RGB or (spec_r, spec_g) 0-255 tuple). dds_bytes must be a
+    'colour' | 'normal' | 'specular', base an RGB or (spec_r, spec_g) 0-255 tuple; folds 'along' | 'across', wet the
+    specular's (r, g) past the entrance for 'across'). dds_bytes must be a
     format Dds actually reads (not d.fallback): DXT1/DXT3/DXT5/BC5, or uncompressed 24/32-bit."""
     u0, v0, u1, v1 = rect
     d = Dds('mucosa', dds_bytes)
@@ -60,7 +91,7 @@ def paint(dds_bytes: bytes, rect: tuple, kind: str, base: tuple) -> bytes:
                 vy = (y + 0.5) / h
                 for x in range(x0, x1):
                     ux = (x + 0.5) / w
-                    r, g, b, a = _pattern_pixel(ux, vy, kind, base, u0, v0, u1, v1)
+                    r, g, b, a = _pattern_pixel(ux, vy, kind, base, u0, v0, u1, v1, folds, wet)
                     at = off + (y * w + x) * d.block
                     out[at + d.raw['R']] = r
                     out[at + d.raw['G']] = g
@@ -84,7 +115,7 @@ def paint(dds_bytes: bytes, rect: tuple, kind: str, base: tuple) -> bytes:
             vy = (py0 + j + 0.5) / h
             for i in range(rw):
                 ux = (px0 + i + 0.5) / w
-                r, g, b, a = _pattern_pixel(ux, vy, kind, base, u0, v0, u1, v1)
+                r, g, b, a = _pattern_pixel(ux, vy, kind, base, u0, v0, u1, v1, folds, wet)
                 pix[i, j] = (r, g, b) if img_mode == 'RGB' else (r, g, b, a)
         enc = encode_blocks(region, d.pil_format)
         for j in range(cby):

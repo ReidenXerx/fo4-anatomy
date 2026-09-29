@@ -88,6 +88,23 @@ def synth_level(size):
     return im
 
 
+def across():
+    """folds='across' (A-54): the entrance row is exactly base (colour, flat normal, base specular), the ridges vary
+    down the rect and not around it, and the specular reaches wet past the entrance."""
+    base, wet, R = (99, 46, 49), (72, 140), (0.0, 0.0, 1.0, 1.0)
+    px = lambda s, t, kind, b: mucosa._pattern_pixel(s, t, kind, b, *R, folds='across', wet=wet)
+    check('across: entrance row colour is base', all(px(s / 10, 0.0, 'colour', base)[:3] == base for s in range(11)))
+    check('across: entrance row normal is flat', all(px(s / 10, 0.0, 'normal', base)[:2] == (128, 128) for s in range(11)))
+    check('across: entrance row specular is base', px(0.5, 0.0, 'specular', (51, 23))[:2] == (51, 23))
+    check('across: specular is wet past the entrance', px(0.5, 0.5, 'specular', (51, 23))[:2] == wet)
+    down = {px(0.0, t / 200, 'normal', base)[1] for t in range(40, 200)}
+    around = {px(s / 50, 0.5, 'normal', base)[1] for s in range(51)}
+    check(f'across: ridges run across ({len(down)} normal values down the rect)', len(down) > 20)
+    check(f'across: the red channel stays flat', all(px(s / 20, t / 20, 'normal', base)[0] == 128
+                                                   for s in range(21) for t in range(21)))
+    check(f'across: gentle wave around the canal ({len(around)} values)', 1 < len(around) < len(down))
+
+
 def main():
     for path, kind, base in REAL_FILES:
         data = open(path, 'rb').read()
@@ -96,6 +113,7 @@ def main():
     levels = [synth_level(64), synth_level(32), synth_level(16)]
     synth_bytes = gt.uncompressed(levels)
     verify('synthetic uncompressed 32-bit BGRA', synth_bytes, 'colour', (150, 70, 70))
+    across()
 
     print()
     if FAILS:
