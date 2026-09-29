@@ -1758,3 +1758,5 @@ scenes, the AAF menu's too.
   sphere sat 19 units up at the collarbone (hands barely met the breasts with our preset), the butt's 3.2 off. Remeasured
   in the actor's frame (flesh centre minus bone origin; radii unchanged: 2.54/4.31 measured). The CBBE preset itself is
   byte-identical; only its collision file changed.
+- **Staged 2026-09-30 (the owner's go):** cbp.dll 2056f805d6c5 (+ pdb; A-55 + A-57) in Anatomy-dev, and the corrected
+  CBBE OCBPCollisionConfig-default.txt, both in place; originals in the session scratchpad (dll_bak).
