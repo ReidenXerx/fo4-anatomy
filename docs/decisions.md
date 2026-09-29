@@ -1707,3 +1707,5 @@ scenes, the AAF menu's too.
   3.89 -> 2.17, and the owner's dynamic lips were tuned on today's push. `[General] contactConstraint=0` in ocbp.ini
   restores OCBPC's response everywhere.
 - The classic build (CBPSSE) is not changed: only the RD build ships (release.py).
+- **Staged 2026-09-30 (the owner's go):** cbp.dll b0ff41f0e457 (+ pdb) in Anatomy-dev, in place; the old one in the
+  session scratchpad (dll_bak, `stage_dll.py --undo`). NOT yet seen in game.
