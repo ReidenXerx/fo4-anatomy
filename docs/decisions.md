@@ -1723,3 +1723,25 @@ scenes, the AAF menu's too.
   show it; walking, spread 45 and sitting sit at 1.8-2.1x worst.
 - **The owner's call:** skip item 3 entirely (neither a corrective bone nor the garment re-weight). Left for later: an
   engine-driven corrective bone at the fold (moved by the thigh's angle) is the one untried route that could beat 4x.
+
+## A-57 — 3BBB bodies: stage 1b re-weights the shared skin to 3BBB (roadmap 1 after A-56, 2026-09-30)
+
+- **The input (the owner's pick):** "3BBB Physics (CBBE - TWB)", Nexus 48978, file 201192 "Caliente's Beautiful Bodies
+  Enhancer (CBBE) 3BBB Body" 1.20 (SQr17); installed DISABLED in Vortex (it carries its own FemaleBody.nif and
+  ocbp.ini). Its bones come from Skeletal Adjustments for CBBE's women's skeleton (female/skeleton.nif; both the owner's
+  GOG and AE have LBreast_01..03_skin, L/RButt_01_skin, L/RLeg_Thigh_01_F/R_skin).
+- **Measured:** CBBE 2.7.2's CBBEBodyPhysics.nif re-weighted: the same 22,708 vertices, triangles and UVs, its set
+  reads CBBE's CBBEBody.osd; weights differ on 7,216 vertices (breasts off Chest/cloth onto Breast_01..03, butt and
+  thighs gain Butt_01 / Thigh_01_F/R); positions differ only at the feet (4,686 vertices, <= 0.16). Nahka's patch is
+  untouched by it.
+- **What (tools/tbbb.py, builder stage 1b, `--body auto|cbbe|3bbb`):** after stage 1, 3BBB's 12 bones join the skin
+  (nif.with_bones, transforms and spheres from the 3BBB file); every CBBE vertex stage 1 kept takes 3BBB's record
+  (the shared skin is 3BBB exactly); each of Nahka's vertices keeps her weights plus 3BBB's change at the CBBE
+  neighbours she is blended from, so the seam moves as one. Stages 3/3b as ever, the breast move off (3BBB's breast
+  bones are the physics targets). verify_zex also accepts bones from the women's skeleton in this mode. `auto` picks
+  3BBB when its body is installed AND the preset the engine runs attaches LBreast_01_skin/RBreast_01_skin.
+- **Checked:** the whole builder on the AE Data with 3BBB overlaid, every stage passes (stage 4 too); welded copies'
+  weights equal to 0.0000 and they stay together (0.0000) when the butt/thigh bones move 1 (2,034 vertices move); the
+  CBBE build byte-identical to the builder before this change (all nine outputs).
+- **Engine (fo4-ocbpc scan.cpp):** every ~1800 frames the log says the physics' average and worst microseconds per
+  frame and the actors and bones it moved, for the CBBE-vs-3BBB numbers.

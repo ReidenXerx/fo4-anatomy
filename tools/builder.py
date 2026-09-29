@@ -51,6 +51,7 @@ OUTPUTS = {                                         # published path -> produced
     'Materials/Anatomy/AnatomyGenitals.bgsm': None,
 }
 SKELETON = 'Meshes/Actors/Character/CharacterAssets/skeleton.nif'
+FEMALE_SKELETON = 'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif'   # what women load (A-57: 3BBB's bones)
 GROUPS = ('<?xml version="1.0" encoding="UTF-8"?>\n<SliderGroups>\n'
           '    <Group name="CBBE">\n        <Member name="Anatomy Body"/>\n    </Group>\n'
           '    <Group name="Anatomy">\n        <Member name="Anatomy Body"/>\n    </Group>\n</SliderGroups>\n')
@@ -117,6 +118,9 @@ def main():
                                    'registry names)')
     ap.add_argument('--out', help='write the results here instead of into Data')
     ap.add_argument('--keep-work', action='store_true', help='keep the work folder (for a bug report)')
+    ap.add_argument('--body', choices=('auto', 'cbbe', '3bbb'), default='auto',
+                    help='the body to build on (default: 3BBB when it is installed and your physics preset drives its '
+                         'breast bones, else CBBE)')
     import gamedata
     args = gamedata.parse_args(ap, FROZEN)
     log_path = HERE / 'AnatomyBuilder.log'
@@ -180,17 +184,42 @@ def main():
         zb.SKELETON = skeleton_copy
         zb.MASK = ab.OUT / 'Masks/AnatomyGenitalRegion.xml'
         zb.STAGE1 = ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.nif'
-        driven, why = breasts_driven(game)
-        zb.MOVE_BREASTS = driven
-        print(f'   breasts: {"move onto LBreast_skin/RBreast_skin" if driven else "keep CBBE\'s cloth weights"} ({why})')
+        import tbbb
+        preset = next((p for p in ('F4SE/Plugins/ocbp.ini', DEFAULT_PRESET) if game.find(p) is not None), None)
+        on_3bbb, why3 = tbbb.choose(game, args.body, preset)
+        print(f'   body: {why3}')
+        if on_3bbb:
+            # A-57: 3BBB's weights, and its bones from the skeleton women load (Skeletal Adjustments' 3BBB skeleton)
+            women = work / 'female_skeleton.nif'
+            if game.find(FEMALE_SKELETON) is None:
+                raise SystemExit(f'a 3BBB body needs a women\'s skeleton with its bones ({FEMALE_SKELETON}): install '
+                                 'Skeletal Adjustments for CBBE (Nexus 39006), or build on CBBE (--body cbbe)')
+            women.write_bytes(game.read(FEMALE_SKELETON))
+            lacking = [b for b in tbbb.BREAST_BONES if b not in zb.skeleton_world(women)]
+            if lacking:
+                raise SystemExit(f'{FEMALE_SKELETON} has no {lacking}: it is not a 3BBB skeleton. Install Skeletal '
+                                 'Adjustments for CBBE (Nexus 39006), or build on CBBE (--body cbbe)')
+            verify_zex.WOMEN_SKELETON = women
+            print(f'   input {game.describe(tbbb.SHAPEDATA)}  sha1 {sha(game.read(tbbb.SHAPEDATA))}')
+            zb.MOVE_BREASTS = False
+            print('   breasts: keep 3BBB\'s own breast bones')
+        else:
+            driven, why = breasts_driven(game)
+            zb.MOVE_BREASTS = driven
+            print(f'   breasts: {"move onto LBreast_skin/RBreast_skin" if driven else "keep CBBE\'s cloth weights"} ({why})')
         sg.PROJECT = ab.OUT
         gt.OUT = work / 'textures'
         gt.ANATOMY_OUT = gt.OUT / 'Anatomy'
         gt.CROPS = SHIPPED / 'tex'
         gt.FULL_NAHKA = False
 
-        run_stage('1. CBBE plus Nahka\'s genitals', lambda: apply_patch.build(
-            data, apply_patch.load(SHIPPED / 'nahka_patch.json.gz'), ab.OUT))
+        patch = apply_patch.load(SHIPPED / 'nahka_patch.json.gz')
+        run_stage('1. CBBE plus Nahka\'s genitals', lambda: apply_patch.build(data, patch, ab.OUT))
+        if on_3bbb:
+            import json
+            mapping = {int(k): v for k, v in json.loads((ab.OUT / 'mapping.json').read_text())['output_to_cbbe'].items()}
+            run_stage('1b. the 3BBB body (A-57)', lambda: print(tbbb.apply(
+                zb.STAGE1, mapping, patch['near'], len(mapping), game.read(tbbb.SHAPEDATA), game.read(cbbe_files[1]))))
         sys.argv = ['mask.py', '--project', str(ab.OUT)]
         run_stage('2. the genital region', mask.main)
         run_stage('3. bones and weights', zb.main)

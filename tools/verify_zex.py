@@ -33,6 +33,7 @@ import physics_design as pd
 ZEX_GENITAL = ['Vagina_00', 'Vagina_L_01', 'Vagina_L_02', 'Vagina_R_01', 'Vagina_R_02', 'Anus_01', 'Anus_02',
                'Anus_03', 'Anus_04', 'Vagina_CBP_00', 'Vagina_CBP_L_01', 'Vagina_CBP_L_02', 'Vagina_CBP_R_01',
                'Vagina_CBP_R_02']
+WOMEN_SKELETON = None     # A-57: the builder sets it for a 3BBB body (its bones live in the skeleton women load)
 
 
 def mask_values(path):
@@ -103,6 +104,8 @@ def main():
     import zex_bones as zb
     bind = zb.skeleton_world(zb.SKELETON)
     runtime = {name for name, _, _ in physics_config.bone_table(bind[pd.PARENT])}
+    if WOMEN_SKELETON is not None:                   # A-57: a 3BBB body's bones come from the skeleton women load
+        runtime |= set(zb.skeleton_world(WOMEN_SKELETON))
     # CBBE's Havok cloth bones (CLOTH_*) are made by the body's own cloth data, not by any skeleton
     cloth = after_nif.extra_block('BSClothExtraData') is not None
     stranded = [n for n in weighted if n not in bind and n not in runtime
