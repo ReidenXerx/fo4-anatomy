@@ -1708,4 +1708,5 @@ scenes, the AAF menu's too.
   restores OCBPC's response everywhere.
 - The classic build (CBPSSE) is not changed: only the RD build ships (release.py).
 - **Staged 2026-09-30 (the owner's go):** cbp.dll b0ff41f0e457 (+ pdb) in Anatomy-dev, in place; the old one in the
-  session scratchpad (dll_bak, `stage_dll.py --undo`). NOT yet seen in game.
+  session scratchpad (dll_bak, `stage_dll.py --undo`). The owner played it: no regression (the exact squeeze is hard to
+  stage on purpose; normal play is the test).
