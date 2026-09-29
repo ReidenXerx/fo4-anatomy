@@ -1685,3 +1685,5 @@ scenes, the AAF menu's too.
   canal step added, so every genital morph would leave them behind (a crack at the entrance). The .tri's deltas equal
   the osd's (0.0001), so the staged .tri is filled from the osd. It also found A-50's gap: Anatomy-dev's .tri (09-24)
   had no entries for the anal canal's 191 vertices (AnusPenetrate 336 -> 527 entries). BodySlide writes them itself.
+- **Staged 2026-09-30 (the owner's go):** Anatomy-dev in place (built body + its .tri, BodySlide source + osd, the three
+  maps); originals in the session scratchpad (stage_bak, `stage.py --undo`). NOT yet seen in game.
