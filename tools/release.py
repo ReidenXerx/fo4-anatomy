@@ -427,6 +427,10 @@ def builder_files():
         'AnatomyBuilder/licences/Pillow LICENSE.txt': pillow_licence(),
         'AnatomyBuilder/data/nahka_patch.json.gz': BUILD / 'patch/nahka_patch.json.gz',
     }
+    # A-57: the builder writes the preset for the body it built (tools/default_preset.py, both bodies)
+    for name in ('ocbp-default.ini', 'OCBPCollisionConfig-default.txt', 'ocbp-default-3bbb.ini',
+                 'OCBPCollisionConfig-default-3bbb.txt'):
+        out[f'AnatomyBuilder/data/presets/{name}'] = BUILD / 'config/Anatomy' / name
     for p in sorted((BUILD / 'patch/tex').iterdir()):
         out[f'AnatomyBuilder/data/tex/{p.name}'] = p
     for p in sorted(dist.rglob('*')):

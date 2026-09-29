@@ -38,6 +38,7 @@ if not FROZEN:
     sys.path.insert(0, str(HERE))
 ROOT = HERE.parent
 SHIPPED = HERE / 'data' if FROZEN else ROOT / 'build/patch'
+PRESETS = HERE / 'data/presets' if FROZEN else ROOT / 'build/config/Anatomy'   # A-57: tools/default_preset.py's files
 SET = 'Anatomy Body'
 OUTPUTS = {                                         # published path -> produced file (filled in main)
     'Tools/BodySlide/SliderSets/Anatomy.osp': None,
@@ -49,6 +50,8 @@ OUTPUTS = {                                         # published path -> produced
     'Textures/Anatomy/FemaleBody_n.dds': None,
     'Textures/Anatomy/FemaleBody_s.dds': None,
     'Materials/Anatomy/AnatomyGenitals.bgsm': None,
+    'F4SE/Plugins/Anatomy/ocbp-body.ini': None,                     # A-57: the physics for the body built (CBBE/3BBB)
+    'F4SE/Plugins/Anatomy/OCBPCollisionConfig-body.txt': None,
 }
 SKELETON = 'Meshes/Actors/Character/CharacterAssets/skeleton.nif'
 FEMALE_SKELETON = 'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif'   # what women load (A-57: 3BBB's bones)
@@ -185,8 +188,8 @@ def main():
         zb.MASK = ab.OUT / 'Masks/AnatomyGenitalRegion.xml'
         zb.STAGE1 = ab.OUT / 'ShapeData' / ab.DATA_FOLDER / f'{ab.DATA_FOLDER}.nif'
         import tbbb
-        preset = next((p for p in ('F4SE/Plugins/ocbp.ini', DEFAULT_PRESET) if game.find(p) is not None), None)
-        on_3bbb, why3 = tbbb.choose(game, args.body, preset)
+        theirs = 'F4SE/Plugins/ocbp.ini' if game.find('F4SE/Plugins/ocbp.ini') is not None else None
+        on_3bbb, why3 = tbbb.choose(game, args.body, theirs)
         print(f'   body: {why3}')
         if on_3bbb:
             # A-57: 3BBB's weights, and its bones from the skeleton women load (Skeletal Adjustments' 3BBB skeleton)
@@ -256,6 +259,11 @@ def main():
         groups = work / 'Anatomy.xml'
         groups.write_text(GROUPS, encoding='utf-8')
         produced['Tools/BodySlide/SliderGroups/Anatomy.xml'] = groups
+        # A-57: Anatomy's preset for THIS body; the engine reads it (before the shipped CBBE default) when the player has
+        # no ocbp.ini of their own
+        kind = '-3bbb' if on_3bbb else ''
+        produced['F4SE/Plugins/Anatomy/ocbp-body.ini'] = PRESETS / f'ocbp-default{kind}.ini'
+        produced['F4SE/Plugins/Anatomy/OCBPCollisionConfig-body.txt'] = PRESETS / f'OCBPCollisionConfig-default{kind}.txt'
         if set(produced) != set(OUTPUTS):
             raise SystemExit('internal: the output list changed')
         dest = pathlib.Path(args.out) if args.out else data

@@ -1745,3 +1745,16 @@ scenes, the AAF menu's too.
   CBBE build byte-identical to the builder before this change (all nine outputs).
 - **Engine (fo4-ocbpc scan.cpp):** every ~1800 frames the log says the physics' average and worst microseconds per
   frame and the actors and bones it moved, for the CBBE-vs-3BBB numbers.
+- **A 3BBB preset of Anatomy's own (Fallout-collection's question: Ivy keeps MTM/OCBPC presets off, 09-27):**
+  tools/default_preset.py --3bbb writes ocbp-default-3bbb.ini + OCBPCollisionConfig-default-3bbb.txt from targets:
+  the breast chain 01 -> 02 -> 03 (runs 0.6/0.48/0.42, the tip 2-3 swings; measured on a chain sim, the tip runs 1.16
+  in a jog against CBBE's 1.2), Butt_01 (ButtFat and LBreast_skin carry nothing on 3BBB), Thigh_01_F/R, CBBE's belly
+  and thigh parts. The builder writes the preset for the body it built as F4SE/Plugins/Anatomy/ocbp-body.ini (+
+  OCBPCollisionConfig-body.txt); the engine (config.cpp) reads it before the shipped ocbp-default.ini, still only when
+  the player has no ocbp.ini. `auto` now picks 3BBB when its body is installed and the player has no ocbp.ini (Ivy),
+  or theirs attaches 3BBB's breast bones.
+- **Found: A-46's collision spheres were in the wrong frame.** The engine places a sphere at bone + skeleton rotation
+  x offset (Thing.cpp), never turning it by the bone's rotation, but A-46 measured the offsets in bone space: the breast
+  sphere sat 19 units up at the collarbone (hands barely met the breasts with our preset), the butt's 3.2 off. Remeasured
+  in the actor's frame (flesh centre minus bone origin; radii unchanged: 2.54/4.31 measured). The CBBE preset itself is
+  byte-identical; only its collision file changed.

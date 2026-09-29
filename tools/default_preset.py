@@ -28,6 +28,8 @@ import ocbpc_sim as sim
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'build/config/Anatomy/ocbp-default.ini'
 COLLISION_OUT = ROOT / 'build/config/Anatomy/OCBPCollisionConfig-default.txt'
+OUT_3BBB = ROOT / 'build/config/Anatomy/ocbp-default-3bbb.ini'                  # A-57
+COLLISION_OUT_3BBB = ROOT / 'build/config/Anatomy/OCBPCollisionConfig-default-3bbb.txt'
 FPS = 60
 TICK, STEP = 4.0, 0.016                      # the engine's defaults (Thing.cpp: timeStep absent -> 0.016)
 
@@ -51,12 +53,41 @@ PARTS = {
                        cap=0.9, xyz=(0.8, 0.6, 1.0), tilt=0.0, clothed=0.7),
 }
 
-# collision: spheres in each bone's space, measured on the Anatomy body (the weight-weighted centre of what the bone
-# carries, the median radius of the vertices it carries at least a quarter of); hands press them
+# collision: spheres measured on the Anatomy body (the weight-weighted centre of what the bone carries, the median
+# radius of the vertices it carries at least a quarter of); hands press them. The offset is from the bone's origin in
+# the ACTOR's frame: the engine places a sphere at bone + skeleton rotation * offset (Thing.cpp), never turning it by
+# the bone's own rotation. A-46 measured them in bone space, which put the breast sphere 19 units up at the collarbone
+# and the butt's 3.2 off (A-57); these are the same spheres in the engine's frame.
 COLLIDE = {
-    'LBreast_skin': (0.42, 4.19, 10.56, 2.5), 'RBreast_skin': (-0.42, 4.19, 10.56, 2.5),
-    'LButtFat_skin': (0.95, -6.53, -2.96, 4.2), 'RButtFat_skin': (-0.95, -6.53, -2.96, 4.2),
+    'LBreast_skin': (-3.38, 7.08, -8.17, 2.5), 'RBreast_skin': (3.38, 7.08, -8.17, 2.5),
+    'LButtFat_skin': (-0.9, -7.1, -0.41, 4.2), 'RButtFat_skin': (0.87, -7.09, -0.42, 4.2),
 }
+
+# A-57: the preset for a 3BBB body (builder --body 3bbb writes it as ocbp-body.ini). 3BBB's breasts are a chain,
+# LBreast_01 -> 02 -> 03 (each the next one's parent), so the tip rides on all three: the base moves least and the tip
+# swings longest. Butt_01 (under the pelvis) replaces ButtFat, which carries nothing on 3BBB; LBreast_skin carries
+# nothing either. Thigh_01_F/R are 3BBB's front and back thigh flesh. The rest is CBBE's.
+PARTS_3BBB = {
+    'Breast1': dict(bones=('LBreast_01_skin', 'RBreast_01_skin'), run=0.6, swings=2, settle=0.9, cap=1.8,
+                    xyz=(0.6, 0.8, 1.0), tilt=4.0, clothed=0.5),
+    'Breast2': dict(bones=('LBreast_02_skin', 'RBreast_02_skin'), run=0.48, swings=2, settle=1.0, cap=1.4,
+                    xyz=(0.6, 0.8, 1.0), tilt=0.0, clothed=0.5),
+    'Breast3': dict(bones=('LBreast_03_skin', 'RBreast_03_skin'), run=0.42, swings=3, settle=1.1, cap=1.2,
+                    xyz=(0.6, 0.8, 1.0), tilt=0.0, clothed=0.5),
+    'Butt3B': dict(bones=('LButt_01_skin', 'RButt_01_skin'), run=0.6, swings=1, settle=0.5, cap=1.5,
+                   xyz=(0.5, 0.7, 1.0), tilt=0.0, clothed=0.6),
+    'ThighF': dict(bones=('LLeg_Thigh_01_F_skin', 'RLeg_Thigh_01_F_skin'), run=0.2, swings=1, settle=0.35, cap=0.5,
+                   xyz=(0.6, 0.6, 1.0), tilt=0.0, clothed=0.7),
+    'ThighB': dict(bones=('LLeg_Thigh_01_R_skin', 'RLeg_Thigh_01_R_skin'), run=0.25, swings=1, settle=0.4, cap=0.6,
+                   xyz=(0.6, 0.6, 1.0), tilt=0.0, clothed=0.7),
+}
+PARTS_3BBB.update({k: v for k, v in PARTS.items() if k not in ('Breasts', 'Butt')})
+COLLIDE_3BBB = {                              # measured on the 3BBB build the same way, in the engine's frame
+    'LBreast_02_skin': (-1.11, 3.07, 1.56, 3.65), 'RBreast_02_skin': (1.12, 3.07, 1.55, 3.65),
+    'LBreast_03_skin': (-2.13, 2.52, 2.25, 1.46), 'RBreast_03_skin': (2.13, 2.52, 2.25, 1.46),
+    'LButt_01_skin': (-0.75, -5.62, -0.66, 3.7), 'RButt_01_skin': (0.76, -5.62, -0.65, 3.7),
+}
+CHAIN = ('Breast1', 'Breast2', 'Breast3')
 HANDS = {'LArm_Hand': 2.5, 'RArm_Hand': 2.5}
 
 ZERO_KEYS = ('gravityBias', 'gravityCorrection', 'cogOffsetX', 'cogOffsetY', 'cogOffsetZ',
@@ -136,9 +167,25 @@ def ini_section(name, t, s, m, run_scale):
                 f'settle {m["settle"]:.2f} s', f'[{name}]'] + [f'{key}={s[key]:g}' for key in sorted(s)]
 
 
-def main():
+def chain_run(sections, amplitude=2.0, hz=2.6, seconds=4.0):
+    """A chain's tip (each bone carried by the pelvis bob plus its parents' offsets): worst tip offset after 1 s."""
+    bs = [sim.Bone(s, [0.0, 0.0, 0.0], 0.6) for s in sections]
+    worst = 0.0
+    for f, carry in enumerate(sim.gait(amplitude, hz, seconds, FPS)):
+        c = list(carry)
+        for b in bs:
+            b.update(c, [], 1000 / FPS)
+            c = [c[i] + b.offset(c)[i] for i in range(3)]
+        if f > FPS:
+            worst = max(worst, max(abs(c[i] - carry[i]) for i in range(3)))
+    return worst
+
+
+def main(body='cbbe'):
+    parts, collide = (PARTS_3BBB, COLLIDE_3BBB) if body == '3bbb' else (PARTS, COLLIDE)
+    out, collision_out = (OUT_3BBB, COLLISION_OUT_3BBB) if body == '3bbb' else (OUT, COLLISION_OUT)
     naked, clothed = {}, {}
-    for name, t in PARTS.items():
+    for name, t in parts.items():
         naked[name] = (t,) + design(t)
         clothed[name] = (t,) + design(t, t['clothed'])
         for label, (_, s, m), scale in (('naked', naked[name], 1.0), ('clothed', clothed[name], t['clothed'])):
@@ -159,19 +206,26 @@ def main():
         lines += ini_section(name, t, s, m, 1.0)
     for name, (t, s, m) in clothed.items():
         lines += ini_section(f'{name}Clothed', t, s, m, t['clothed'])
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text('\n'.join(lines) + '\n', encoding='utf-8', newline='\r\n')
+    if body == '3bbb':
+        tip = chain_run([naked[n][1] for n in CHAIN])
+        lines.insert(3, f'; 3BBB body (A-57): the breast chain\'s tip runs {tip:.2f} in a jog (CBBE\'s one breast bone: '
+                        f'{PARTS["Breasts"]["run"]:g})')
+        print(f'breast chain tip in a jog: {tip:.2f} (CBBE breast target {PARTS["Breasts"]["run"]:g})')
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text('\n'.join(lines) + '\n', encoding='utf-8', newline='\r\n')
     col = ["# Anatomy's default collision (decision A-46): read by the Anatomy Engine ONLY when",
            '# Data\\F4SE\\Plugins\\OCBPCollisionConfig.txt is missing. GENERATED by tools/default_preset.py.',
-           '# Spheres in each bone\'s space, measured on the Anatomy body: x,y,z,radius.', '', '[AffectedNodes]']
-    col += list(COLLIDE) + ['', '[ColliderNodes]'] + list(HANDS)
-    for bone, (x, y, z, r) in COLLIDE.items():
+           '# Spheres measured on the Anatomy body: x,y,z from the bone in the actor\'s frame (A-57), radius.', '',
+           '[AffectedNodes]']
+    col += list(collide) + ['', '[ColliderNodes]'] + list(HANDS)
+    for bone, (x, y, z, r) in collide.items():
         col += ['', f'[{bone}]', f'{x:g},{y:g},{z:g},{r:g}']
     for bone, r in HANDS.items():
         col += ['', f'[{bone}]', f'0,0,0,{r:g}']
-    COLLISION_OUT.write_text('\n'.join(col) + '\n', encoding='utf-8', newline='\r\n')
-    print('wrote', OUT, 'and', COLLISION_OUT)
+    collision_out.write_text('\n'.join(col) + '\n', encoding='utf-8', newline='\r\n')
+    print('wrote', out, 'and', collision_out)
 
 
 if __name__ == '__main__':
-    main()
+    import sys
+    main('3bbb' if '--3bbb' in sys.argv[1:] else 'cbbe')

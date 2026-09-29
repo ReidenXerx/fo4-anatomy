@@ -42,7 +42,8 @@ def attached(preset_text):
 
 
 def choose(game, want, preset_rel):
-    """(True, why) to build on 3BBB. want: 'auto' | 'cbbe' | '3bbb'; preset_rel: the preset the engine will run."""
+    """(True, why) to build on 3BBB. want: 'auto' | 'cbbe' | '3bbb'; preset_rel: the PLAYER's own ocbp.ini, or None
+    (then the engine runs Anatomy's preset for the body built, so an installed 3BBB body decides)."""
     have = game.find(SHAPEDATA) is not None
     if want == 'cbbe':
         return False, 'CBBE (asked for)'
@@ -53,10 +54,11 @@ def choose(game, want, preset_rel):
         return True, '3BBB (asked for)'
     if not have:
         return False, 'CBBE: no 3BBB body installed'
-    drives = preset_rel is not None and set(BREAST_BONES) <= attached(game.read(preset_rel).decode('utf-8', 'replace'))
-    if drives:
+    if preset_rel is None:
+        return True, '3BBB: its body is installed and you have no ocbp.ini (Anatomy\'s 3BBB preset will run)'
+    if set(BREAST_BONES) <= attached(game.read(preset_rel).decode('utf-8', 'replace')):
         return True, f'3BBB: its body is installed and {preset_rel} drives its breast bones'
-    return False, f'CBBE: a 3BBB body is installed, but {preset_rel or "no preset"} does not drive its breast bones'
+    return False, f'CBBE: a 3BBB body is installed, but {preset_rel} does not drive its breast bones'
 
 
 def _bone_data(n, shape):
