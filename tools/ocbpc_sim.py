@@ -25,6 +25,7 @@ linear axes are in (the skeleton root's rotation).
 import math
 
 import physics_config as pc
+import physics_design as pd
 
 
 def v_add(a, b):
@@ -124,6 +125,61 @@ class Bone:
         return v_sub(self.actual, v_add(self.rest, carry))
 
 
+class ContactBone(Bone):
+    """The engine's A-55 contact (fo4-ocbpc Thing.cpp, a body bone not named Anat...): the spring always runs, then the
+    bone is projected out of every collider where it would be SHOWN (the push turned back into internal units by
+    1/linear), only the velocity INTO the collider removed, and tangential velocity decaying at FRICTION per second."""
+    FRICTION = 8.0
+
+    def update(self, carry, colliders, delta_ms):
+        dt = clamp(int(delta_ms), 8, 64)
+        mult = self.tick / dt
+        target = v_add(self.rest, carry)
+        diff = v_sub(target, self.old)
+        diff[2] += self.gcorr
+        if max(abs(x) for x in diff) > 100:
+            self.old, self.vel = list(target), [0.0, 0.0, 0.0]
+            self.act_off, self.actual = [0.0, 0.0, 0.0], list(target)
+            return
+        diff = v_mul(diff, mult)
+        force = [diff[i] * self.k1 + diff[i] * diff[i] * sgn(diff[i]) * self.k2 for i in range(3)]
+        force[2] -= self.gbias
+        pos_delta = [0.0, 0.0, 0.0]
+        t = dt
+        while True:
+            self.vel = [self.vel[i] + force[i] * self.step - self.vel[i] * self.damp * self.step for i in range(3)]
+            pos_delta = v_add(pos_delta, v_mul(self.vel, self.step))
+            t -= self.tick
+            if t < self.tick:
+                break
+        new = v_add(self.old, pos_delta)
+        shown = [target[i] + (new[i] - target[i]) * self.lin[i] for i in range(3)]
+        push = [0.0, 0.0, 0.0]
+        for _ in range(4):
+            hit, p = self._push(v_add(shown, push), colliders)
+            if not hit:
+                break
+            push = v_add(push, p)
+        if any(abs(x) > 1e-9 for x in push):
+            internal = [push[i] / self.lin[i] if self.lin[i] > 1e-4 else 0.0 for i in range(3)]
+            new = v_add(new, internal)
+            ln = math.sqrt(sum(x * x for x in internal))
+            if ln > 1e-6:
+                n = [x / ln for x in internal]
+                vn = sum(self.vel[i] * n[i] for i in range(3))
+                if vn < 0:
+                    self.vel = [self.vel[i] - vn * n[i] for i in range(3)]
+                    vn = 0.0
+                keep = math.exp(-self.FRICTION * dt / 1000)
+                self.vel = [vn * n[i] + (self.vel[i] - vn * n[i]) * keep for i in range(3)]
+        diff = v_sub(new, target)
+        diff = [clamp(diff[0], -self.maxo[0], self.maxo[0]), clamp(diff[1], -self.maxo[1], self.maxo[1]),
+                clamp(diff[2] - self.gcorr, -self.maxo[2], self.maxo[2]) + self.gcorr]
+        self.old = v_add(target, diff)
+        self.act_off = [diff[i] * self.lin[i] for i in range(3)]
+        self.actual = v_add(target, self.act_off)
+
+
 # --------------------------------------------------------------------------
 # scenarios
 # --------------------------------------------------------------------------
@@ -187,6 +243,46 @@ def run_insert(section, bone_rest, entry, axis, radii, spacing, affected_r, fps=
                 thrust_min=min(thrust), thrust_max=max(thrust), peak=peak, after=math.sqrt(sum(x * x for x in after)))
 
 
+def run_squeeze(cls, section, bone_r, kind='steady', fps=60, hand_r=2.5, press=1.0, seconds=5.0):
+    """A hand sphere pressed into a body bone's sphere (roadmap 2): 'steady' (in over 1 s, held), 'knead' (+-0.5 at
+    1 Hz), 'grab' (in over 0.1 s). Returns (twitch, sink): twitch = the worst frame-to-frame change of the bone's shown
+    offset while the hand holds still (steady/grab, after 2 s), sink = how deep the hand ends up inside the flesh."""
+    b = cls(section, [0.0, 0.0, 0.0], bone_r)
+    lim = bone_r + hand_r
+    shown, sink = [], 0.0
+    for f in range(int(seconds * fps)):
+        t = f / fps
+        if kind == 'knead':
+            depth = min(1.0, t) * (press + 0.5 * math.sin(2 * math.pi * t))
+        elif kind == 'grab':
+            depth = press * min(1.0, max(0.0, (t - 1.0) / 0.1))
+        else:
+            depth = press * min(1.0, t)
+        hand = [0.0, lim - depth, 0.0]
+        b.update([0.0, 0.0, 0.0], [(hand, hand_r)], 1000 / fps)
+        shown.append(list(b.actual))
+        if t > 1.5:
+            sink = max(sink, lim - math.dist(b.actual, hand))
+    hold = shown[int(2.0 * fps):]
+    twitch = max(math.dist(a, c) for a, c in zip(hold, hold[1:]))
+    return twitch, sink
+
+
+def preset_section(name, path=None):
+    """One [section] of our built physics preset (build/config/Anatomy/ocbp-default.ini) as {key: float}."""
+    import pathlib
+    import re
+    path = path or pathlib.Path(__file__).resolve().parent.parent / 'build/config/Anatomy/ocbp-default.ini'
+    text = pathlib.Path(path).read_text(encoding='utf-8')
+    m = re.search(r'^\[' + re.escape(name) + r'\]\s*$(.*?)(?=^\[|\Z)', text, re.M | re.S)
+    out = {}
+    for line in m.group(1).splitlines():
+        if '=' in line and not line.lstrip().startswith(';'):
+            k, v = line.split('=', 1)
+            out[k.strip()] = float(v)
+    return out
+
+
 def contact_distance(bone_rest, entry, axis, radii, spacing, affected_r, depth=5.0):
     """Where the bone must end up geometrically: out of every sphere at full depth."""
     spheres = shaft(entry, axis, depth, radii, spacing)
@@ -215,7 +311,7 @@ def main():
              'straight up': ([0.0, 0.5, -55.9], [0.0, 0.0, 1.0]),
              'flatter': ([0.0, 0.5, -55.9], [0.0, 0.8, 0.6]),
              '0.4 to her right': ([0.4, 0.5, -55.9], [0.0, 0.48, 0.88])}
-    for bone, rest in (('Vagina_CBP_L_02', (-0.64, 1.09, -55.71)), ('Vagina_CBP_R_02', (0.53, 1.07, -55.71))):
+    for bone, rest in (('AnatLip_L', pd.REST['AnatLip_L']), ('AnatLip_R', pd.REST['AnatLip_R'])):
         ox, oy, oz, ra = pc.AFFECTED[bone][0]
         sphere = [rest[0] + ox, rest[1] + oy, rest[2] + oz]
         print(f'insert, {bone} (sphere at x {sphere[0]:+.2f}, r {ra}):')
@@ -223,8 +319,7 @@ def main():
             r = run_insert(labia, sphere, entry, axis, radii, 3.0, ra)
             print(f'  {name:17} hold {r["hold"]:.2f} (90% after {r["settle_frames"]} frames); thrusts '
                   f'{r["thrust_min"]:.2f}..{r["thrust_max"]:.2f}; peak {r["peak"]:.2f}; after withdrawal {r["after"]:.2f}')
-    ring = {'Anus_01': (0, -2.98, -54.26), 'Anus_02': (0, -2.53, -54.49), 'Anus_03': (0.10, -2.76, -54.44),
-            'Anus_04': (-0.10, -2.76, -54.44)}
+    ring = {b: pd.REST[b] for b in ('AnatAnus_F', 'AnatAnus_B', 'AnatAnus_L', 'AnatAnus_R')}
     axis = [0.0, 0.45 / math.hypot(0.45, 0.89), 0.89 / math.hypot(0.45, 0.89)]
     for shift in (0.0, 0.3):
         entry = [0.0, -2.76 - shift, -54.4]
@@ -236,6 +331,16 @@ def main():
             r = run_insert(anus, sphere, entry, axis, radii, 3.0, ra)
             print(f'  {bone}: hold {r["hold"]:.2f}; thrusts {r["thrust_min"]:.2f}..{r["thrust_max"]:.2f}; '
                   f'peak {r["peak"]:.2f}; after {r["after"]:.2f}')
+
+
+    print('squeeze (roadmap 2, A-55): a hand (r 2.5) pressed 1.0 into a body bone; twitch / sink, OCBPC -> contact')
+    presets = {'Breasts': (preset_section('Breasts'), 2.5), 'Butt': (preset_section('Butt'), 4.2)}
+    for name, (sec, r) in presets.items():
+        for kind in ('steady', 'grab', 'knead'):
+            for fps in (30, 60, 144):
+                a = run_squeeze(Bone, sec, r, kind, fps)
+                c = run_squeeze(ContactBone, sec, r, kind, fps)
+                print(f'  [{name}] {kind:6} {fps:3} fps  twitch {a[0]:.3f} -> {c[0]:.3f}  sink {a[1]:.2f} -> {c[1]:.2f}')
 
 
 if __name__ == '__main__':

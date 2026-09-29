@@ -1687,3 +1687,23 @@ scenes, the AAF menu's too.
   had no entries for the anal canal's 191 vertices (AnusPenetrate 336 -> 527 entries). BodySlide writes them itself.
 - **Staged 2026-09-30 (the owner's go):** Anatomy-dev in place (built body + its .tri, BodySlide source + osd, the three
   maps); originals in the session scratchpad (stage_bak, `stage.py --undo`). The owner looked in game: "looks good".
+
+## A-55 — The squeeze jitter: contact as a constraint, and rotateLinear on every frame (roadmap 2, 2026-09-30)
+
+- **Measured (tools/ocbpc_sim.py, run_squeeze; a hand sphere r 2.5 on a body bone's sphere):** OCBPC's response lets a
+  hand sink into the flesh (kneading: 0.15 at 60 fps, 0.45 at 30, 1.07 on a firm preset) and leaves a small steady
+  wobble (up to 0.032). The design's suspect was wrong: the push's 1/linear is a unit conversion (the engine's internal
+  offset is shown x linear), not a kick; the push lands 1:1 in shown units.
+- **Found in the source, invisible to the sim:** Thing.cpp built the shown offset WITHOUT rotateLinear on a collision
+  frame and WITH it on a free one. Contact flickers frame to frame, so any preset with a rotateLinear swings a pressed
+  bone's offset between two directions every frame. OCBPC 0.3's own CBBE preset has [Butt] rotateLinearZ=90: a 90
+  degree swing under any hand. Now rotateLinear applies on every frame (every bone; ours are all 0).
+- **Contact (fo4-ocbpc CBPSSE-RD, bones NOT named Anat...):** the spring always runs; then the bone's shown position
+  is pushed out of every collider (a few passes, the penis tubes included), the push turned back into internal units
+  (the exact inverse of the shown-offset transform, 1/linear per axis), only the velocity into the collider removed and
+  tangential velocity decaying at 8/s. Measured: steady press and grab 0.000 wobble, no sink, at 30/60/144 fps.
+  Trade: a jittery animated hand's jitter now shows in the flesh it touches (OCBPC low-passed it).
+- **The genitals keep OCBPC's push:** the constraint would hold the lips 2.43 open instead of 3.01 and the anus's back
+  3.89 -> 2.17, and the owner's dynamic lips were tuned on today's push. `[General] contactConstraint=0` in ocbp.ini
+  restores OCBPC's response everywhere.
+- The classic build (CBPSSE) is not changed: only the RD build ships (release.py).

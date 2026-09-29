@@ -45,7 +45,11 @@ positions and sliders untouched) and a rugae mucosa patch; see decisions.md A-54
 
 **Goal.** A hand pressing a breast or the butt holds still under the hand instead of twitching, with any preset.
 
-**Cause (read in code, not yet measured).** `Thing.cpp` about lines 423-435, in both engines, inherited from OCBPC:
+**Built (A-55, 2026-09-30):** measured in ocbpc_sim, the 1/linear below is a unit conversion, not a kick; the real
+finds were a hand sinking into the flesh and rotateLinear skipped on collision frames (a swing every frame under
+contact). Contact is now a constraint for body bones; the genitals keep OCBPC's push. See decisions.md A-55.
+
+**Cause (the first reading, superseded).** `Thing.cpp` about lines 423-435, in both engines, inherited from OCBPC:
 on a collision the bone's velocity is REPLACED by the push (`velocity = collisionVector * timeStep`), and the push
 is scaled by `collisionX / linearX`, so a soft preset kicks hardest (MTM's 0.05 means about 20x). The bone is
 thrown out of the hand, the spring pulls it back in, it is kicked again: a loop every frame while the hand presses.
