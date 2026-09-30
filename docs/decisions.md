@@ -1764,3 +1764,24 @@ scenes, the AAF menu's too.
   auto choice (no player ocbp.ini) -> lab BodySlide 'Anatomy Zero' --trimorphs -> neck seam (already aligned) ->
   FemaleBody.nif bc4f7d5aa831 + .tri, ShapeData, maps, ocbp-body.ini (3BBB) + collision; Vortex deployed via Event
   Horizon. The 3BBB body mod itself stays DISABLED (its ocbp.ini would replace ours). Backups: scratchpad bak3bbb.
+
+## A-58 — Outfit refits, first target: the collection's CBBE clothes onto our 3BBB body (roadmap 2, 2026-09-30)
+
+- **The owner:** the collection moves to 3BBB, so refit all its clothes; build the refit pipeline on that. Dev: ONE
+  dev mod with every refit; release: a Nexus page per body type with dozens of refits (memory: refit-release-plan).
+- **Why simple here:** 3BBB is CBBE's mesh re-weighted (A-57), so an outfit keeps its shape and sliders; only weights
+  change (the roadmap's reshape/slider steps are empty for CBBE -> 3BBB).
+- **tools/refit.py:** per garment vertex, the change the skin under it went through (our 3BBB + hip-fold body minus
+  CBBE, all bones; our Anat* nodes counted as the pelvis), inverse-distance from the 6 nearest skin vertices, full
+  within 1.0 of the skin, fading out by 2.5, added to the author's weights (sum kept, 4 bones, never across the
+  midline). Shapes already on 3BBB bones are left alone (else doubled). garments.py (A-36) does the rest: selection,
+  private BodySlide workspace, headless zero-preset --trimorphs build, verify. garments.py gained optional hooks;
+  its default hip-fold output is byte-identical to before (checked on 4 garments).
+- **Measured (trial):** garment-to-skin drift under a 1-unit breast bounce 1.53 -> 0.44 (p95 0.45 -> 0.12), butt
+  0.37 -> 0.07; the owner: full follow (lower drift = clothes bounce WITH the body; jiggle is the preset's job).
+- **Full run:** 943 worn CBBE sets; 730 refitted, BodySlide built all with no error; 727 verified (same vertices and
+  morphs as the owner's builds); 3 Grease Rat Garbs meshes (Teddy, two Wings) left out (their .tri differ from the
+  owner's old build). Packed as "Anatomy Refits 3BBB-dev" (1,454 files), installed through Event Horizon, set after
+  the 31 mods it overlaps (bodyslides_f4_sd, CBBE, the outfit mods), deployed; Data holds the refits.
+- **Open:** residual breast drift (0.44 worst: the 4-bone cap / blending), loose-cloth hems between the legs (known
+  hard case), the release packaging per body page.
