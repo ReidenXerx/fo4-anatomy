@@ -1815,3 +1815,29 @@ scenes, the AAF menu's too.
 - **BodySlide popups:** its "No read/write permission for game data path!" task dialog fires on every headless launch
   even on a writable path; garments.run_bodyslide closes it (WM_COMMAND IDOK to the #32770) - shared memory.
 - **Next:** reshape for another body (vanilla -> CBBE, CBBE -> BodyTalk): the same conform with a source body != target.
+
+## A-60 — The health check, and a penis chain with nodes between its bones (engine 1.2.0-dev, 2026-09-30)
+
+- **The owner (via Watcher, then a poll):** an automatic check in the engine, on EVERY save load, a report file every
+  time, and a message box only when something is wrong, once per game session; the penis-chain fix "both now".
+- **Chain (fork b917fb1):** asu's skeleton puts nodes between Penis_00 ... Penis_05, so every man logged "do not hang
+  one from the next" and was never aimed. Linear() now accepts descendants; the in-between nodes fold into each link
+  as one Gap (r, p, s) and a turn D the solver makes is written back as G^T D G on the bone's own local. Checked on a
+  random chain with gaps (scratchpad gap_check.py): same joints, same turned pose, errors ~1e-15. ZeX's clean chain
+  has G = identity, so it is unchanged.
+- **Health check (fork CBPSSE-RD/Health.cpp):** 10 s and 120 physics frames after kPostLoadGame, writes
+  Documents\My Games\Fallout4\F4SE\Anatomy_Health.txt:
+  1. engine: version (CMake VERSION now 1.2.0: the 1.1.x builds said 1.1.0), runtime, the file it was loaded from,
+     other *cbp*.dll in F4SE\Plugins (a problem: two engines move the same bones);
+  2. preset in use (config.cpp PresetInUse), whitelist, only-flags, the body bones it moves;
+  3. Data\...\FemaleBody.nif: loose? Anatomy's (the AnatomyGenitals string)? 3BBB (LBreast_01_skin) or CBBE? For
+     breasts and butt, the preset's bones against the names the NIF holds (length-prefixed, case-blind): none weighted
+     = a problem (a 3BBB preset on a CBBE body or the reverse);
+  4. AnatomyBuilder's stamp F4SE\Plugins\Anatomy\build.ini (new builder output: body, breasts 3bbb|moved|cloth, the
+     player's ocbp.ini FNV-1a): the body built against the NIF, and the breasts' weighting against the preset
+     running NOW (the builder's own rule, breasts_driven / tbbb.choose); a changed ocbp.ini alone is only reported;
+  5. actors the physics runs on; each woman's shapes and our bones in her skin (Bones.cpp DescribeBody, guarded);
+     each man's chain (Aim.cpp AimChainState). Problems: the player (a woman) not simulated; no man with a working
+     chain.
+  The box: MessageMenuManager::Create resolved through Hook::Resolve (ids 89563/2249456, singleton 959572/4796373),
+  called under __try; a runtime without the ids shows nothing and says so in cbp.log.

@@ -52,6 +52,7 @@ OUTPUTS = {                                         # published path -> produced
     'Materials/Anatomy/AnatomyGenitals.bgsm': None,
     'F4SE/Plugins/Anatomy/ocbp-body.ini': None,                     # A-57: the physics for the body built (CBBE/3BBB)
     'F4SE/Plugins/Anatomy/OCBPCollisionConfig-body.txt': None,
+    'F4SE/Plugins/Anatomy/build.ini': None,                         # what was built, for the engine's health check
 }
 SKELETON = 'Meshes/Actors/Character/CharacterAssets/skeleton.nif'
 FEMALE_SKELETON = 'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif'   # what women load (A-57: 3BBB's bones)
@@ -102,6 +103,25 @@ def breasts_driven(game):
     driven = {'LBreast_skin', 'RBreast_skin'} <= attach
     whose = 'your ocbp.ini' if preset.endswith('/ocbp.ini') else "Anatomy's default preset (you have no ocbp.ini)"
     return driven, f'{whose}: [Attach] {"names" if driven else "does not name"} LBreast_skin and RBreast_skin'
+
+
+def fnv1a(blob):
+    """The engine's hash (Health.cpp Fnv1a): 32-bit FNV-1a, lowercase hex."""
+    h = 2166136261
+    for b in blob:
+        h = ((h ^ b) * 16777619) & 0xFFFFFFFF
+    return f'{h:08x}'
+
+
+def stamp(body, breasts, preset_bytes):
+    """F4SE/Plugins/Anatomy/build.ini: the body built and where its breasts are weighted, and the player's ocbp.ini
+    as it was (the engine's health check tells a preset changed since from one that no longer fits)."""
+    return ('; written by AnatomyBuilder: what it built, read by Anatomy Engine\'s health check\n'
+            '[Build]\n'
+            f'date={time.strftime("%Y-%m-%d %H:%M")}\n'
+            f'body={body}\n'
+            f'breasts={breasts}\n'
+            f'presetHash={fnv1a(preset_bytes) if preset_bytes is not None else "none"}\n')
 
 
 def run_stage(label, fn):
@@ -205,10 +225,12 @@ def main():
             verify_zex.WOMEN_SKELETON = women
             print(f'   input {game.describe(tbbb.SHAPEDATA)}  sha1 {sha(game.read(tbbb.SHAPEDATA))}')
             zb.MOVE_BREASTS = False
+            breasts = '3bbb'
             print('   breasts: keep 3BBB\'s own breast bones')
         else:
             driven, why = breasts_driven(game)
             zb.MOVE_BREASTS = driven
+            breasts = 'moved' if driven else 'cloth'
             print(f'   breasts: {"move onto LBreast_skin/RBreast_skin" if driven else "keep CBBE\'s cloth weights"} ({why})')
         sg.PROJECT = ab.OUT
         gt.OUT = work / 'textures'
@@ -264,6 +286,10 @@ def main():
         kind = '-3bbb' if on_3bbb else ''
         produced['F4SE/Plugins/Anatomy/ocbp-body.ini'] = PRESETS / f'ocbp-default{kind}.ini'
         produced['F4SE/Plugins/Anatomy/OCBPCollisionConfig-body.txt'] = PRESETS / f'OCBPCollisionConfig-default{kind}.txt'
+        built = work / 'build.ini'
+        built.write_text(stamp('3bbb' if on_3bbb else 'cbbe', breasts, game.read(theirs) if theirs else None),
+                         encoding='utf-8')
+        produced['F4SE/Plugins/Anatomy/build.ini'] = built
         if set(produced) != set(OUTPUTS):
             raise SystemExit('internal: the output list changed')
         dest = pathlib.Path(args.out) if args.out else data
