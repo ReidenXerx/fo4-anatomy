@@ -488,7 +488,8 @@ def run_bodyslide(cmd, cwd, timeout):
             for h in tops:
                 pid = wintypes.DWORD()
                 user32.GetWindowThreadProcessId(h, ctypes.byref(pid))
-                if pid.value != proc.pid or not user32.IsWindowVisible(h) or text(h) != 'Warning':
+                title = text(h) if pid.value == proc.pid and user32.IsWindowVisible(h) else ''
+                if title not in ('Warning', 'Failed'):   # the game data path check; a group build's failed-sets list
                     continue
                 buf = ctypes.create_unicode_buffer(64)
                 user32.GetClassNameW(h, buf, 64)
@@ -497,7 +498,8 @@ def run_bodyslide(cmd, cwd, timeout):
                 # a Windows task dialog (its text lives in a DirectUIHWND: no child to read or click), so the
                 # dialog itself gets IDOK; the build's own log still decides whether the build succeeded
                 user32.PostMessageW(h, 0x0111, 1, 0)                   # WM_COMMAND IDOK, no focus taken
-                answered.append('closed a BodySlide "Warning" task dialog (the game data path check)')
+                answered.append(f'closed a BodySlide "{title}" dialog' + (' (the game data path check)' if
+                                title == 'Warning' else ' (its failed sets are in Log_BS.txt)'))
             stop.wait(0.3)
     t = threading.Thread(target=watch, daemon=True)
     t.start()
