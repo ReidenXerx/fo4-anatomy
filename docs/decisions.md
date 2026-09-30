@@ -1873,3 +1873,14 @@ scenes, the AAF menu's too.
 - **regen:** "All group build sets processed successfully!" is no longer taken on trust. Every member set of the
   group must have written its .nif during the run, or it is named "not built: <set>" and the build is not ok
   (BodySlide once skipped 9 sets and still logged success).
+
+## A-64 — The builder writes in place when a rename cannot cross drives (mb1205, 2026-09-30)
+
+- **Report (Discord, via Watcher):** AnatomyBuilder 1.0.7 and 1.0.12 stop with WinError 17 "cannot move the file to a
+  different disk drive" on SliderSets/Anatomy.osp.anatomy-new -> Anatomy.osp, both paths on the same drive letter.
+  A virtual Data (MO2's usvfs) puts the new file in its Overwrite folder and the old one in a mod's folder, which
+  can be two drives.
+- **Fix (builder.py):** os.replace stays (a crash never leaves half a file); on WinError 17 / EXDEV the file is copied
+  over the target and the .anatomy-new removed.
+- **Proof (scratch builder_x17):** every rename refused as WinError 17: all 12 outputs written, none left behind,
+  11 byte-identical to a normal run and build.ini different only in its date line.
