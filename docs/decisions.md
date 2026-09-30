@@ -1903,3 +1903,4 @@ scenes, the AAF menu's too.
   serial loop does. The workers' scratch folders live under one folder the build removes (they leaked in %TEMP%).
 - Proof: a planted failing check stops the build at once with its message; the parallel output stays byte-identical
   to the serial one (91 files).
+- **Wave 2:** a worker's real bug (not SystemExit) now carries its traceback text back, not only its repr.

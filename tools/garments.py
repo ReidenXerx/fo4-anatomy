@@ -604,7 +604,9 @@ def _patch_one(job):
     try:
         return dst, patch_nif(_PW['body'], src, dst, _PW['xfer'], _PW['chk'], _PW['to_body']), None
     except BaseException as e:                 # noqa: B902 - SystemExit is the case that matters
-        return dst, None, f'{src.name}: {e!r}'
+        import traceback                       # a real bug keeps its traceback (the Pool would have shown it)
+        detail = '' if isinstance(e, SystemExit) else '\n' + traceback.format_exc()
+        return dst, None, f'{src.name}: {e!r}{detail}'
 
 
 def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None, workers=1, skip=None):
