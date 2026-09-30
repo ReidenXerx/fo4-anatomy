@@ -587,22 +587,49 @@ def workspace(bs, work, target):
     return home
 
 
-def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None):
-    """body/xfer/chk: another transfer (fo4-refit tools/refit.py, A-58); the hip fold's by default."""
+_PW = {}
+
+
+def _patch_init(body, xfer, chk, to_body):
+    import tempfile
+    global WORK
+    WORK = pathlib.Path(tempfile.mkdtemp(prefix='garments-'))   # reparse's scratch file: one per process
+    _PW.update(body=body, xfer=xfer, chk=chk, to_body=to_body)
+
+
+def _patch_one(job):
+    src, dst = job
+    return dst, patch_nif(_PW['body'], src, dst, _PW['xfer'], _PW['chk'], _PW['to_body'])
+
+
+def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None, workers=1):
+    """body/xfer/chk: another transfer (fo4-refit tools/refit.py, A-58); the hip fold's by default.
+    workers > 1: the ShapeData files are patched by that many processes (fo4-refit: 943 sets, 36 min on one core).
+    Sets that share one source file are patched once. Reports and output are the same as the serial loop's."""
     targets, left = plan(bs, data)
     if only:
         targets = [t for t in targets if any(o.lower() in t['name'].lower() for o in only)]
     home = workspace(bs, work, target)
     body = body or Body(bs)
     print(f"body: {len(body.band)} vertices where our body's weights differ from CBBE's")
+    reports = {}
+    if workers > 1:
+        import multiprocessing as mp
+        jobs = {}
+        for t in targets:
+            jobs.setdefault(home / 'ShapeData' / t['folder'] / t['src'], bs / 'ShapeData' / t['folder'] / t['src'])
+        with mp.Pool(workers, initializer=_patch_init, initargs=(body, xfer, chk, to_body)) as pool:
+            for dst, report in pool.imap_unordered(_patch_one, [(s, d) for d, s in jobs.items()]):
+                reports[dst] = report
     built, off = [], []
     for t in targets:
         src = bs / 'ShapeData' / t['folder'] / t['src']
         dst = home / 'ShapeData' / t['folder'] / t['src']
-        report = patch_nif(body, src, dst, xfer, chk, to_body)
+        report = reports[dst] if dst in reports else patch_nif(body, src, dst, xfer, chk, to_body)
         moved = {k: v for k, v in report.items() if isinstance(v, int)}
         if not moved:
-            dst.unlink()
+            if dst.exists():                              # a source file two sets share goes once
+                dst.unlink()
             off.append(t['name'])
             continue
         for where, f in t['data']:

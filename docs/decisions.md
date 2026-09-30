@@ -1874,6 +1874,12 @@ scenes, the AAF menu's too.
   group must have written its .nif during the run, or it is named "not built: <set>" and the build is not ok
   (BodySlide once skipped 9 sets and still logged success).
 
+## A-63 — garments.build patches sets in parallel on request (fo4-refit, 2026-09-30)
+
+- build(workers=N) patches the ShapeData files with N processes (each set is independent; a source file two sets share
+  is patched once). workers=1, the default and the hip fold's own build, is the serial loop as before.
+- Proof (scratch parallel_proof): 71 sets with the refit transfer and placement, serial vs 8 workers: the same sets,
+  the same reports, every patched file byte-identical; 273 s vs 62 s. fo4-refit passes workers=11.
 ## A-64 — The builder writes in place when a rename cannot cross drives (mb1205, 2026-09-30)
 
 - **Report (Discord, via Watcher):** AnatomyBuilder 1.0.7 and 1.0.12 stop with WinError 17 "cannot move the file to a
