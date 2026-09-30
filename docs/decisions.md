@@ -1904,3 +1904,48 @@ scenes, the AAF menu's too.
 - Proof: a planted failing check stops the build at once with its message; the parallel output stays byte-identical
   to the serial one (91 files).
 - **Wave 2:** a worker's real bug (not SystemExit) now carries its traceback text back, not only its repr.
+
+## A-67 — Engine-driven sex sounds: the design (roadmap item 3, the owner's polls 2026-09-30)
+
+- **Research (Sonnet, measured on the owner's data):** every installed pack fires its body sounds AND its voices as
+  "SoundPlay.<SNDR EDID>" annotations in its .hkx (BP70 481/532 files, DR_pack 167/289, Atomic Lust 20/96, ZaZOut4 47/66,
+  CHAK 26/101; Rufgt none). ~90 SNDRs, each in its pack's plugin, all 3D mono on VANILLA shared sound categories.
+  Nothing plays through AAF XML, the AAF DLL or Papyrus, except dialogue-topic moans (Atomic Lust, UAP Moans).
+  No pack makes furniture creaks.
+- **Muting = an ENGINE HOOK** (the owner: pack authors are "inconsistent and often noobish"; "we rule by our own"): the
+  engine drops SoundPlay annotation events for actors in a scene while the override is on. Not a generated patch of
+  the packs' SNDRs. Covers future packs with no per-pack work. Case-insensitive ("Soundplay." exists).
+- **The packs' voices are muted too**; Rapport's voices replace them (engine = body sounds, Rapport = voices; one
+  toggle in Rapport's MCM reaches the engine over the Rapport -> engine messaging).
+- **Our clips and their SNDRs ship in Anatomy.esp**, the clips as loose files under Sound\FX\Anatomy\.
+- **Blocker, first work:** CommonLibF4RD has no audio API. Needed on OG 1.10.163 AND AE 1.11.240: BSAudioManager
+  singleton, GetSoundHandleByName (OG id 196484 in the old CommonLibF4), BSSoundHandle play/fade/stop, follow-a-node,
+  volume, frequency; and the function that plays a SoundPlay annotation (the hook point). Tools: fo4-ocbpc tools/rd.
+- **Audio API found (2026-09-30), OG 1.10.163 / AE 1.11.240 Address Library ids**, from the Papyrus Sound natives
+  (Play, StopInstance, SetInstanceVolume name strings -> their native -> the handle wrappers), then AE twins by the
+  same natives and the wrappers' identical layout (offsets from Play equal on both), each confirmed by code shape:
+  BSAudioManager::Get 679748/2267093; BuildSoundDataFromDescriptor(mgr, BSSoundHandle&, BSISoundDescriptor* =
+  form+0x20, float dist, u32 flags=0x10, void* =0) 1419045/2267105; GetSoundHandleByName 196484/2267104;
+  BSSoundHandle: Play 384073/2267042, Stop 1340948/2267045, IsPlaying 1514207/2267046, SetVolume(float)
+  422259/2267057, SetFrequency(float, by elimination; confirm by ear) 940583/2267059, SetObjectToFollow(NiAVObject*)
+  1179144/2267066, FadeInPlay(u16 ms) 353528/2267075, FadeOutAndRelease(u16 ms) 260328/2267076; listener distance
+  helper 1442297/2267159. Handle = {u32 id = -1, u8 assumeSuccess, u8 state} (state 1 playing, 2 stopped, 3 paused).
+  Next: the SoundPlay annotation handler (strings "SoundPlay"/"SoundPlayAt" -> BSFixedString globals OG 0x58D4430 /
+  0x58D4438; find the code comparing an event tag to them).
+- **The mute hook point found:** the animation sound-event handler, OG 0x16C210 = id 936308, AE 0x323090 = id
+  2193468. One argument, the event: tag BSFixedString at +0x8 ("SoundPlay", "SoundPlayAt", ...; compared by pointer
+  to the pooled globals, OG 0x58D4430/0x58D4438, AE 0x30EC0B8/0x30EC0C0), the sound's EDID (the text after the dot)
+  at +0x18, the reference's handle (u32) at +0x20. Returns 0 always. SoundPlay resolves the descriptor through
+  OG 0x16D490 (id 1061737) and plays nothing when that is null. Hook: detour 936308/2193468; when the override is
+  on, the tag is SoundPlay/SoundPlayAt (compare c_str, case-insensitive) and the handle is an actor in a scene,
+  return 0 without calling the original.
+- **Hook as a call site** (the fork's Hook::CallSite + WriteCall; no function detours): inside the handler
+  936308/2193468 the SoundPlay branch calls the descriptor resolver OG 0x16D490 = id 1061737, AE 0x324AD0 = id
+  2193485, as (TESObjectREFR* ref, BSFixedString* soundEDID) -> descriptor or null; null plays nothing. Our thunk
+  returns null for an actor in a scene while the override is on, else calls through. SoundPlayAt (no pack uses it)
+  is not covered by this site.
+- **The mute WORKS in game (the owner, 2026-10-01, AE 1.11.240, BP70 missionary):** "sounds muted in the same scene".
+  The handler calls the lookup at TWO sites on both runtimes (AE 0x3231B9/0x323332, OG 0x16C2DB/0x16C484: plain
+  SoundPlay, and the name split from a longer tag), so Hook::CallSites hooks both (fork c5b2049). cbp log muted
+  BP70SoundSexSlap, BP70SoundPenetrate, BP70SoundSpank and the BP70 voices (female/male Vanilla + Breathing) for
+  both actors. OG not tried in game yet.

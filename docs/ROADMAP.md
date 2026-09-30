@@ -35,6 +35,12 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
 
 ## Later (low priority)
 
+- **Collision spheres fitted to each player's body** (the owner, 2026-10-01: low priority, "with supporting cbbe
+  and 3bbb reasonable shapes we are good"): AnatomyBuilder writes OCBPCollisionConfig-body.txt from one of two
+  fixed presets (CBBE, 3BBB; spheres measured once on the reference body, tools/default_preset.py). A very big or
+  small BodySlide preset keeps those sizes. AnatomyRebuild runs after every BodySlide build and could measure the
+  built body and write spheres that fit it.
+
 - **The inner-thigh crease** (A-56): an engine-driven corrective bone at the lip-thigh fold, moved by the
   thigh's angle, is the one untried route past A-30's 4x in legs-up poses; over-body garment weights with it.
 - **Men's anus**: a second opening on BodyTalk4 men (geometry, canal, bones at run time, an aim target), built on
