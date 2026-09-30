@@ -352,7 +352,7 @@ def check(positions, before, after):
 
 def patch_nif(body, src, dst, xfer=None, chk=None):
     """Patch every skinned shape of one ShapeData .nif into dst. Returns {shape: changed vertices or why not}.
-    xfer/chk: another weight transfer and its proof (tools/refit.py, A-58); the hip fold's by default."""
+    xfer/chk: another weight transfer and its proof (fo4-refit tools/refit.py, A-58); the hip fold's by default."""
     xfer, chk = xfer or transfer, chk or check
     n = nif.Nif(src)
     report, plans = {}, {}
@@ -554,7 +554,7 @@ def workspace(bs, work, target):
 
 
 def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None):
-    """body/xfer/chk: another transfer (tools/refit.py, A-58); the hip fold's by default."""
+    """body/xfer/chk: another transfer (fo4-refit tools/refit.py, A-58); the hip fold's by default."""
     targets, left = plan(bs, data)
     if only:
         targets = [t for t in targets if any(o.lower() in t['name'].lower() for o in only)]

@@ -1816,6 +1816,10 @@ scenes, the AAF menu's too.
   even on a writable path; garments.run_bodyslide closes it (WM_COMMAND IDOK to the #32770) - shared memory.
 - **Next:** reshape for another body (vanilla -> CBBE, CBBE -> BodyTalk): the same conform with a source body != target.
 
+- **Moved (2026-09-30, owner):** the refit pipeline (refit.py, conform.py and their studies) now lives in its own
+  private repo, ReidenXerx/fo4-refit (these two entries are its R-1, R-2). It still imports this repo's mesh tools
+  (garments.py and the rest) through tools/anatomy_tools.py there.
+
 ## A-60 — The health check, and a penis chain with nodes between its bones (engine 1.2.0-dev, 2026-09-30)
 
 - **The owner (via Watcher, then a poll):** an automatic check in the engine, on EVERY save load, a report file every
