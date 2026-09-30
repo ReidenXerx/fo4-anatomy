@@ -248,9 +248,50 @@ def ba2(bs, data, out):
     return done
 
 
+_W = {}
+
+
+def _init_worker(bs):
+    import os
+    for v in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
+        os.environ[v] = '1'                           # one BLAS thread per worker: the pool already fills the cores
+    import conform
+    import tempfile
+    g.WORK = pathlib.Path(tempfile.mkdtemp(prefix='refit-'))     # garments.reparse's scratch file, one per process
+    _W['body'], _W['change'] = conform.Body(bs), Change(bs)
+
+
+def _project(job):
+    import conform
+    model, src, home = job
+    name = 'Anatomy3BBB ' + model.replace('\\', ' ').replace('/', ' ')[-60:]
+    try:
+        return conform.make_project(_W['body'], _W['change'], pathlib.Path(src), model, pathlib.Path(home), name)
+    except SystemExit as e:
+        return dict(model=model, skipped=str(e))
+
+
+def projects(bs, work, jobs, workers=11):
+    """A BodySlide project per outfit mesh (conform.py, A-59), in parallel (one process per core but one; each loads
+    the body once). jobs: [(model, source .nif)]. Returns (home, reports)."""
+    import multiprocessing as mp
+    home = g.workspace(bs, work, work / 'built')
+    with mp.Pool(workers, initializer=_init_worker, initargs=(bs,)) as pool:
+        reports = list(pool.imap_unordered(_project, [(m, str(s), str(home)) for m, s in jobs]))
+    import xml.etree.ElementTree as ET
+    root = ET.Element('SliderGroups')
+    grp = ET.SubElement(root, 'Group', name=GROUP)
+    for r in sorted(reports, key=lambda r: r.get('set', '')):
+        if 'set' in r:
+            ET.SubElement(grp, 'Member', name=r['set'])
+    ET.indent(root)
+    ET.ElementTree(root).write(home / 'SliderGroups' / f'{GROUP}.xml', encoding='UTF-8', xml_declaration=True)
+    return home, reports
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('what', choices=('plan', 'trial', 'build', 'regen', 'verify', 'install', 'all', 'ba2'))
+    ap.add_argument('what', choices=('plan', 'trial', 'build', 'regen', 'verify', 'install', 'all', 'ba2', 'projects'))
     ap.add_argument('--data', type=pathlib.Path, default=AE_DATA)
     ap.add_argument('--work', type=pathlib.Path, default=WORK)
     ap.add_argument('--target', type=pathlib.Path, default=WORK / 'built')
@@ -265,6 +306,31 @@ def main():
         print(f'{len(targets)} CBBE garments worn as a woman\'s model')
         for reason, names in sorted(left.items(), key=lambda kv: -len(kv[1])):
             print(f'  left {len(names):4}: {reason}')
+        return
+    if args.what == 'projects':
+        # the BA2-only outfits `ba2` selected (their refitted meshes carry the original positions): each becomes a
+        # BodySlide project, then BodySlide builds the group at --preset
+        import gamedata
+        game = gamedata.Game(args.data)
+        work = args.work / 'projects'
+        src_dir = work / 'src'
+        src_dir.mkdir(parents=True, exist_ok=True)
+        jobs = []
+        for p in sorted((args.work / 'ba2').rglob('*.nif')):
+            rel = p.relative_to(args.work / 'ba2').as_posix()
+            model = rel[len('Meshes/'):-4].replace('/', '\\').lower()
+            src = src_dir / (model.replace('\\', '_') + '.nif')
+            src.write_bytes(game.read(rel))                 # the ORIGINAL mesh, straight from its archive
+            jobs.append((model, src))
+        home, reports = projects(bs, work, jobs)
+        made = [r for r in reports if 'set' in r]
+        print(f'{len(made)} projects, {len(reports) - len(made)} skipped:',
+              [(r['model'], r.get('skipped')) for r in reports if 'set' not in r][:10])
+        print('presets detected:', collections.Counter(r['preset'] for r in made).most_common())
+        code, ok, errors = g.regen(home, work / 'built', args.preset)
+        print(f"BodySlide exit {code}; {'all sets built' if ok else 'NOT all sets built'}; {len(errors)} error lines")
+        for e in errors[:20]:
+            print('   ', e)
         return
     if args.what == 'ba2':
         out = args.work / 'ba2'

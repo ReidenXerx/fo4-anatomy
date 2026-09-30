@@ -15,6 +15,8 @@ Shapes with their own transform (rigid attachments) keep their shape and get no 
 """
 import collections
 import math
+
+import numpy as np
 import pathlib
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape, quoteattr
@@ -39,10 +41,12 @@ class Body:
         self.cset, sliders = ab.read_set(bs / 'SliderSets/CBBE.osp', ab.CBBE_SET)
         self.sliders = [(name, attrs) for name, attrs, _, _ in sliders]
         self.pos, self.diff = [], collections.defaultdict(dict)   # diff[slider][body vertex] = (x, y, z)
+        self.tris = []
         for shape in SHAPES:
             s = n.shape(shape)
             base = len(self.pos)
             self.pos += s.positions()
+            self.tris += [(a + base, b + base, c + base) for a, b, c in s.triangles()]
             for name, _ in self.sliders:
                 for i, d in data.get(shape + name, {}).items():
                     self.diff[name][base + i] = d
@@ -61,66 +65,85 @@ class Body:
                 self.presets[pr.get('name')] = vals
         self._shaped = {}
 
+    def _arrays(self):
+        if not hasattr(self, 'P'):
+            self.P = np.array(self.pos, dtype=np.float64)
+            self.snames = [nm for nm, _ in self.sliders if self.diff.get(nm)]
+            self.D = np.zeros((len(self.snames), len(self.pos), 3), dtype=np.float32)
+            for k, nm in enumerate(self.snames):
+                items = self.diff[nm]
+                idx = np.fromiter(items.keys(), dtype=np.int64, count=len(items))
+                self.D[k, idx] = np.array(list(items.values()), dtype=np.float32)
+            self.T = np.array(self.tris, dtype=np.int64)
+
     def shaped(self, preset):
-        """(positions, grid) of the body built with a preset."""
+        """(positions N x 3, normals N x 3) of the body built with a preset (numpy)."""
+        self._arrays()
         if preset not in self._shaped:
-            vals = self.presets[preset]
-            pos = [list(p) for p in self.pos]
-            for name, v in vals.items():
-                if not v:
-                    continue
-                for i, d in self.diff.get(name, {}).items():
-                    for k in range(3):
-                        pos[i][k] += v * d[k]
-            self._shaped[preset] = (pos, g.Grid(pos))
+            v = np.array([self.presets[preset].get(nm, 0.0) for nm in self.snames], dtype=np.float64)
+            pos = self.P + np.einsum('s,snk->nk', v, self.D.astype(np.float64))
+            a, b, c = pos[self.T[:, 0]], pos[self.T[:, 1]], pos[self.T[:, 2]]
+            fn = np.cross(b - a, c - a)                    # area-weighted vertex normals, for inside/outside
+            nrm = np.zeros_like(pos)
+            for j in range(3):
+                np.add.at(nrm, self.T[:, j], fn)
+            nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
+            self._shaped[preset] = (pos, nrm)
         return self._shaped[preset]
 
-    def nearest(self, grid, q):
-        """[(distance, body vertex)] of the K nearest, however far."""
-        for r in (1.0, 3.0, 8.0, 20.0, 60.0):
-            h = grid.within(q, r)
-            if len(h) >= K:
-                return h[:K]
-        return grid.within(q, 200.0)[:K]
+    def knn(self, preset, q, k=K):
+        """(distances M x k, body vertices M x k) of the k nearest body vertices, however far (chunked brute force)."""
+        pos, _ = self.shaped(preset)
+        q = np.asarray(q, dtype=np.float64).reshape(-1, 3)
+        b = pos.astype(np.float32)
+        bb = (b * b).sum(1)
+        dist, idx = np.empty((len(q), k)), np.empty((len(q), k), dtype=np.int64)
+        for s0 in range(0, len(q), 512):
+            qq = q[s0:s0 + 512].astype(np.float32)
+            d2 = (qq * qq).sum(1)[:, None] + bb[None, :] - 2.0 * (qq @ b.T)
+            part = np.argpartition(d2, k, axis=1)[:, :k]
+            dd = np.take_along_axis(d2, part, 1)
+            order = np.argsort(dd, axis=1)
+            idx[s0:s0 + 512] = np.take_along_axis(part, order, 1)
+            dist[s0:s0 + 512] = np.sqrt(np.maximum(np.take_along_axis(dd, order, 1), 0.0))
+        return dist, idx
 
-    def offsets(self, grid, q, values=None):
-        """{slider: (x, y, z)} at q, blended from the nearest body vertices; with values, their sum as one offset."""
-        hits = self.nearest(grid, q)
-        wsum = sum(1.0 / max(d, 1e-3) for d, _ in hits)
-        out = {}
-        for name, _ in self.sliders:
-            dd = self.diff.get(name)
-            if not dd:
-                continue
-            acc = [0.0, 0.0, 0.0]
-            for d, i in hits:
-                x = dd.get(i)
-                if x:
-                    w = 1.0 / max(d, 1e-3) / wsum
-                    for k in range(3):
-                        acc[k] += w * x[k]
-            if any(abs(a) > 1e-5 for a in acc):
-                out[name] = tuple(acc)
-        if values is None:
-            return out
-        return tuple(sum(values.get(nm, 0.0) * v[k] for nm, v in out.items()) for k in range(3))
+    def signed(self, preset, points, reach=2.0):
+        """[distance outside (+) or inside (-) the body built with a preset] for the points within reach of it."""
+        pos, nrm = self.shaped(preset)
+        q = np.asarray(points, dtype=np.float64).reshape(-1, 3)
+        dist, idx = self.knn(preset, q, 1)
+        keep = dist[:, 0] <= reach
+        j = idx[keep, 0]
+        return list(((q[keep] - pos[j]) * nrm[j]).sum(1))
+
+    def offsets_all(self, preset, q):
+        """Every slider's offset at every point: array M x S x 3 (self.snames order), inverse-distance blended from
+        the K nearest body vertices of the body built with the preset."""
+        dist, idx = self.knn(preset, q, K)
+        w = 1.0 / np.maximum(dist, 1e-3)
+        w /= w.sum(1, keepdims=True)
+        out = np.zeros((len(idx), len(self.snames), 3), dtype=np.float32)
+        for k in range(K):
+            out += w[:, k, None, None].astype(np.float32) * self.D[:, idx[:, k], :].transpose(1, 0, 2)
+        return out
 
     def detect(self, points):
-        """(preset, mean distance) whose body the skin-side points hug best."""
+        """(preset, share inside) the mesh was built with: the one whose body pokes through it least (an author
+        fixes clipping at the preset they build with), then the tightest fit (the tenth-percentile gap). Measured
+        (A-59, 24 BA2 outfits, clipping re-targeted to three presets): this pick 3.4% against the best possible 3.3%;
+        the mean gap (the first version) 9.7%, always Zeroed 6.5%."""
         best = None
         for preset in self.presets:
-            _, grid = self.shaped(preset)
-            ds = []
-            for q in points:
-                h = grid.within(q, 2.0)
-                if h:
-                    ds.append(h[0][0])
-            if len(ds) < max(10, len(points) // 4):
+            sd = self.signed(preset, points)
+            if len(sd) < max(10, len(points) // 4):
                 continue
-            score = sum(ds) / len(ds)
-            if best is None or score < best[1]:
-                best = (preset, score)
-        return best
+            inside = sum(1 for d in sd if d < -0.2) / len(sd)
+            gaps = sorted(abs(d) for d in sd)
+            key = (round(inside, 2), gaps[len(gaps) // 10])
+            if best is None or key < best[1]:
+                best = (preset, key)
+        return None if best is None else (best[0], best[1][0])
 
 
 def make_project(body, change, src, model, home, set_name):
@@ -132,8 +155,7 @@ def make_project(body, change, src, model, home, set_name):
     if found is None:
         return dict(model=model, skipped='does not sit on the body')
     preset, score = found
-    values = body.presets[preset]
-    _, grid = body.shaped(preset)
+    vals = np.array([body.presets[preset].get(nm, 0.0) for nm in body.snames], dtype=np.float32)
     folder = home / 'ShapeData' / set_name
     folder.mkdir(parents=True, exist_ok=True)
     dst = folder / f'{set_name}.nif'
@@ -142,12 +164,16 @@ def make_project(body, change, src, model, home, set_name):
     for s in n.shapes():                                  # the reference shape: the preset's offsets taken out
         if s.name not in names:
             continue
-        for i, q in enumerate(s.positions()):
-            offs = body.offsets(grid, q)
-            shift = tuple(sum(values.get(nm, 0.0) * v[k] for nm, v in offs.items()) for k in range(3))
-            s.set_position(i, tuple(q[k] - shift[k] for k in range(3)))
-            for nm, v in offs.items():
-                data.setdefault(s.name + nm, {})[i] = v
+        pos = np.array(s.positions(), dtype=np.float64)
+        offs = body.offsets_all(preset, pos)              # M x S x 3
+        ref_pos = pos - np.einsum('s,msk->mk', vals, offs)
+        for i, q in enumerate(ref_pos):
+            s.set_position(i, tuple(float(x) for x in q))
+        live = np.abs(offs).max(axis=2) > 1e-5            # M x S
+        for k, nm in enumerate(body.snames):
+            rows = np.nonzero(live[:, k])[0]
+            if len(rows):
+                data[s.name + nm] = {int(i): tuple(float(x) for x in offs[i, k]) for i in rows}
     ref = folder / '_reference.nif'
     n.save(ref)
     g.patch_nif(change, ref, dst, refit.transfer, refit.check)        # the weights, on the reference shape
@@ -175,5 +201,5 @@ def make_project(body, change, src, model, home, set_name):
     L += ['    </SliderSet>', '</SliderSetInfo>', '']
     (home / 'SliderSets').mkdir(parents=True, exist_ok=True)
     (home / 'SliderSets' / f'{set_name}.osp').write_text('\n'.join(L), encoding='utf-8')
-    return dict(model=model, set=set_name, preset=preset, fit=round(score, 3), shapes=len(shapes),
+    return dict(model=model, set=set_name, preset=preset, inside=round(score, 3), shapes=len(shapes),
                 sliders=len({k for k in data}))

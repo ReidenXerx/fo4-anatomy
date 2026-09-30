@@ -1792,3 +1792,26 @@ scenes, the AAF menu's too.
   vertices and bodies/creatures skipped: 183 outfits refitted, added to the dev mod (1,637 files), deployed.
 - **Next (the owner, 2026-09-30):** from a clothing mesh ALONE (no BodySlide files), make a proper BodySlide project
   for any body: reshape, weights, every target slider conformed, rigid parts, verified (roadmap refit steps 1-5).
+
+## A-59 — A BodySlide project from a clothing mesh alone (roadmap 2, 2026-09-30)
+
+- **The owner:** "without them at all if we have only just a clothing mod we should be able make proper bodyslide to
+  any body". First target: the 183 BA2-only outfits of A-58 (CBBE-made, no BodySlide set), CBBE sliders + 3BBB weights.
+- **tools/conform.py:** a built mesh = reference + sum(slider data x preset value) (no CBBE slider is inverted).
+  1. the preset it was built with: the one whose body pokes through it LEAST, then the tightest tenth-percentile gap.
+     Offline study (24 outfits, clipping after re-targeting to Curvy/Slim/Zeroed, BodySlide math reproduced in Python):
+     this pick 3.4% against the best possible 3.3%; the mean gap (first version) 9.7%; always Zeroed 6.5%;
+  2. the reference shape: each vertex minus that preset's offsets; 3. every CBBE slider's data from the six nearest
+     body vertices (inverse distance; the Anatomy body's CBBE and genital shapes); 4. refit.transfer's weights on the
+     reference shape; 5. a normal project (ShapeData .nif/.osd, SliderSets .osp, output = the game's mesh path).
+  Round trip: BodySlide at the detected preset rebuilds the original to 0.016-0.031.
+- **Speed (the owner: "use multithreading"):** numpy core (chunked brute-force nearest neighbours, sliders as arrays)
+  and a process per core but one (refit.py projects, one BLAS thread each): 171 projects + the BodySlide build in 7.5
+  minutes (the pure-Python radius search spent hours on armour); same results (banana: 0.014 / 0.05).
+- **Result:** 171 projects (12 skipped: they do not sit on the female body - Point Lookout merc outfits, a male chest);
+  inside the owner's game body: static refits 7.5% -> projects built Zeroed 4.9% (100 outfits better, 19 worse, worst
+  Junk Legion lower 15 -> 104 of ~1000). Live in "Anatomy Refits 3BBB-dev": the meshes plus the 171 sets and the group
+  "Anatomy Refit 3BBB" in Tools\BodySlide, so any preset can rebuild them.
+- **BodySlide popups:** its "No read/write permission for game data path!" task dialog fires on every headless launch
+  even on a writable path; garments.run_bodyslide closes it (WM_COMMAND IDOK to the #32770) - shared memory.
+- **Next:** reshape for another body (vanilla -> CBBE, CBBE -> BodyTalk): the same conform with a source body != target.
