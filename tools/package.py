@@ -8,6 +8,8 @@
     F4SE/Plugins/cbp.dll                                            the fo4-ocbpc fork (A-17): must win over
                                                                     Jiggle Physics and OCBPC-0.3-CBBE
     Anatomy.esp, Scripts/Anatomy/Arousal.pex                        arousal and nipples (A-16): tools/make_esp.py
+    Sound/FX/Anatomy/*.wav                                          the engine's sex sounds (A-67): make_sounds.py;
+                                                                    Anatomy.esp's SNDRs name every clip
                                                                     and scripts/build-papyrus.ps1; the plugin
                                                                     must be enabled
     MCM/Config/Anatomy/config.json, settings.ini                    the arousal menu (tools/build_mcm.py)
@@ -42,6 +44,7 @@ SKELETON = ROOT / 'build/skeleton/female/skeleton.nif'
 PLUGIN = ROOT / 'build/plugin/Anatomy.esp'
 PAPYRUS = ROOT / 'build/papyrus'
 MCM = ROOT / 'build/mcm/MCM/Config/Anatomy'
+SOUNDS = ROOT / 'build/sound/Sound/FX/Anatomy'
 # the fo4-ocbpc fork (MIT base abc0192, sibling repo; A-17): OCBPC 0.3 plus stretch groups and prop colliders.
 # Must win cbp.dll over Jiggle Physics and OCBPC-0.3-CBBE.
 OCBPC_DLL = ROOT.parent / 'fo4-ocbpc/x64/Release/cbp.dll'
@@ -84,14 +87,16 @@ def main():
         **{f'Textures/Anatomy/{t}': TEXTURES / t for t in TEXTURE_FILES},
         'Materials/Anatomy/AnatomyGenitals.bgsm': TEXTURES / 'AnatomyGenitals.bgsm',
     }
+    import make_esp
+    for _, _, clips in make_esp.SOUNDS:   # every clip a SNDR names, or the game plays silence for it
+        files.update({f'Sound/FX/Anatomy/{c}.wav': SOUNDS / f'{c}.wav' for c in clips})
     for rel, src in files.items():
         if not src.exists():
             raise SystemExit(f'missing {src}: run align_body, skeleton, zex_bones, physics_config, make_esp, '
-                             f'build-papyrus.ps1, build_mcm and the zero build first')
+                             f'build-papyrus.ps1, build_mcm, make_sounds and the zero build first')
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-    import make_esp
     print(make_esp.verify(stage / 'Anatomy.esp'))   # the copy that ships: without its keyword it would
                                                      # move our layer into bodies for good
     archive = OUT / f'Anatomy-test-{stamp}.7z'
