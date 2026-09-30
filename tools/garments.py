@@ -350,9 +350,12 @@ def check(positions, before, after):
         seen.setdefault(g, i)
 
 
-def patch_nif(body, src, dst, xfer=None, chk=None):
+def patch_nif(body, src, dst, xfer=None, chk=None, to_body=None):
     """Patch every skinned shape of one ShapeData .nif into dst. Returns {shape: changed vertices or why not}.
-    xfer/chk: another weight transfer and its proof (fo4-refit tools/refit.py, A-58); the hip fold's by default."""
+    xfer/chk: another weight transfer and its proof (fo4-refit tools/refit.py, A-58); the hip fold's by default.
+    to_body(n, shape) -> 4x4 or None: carries a shape with its own node transform into the body's vertex space
+    (fo4-refit R-10: skinned vertices are placed by their bones, not the node transform); without it such a shape
+    is skipped as before."""
     xfer, chk = xfer or transfer, chk or check
     n = nif.Nif(src)
     report, plans = {}, {}
@@ -360,10 +363,15 @@ def patch_nif(body, src, dst, xfer=None, chk=None):
         bones, _ = n.skin(s)
         if not bones:
             continue
+        m = None
         if not identity(n, s):
-            report[s.name] = 'skipped: its shape has its own transform'
-            continue
+            m = to_body(n, s) if to_body else None
+            if m is None:
+                report[s.name] = 'skipped: its shape has its own transform'
+                continue
         pos = s.positions()
+        if m is not None:
+            pos = [tuple(float(x) for x in m[:3, :3] @ p + m[:3, 3]) for p in pos]
         before = [{bones[sl]: w for sl, w in s.skin_weights(i)} for i in range(s.count)]
         after = xfer(body, pos, before)
         if not after:
@@ -555,7 +563,7 @@ def workspace(bs, work, target):
     return home
 
 
-def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None):
+def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None):
     """body/xfer/chk: another transfer (fo4-refit tools/refit.py, A-58); the hip fold's by default."""
     targets, left = plan(bs, data)
     if only:
@@ -567,7 +575,7 @@ def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None):
     for t in targets:
         src = bs / 'ShapeData' / t['folder'] / t['src']
         dst = home / 'ShapeData' / t['folder'] / t['src']
-        report = patch_nif(body, src, dst, xfer, chk)
+        report = patch_nif(body, src, dst, xfer, chk, to_body)
         moved = {k: v for k, v in report.items() if isinstance(v, int)}
         if not moved:
             dst.unlink()
