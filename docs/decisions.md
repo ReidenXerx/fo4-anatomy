@@ -1895,3 +1895,11 @@ scenes, the AAF menu's too.
 
 - skip(target) -> a reason or None: a target with a reason is not built and is listed under that reason in `left`.
   None (the default, the hip fold's own build) builds every target as before.
+
+## A-66 — A parallel build stops on a worker's error instead of hanging (microscope, 2026-09-30)
+
+- A Pool worker that raises SystemExit (check() on a bad transfer, a missing bone bind) died without a result and
+  build() waited forever. _patch_one now returns the error as text and build() raises SystemExit with it, as the
+  serial loop does. The workers' scratch folders live under one folder the build removes (they leaked in %TEMP%).
+- Proof: a planted failing check stops the build at once with its message; the parallel output stays byte-identical
+  to the serial one (91 files).

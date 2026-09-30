@@ -590,16 +590,21 @@ def workspace(bs, work, target):
 _PW = {}
 
 
-def _patch_init(body, xfer, chk, to_body):
+def _patch_init(body, xfer, chk, to_body, scratch):
     import tempfile
     global WORK
-    WORK = pathlib.Path(tempfile.mkdtemp(prefix='garments-'))   # reparse's scratch file: one per process
+    WORK = pathlib.Path(tempfile.mkdtemp(prefix='w-', dir=scratch))   # reparse's scratch file: one per process
     _PW.update(body=body, xfer=xfer, chk=chk, to_body=to_body)
 
 
 def _patch_one(job):
+    """A worker never lets SystemExit out (a bad transfer's check raises it): a Pool worker dies on it without a
+    result and imap waits forever (microscope 2026-09-30). The error travels back as text instead."""
     src, dst = job
-    return dst, patch_nif(_PW['body'], src, dst, _PW['xfer'], _PW['chk'], _PW['to_body'])
+    try:
+        return dst, patch_nif(_PW['body'], src, dst, _PW['xfer'], _PW['chk'], _PW['to_body']), None
+    except BaseException as e:                 # noqa: B902 - SystemExit is the case that matters
+        return dst, None, f'{src.name}: {e!r}'
 
 
 def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None, workers=1, skip=None):
@@ -624,9 +629,16 @@ def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_
         jobs = {}
         for t in targets:
             jobs.setdefault(home / 'ShapeData' / t['folder'] / t['src'], bs / 'ShapeData' / t['folder'] / t['src'])
-        with mp.Pool(workers, initializer=_patch_init, initargs=(body, xfer, chk, to_body)) as pool:
-            for dst, report in pool.imap_unordered(_patch_one, [(s, d) for d, s in jobs.items()]):
-                reports[dst] = report
+        import tempfile
+        scratch = tempfile.mkdtemp(prefix='garments-')        # the workers' scratch, removed with them
+        try:
+            with mp.Pool(workers, initializer=_patch_init, initargs=(body, xfer, chk, to_body, scratch)) as pool:
+                for dst, report, err in pool.imap_unordered(_patch_one, [(s, d) for d, s in jobs.items()]):
+                    if err:
+                        raise SystemExit(err)          # the same stop the serial loop makes, not a hang
+                    reports[dst] = report
+        finally:
+            shutil.rmtree(scratch, ignore_errors=True)
     built, off = [], []
     for t in targets:
         src = bs / 'ShapeData' / t['folder'] / t['src']
