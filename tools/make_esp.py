@@ -26,6 +26,17 @@ MASTER = 'Fallout4.esm'
 QUEST_ID = 0x01000800
 LAYER_ID = 0x01000801          # Anatomy:Arousal reads it back as 0x801 of Anatomy.esp
 TES4_LIGHT = 0x200
+# A-67: the engine's own sex sounds, played by EDID (the game's GetSoundHandleByName, as a pack's "SoundPlay.<EDID>"
+# resolves). Each is a standard descriptor laid out like BP70's (rxl_bp70_animations.esp BP70SoundSexSlap): category
+# 0x000DDDC5 and output model 0x000428B6 of Fallout4.esm (3D mono, attenuated), BNAM as its; the game picks one ANAM
+# at random per play. Clips: sounds/src (ElevenLabs), built by tools/make_sounds.py into Data\Sound\FX\Anatomy.
+SOUNDS = [                     # (form id, EDID, clips)
+    (0x01000802, 'AnatomySoundSlap', ['slap_1', 'slap_2']),
+    (0x01000803, 'AnatomySoundSquelch', ['squelch_1', 'squelch_2']),
+    (0x01000804, 'AnatomySoundThrust', ['thrust_1', 'thrust_2']),
+]
+SOUND_CATEGORY = 0x000DDDC5
+SOUND_OUTPUT = 0x000428B6
 
 
 def field(sig, data):
@@ -57,8 +68,18 @@ def build():
              + field('DNAM', bytes.fromhex('110064670000000000000000')) + field('NEXT', b''))
     layer = (field('EDID', zstring(LAYER_EDID)) + field('CNAM', bytes.fromhex('ffffff00'))
              + field('TNAM', struct.pack('<I', 0)))
-    body = group('KYWD', record('KYWD', LAYER_ID, layer)) + group('QUST', record('QUST', QUEST_ID, quest))
-    hedr = struct.pack('<fiI', 1.0, 4, LAYER_ID + 1)          # version, records + groups, next object id
+    sounds = b''
+    for form_id, edid, clips in SOUNDS:
+        blob = (field('EDID', zstring(edid)) + field('CNAM', bytes.fromhex('0a54ef1e'))
+                + field('GNAM', struct.pack('<I', SOUND_CATEGORY))
+                + b''.join(field('ANAM', zstring(f'data\\Sound\\FX\\Anatomy\\{c}.wav')) for c in clips)
+                + field('ONAM', struct.pack('<I', SOUND_OUTPUT)) + field('LNAM', struct.pack('<I', 0))
+                + field('BNAM', bytes.fromhex('00008006e803')))
+        sounds += record('SNDR', form_id, blob)
+    body = (group('KYWD', record('KYWD', LAYER_ID, layer)) + group('QUST', record('QUST', QUEST_ID, quest))
+            + group('SNDR', sounds))
+    last = max(f for f, _, _ in SOUNDS)
+    hedr = struct.pack('<fiI', 1.0, 5 + len(SOUNDS), last + 1)   # version, records + groups, next object id
     header = (field('HEDR', hedr) + field('CNAM', zstring(AUTHOR))
               + field('MAST', zstring(MASTER)) + field('DATA', struct.pack('<Q', 0)))
     return record('TES4', 0, header, flags=TES4_LIGHT) + body
@@ -107,6 +128,9 @@ def verify(path):
         problems.append(f'no KYWD {LAYER_ID:08X} "{LAYER_EDID}" (the LooksMenu layer key)')
     if by_id.get(('QUST', QUEST_ID)) != QUEST_EDID:
         problems.append(f'no QUST {QUEST_ID:08X} "{QUEST_EDID}"')
+    for form_id, edid, _ in SOUNDS:
+        if by_id.get(('SNDR', form_id)) != edid:
+            problems.append(f'no SNDR {form_id:08X} "{edid}" (the engine\'s sex sounds, A-67)')
     if problems:
         raise SystemExit(f'{path} must not ship as Anatomy.esp: {"; ".join(problems)}')
     return f'{path}: KYWD {LAYER_ID:08X} {LAYER_EDID}, QUST {QUEST_ID:08X} {QUEST_EDID}, light'
