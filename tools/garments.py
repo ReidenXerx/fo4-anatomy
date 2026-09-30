@@ -461,6 +461,68 @@ def plan(bs, data):
 
 
 # ---- the workspace ----
+def run_bodyslide(cmd, cwd, timeout):
+    """Run a private BodySlide headless: minimised without taking focus, and a watchdog presses OK on its
+    "No read/write permission for game data path!" warning should one still appear (the owner, 2026-09-30: no
+    clicking hundreds of times). Returns (CompletedProcess-like, [what the watchdog answered])."""
+    import ctypes
+    import threading
+    from ctypes import wintypes
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 7                                    # SW_SHOWMINNOACTIVE
+    proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, startupinfo=si)
+    user32 = ctypes.windll.user32
+    proto = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    stop, answered = threading.Event(), []
+
+    def text(h):
+        buf = ctypes.create_unicode_buffer(512)
+        user32.GetWindowTextW(h, buf, 512)
+        return buf.value
+
+    def watch():
+        while not stop.is_set():
+            tops = []
+            user32.EnumWindows(proto(lambda h, l: tops.append(h) or True), 0)
+            for h in tops:
+                pid = wintypes.DWORD()
+                user32.GetWindowThreadProcessId(h, ctypes.byref(pid))
+                if pid.value != proc.pid or not user32.IsWindowVisible(h) or text(h) != 'Warning':
+                    continue
+                buf = ctypes.create_unicode_buffer(64)
+                user32.GetClassNameW(h, buf, 64)
+                if buf.value != '#32770':
+                    continue
+                # a Windows task dialog (its text lives in a DirectUIHWND: no child to read or click), so the
+                # dialog itself gets IDOK; the build's own log still decides whether the build succeeded
+                user32.PostMessageW(h, 0x0111, 1, 0)                   # WM_COMMAND IDOK, no focus taken
+                answered.append('closed a BodySlide "Warning" task dialog (the game data path check)')
+            stop.wait(0.3)
+    t = threading.Thread(target=watch, daemon=True)
+    t.start()
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    finally:
+        stop.set()
+    return subprocess.CompletedProcess(cmd, proc.returncode, out, err), answered
+
+
+def own_game_path(text, folder):
+    """A private BodySlide's Config.xml text with EVERY game data path pointed at `folder` (writable, ours) and the
+    missing-path warning off. BodySlide checks write access at start and waits on "No read/write permission for game
+    data path!" even in a headless build; GameDataPath alone was not enough (2026-09-30: the per-game
+    <GameDataPaths><Fallout4> still named the game's Data and the dialog came back on every launch)."""
+    path = str(folder).rstrip('\\') + '\\'
+    text = re.sub(r'<GameDataPath>[^<]*</GameDataPath>|<GameDataPath/>',
+                  lambda m: f'<GameDataPath>{path}</GameDataPath>', text)
+    text = re.sub(r'(<GameDataPaths>.*?<Fallout4>)[^<]*(</Fallout4>)', lambda m: m.group(1) + path + m.group(2),
+                  text, count=1, flags=re.S)
+    text = re.sub(r'<WarnMissingGamePath>[^<]*</WarnMissingGamePath>',
+                  '<WarnMissingGamePath>false</WarnMissingGamePath>', text)
+    return text
+
+
 def workspace(bs, work, target):
     """A private BodySlide: the program, presets and config (OutputDataPath -> target); no sets yet."""
     import re
@@ -484,8 +546,7 @@ def workspace(bs, work, target):
     # BodySlide checks it may write the game's Data at start and, when it may not, waits on a dialog even in
     # a headless group build (2026-09-26: both builds sat behind "No read/write permission for game data
     # path!"). A headless build reads nothing there, so the workspace itself is its game data path.
-    game = '<GameDataPath>' + str(work).rstrip('\\') + '\\</GameDataPath>'
-    text = re.sub(r'<GameDataPath>[^<]*</GameDataPath>', lambda m: game, text)
+    text = own_game_path(text, work)
     cfg.write_text(text, encoding='utf-8')
     for sub in ('ShapeData', 'SliderSets', 'SliderGroups'):
         (home / sub).mkdir()
@@ -545,7 +606,9 @@ def regen(home, target, preset):
         log.unlink()
     cmd = [str(home / 'BodySlide.exe'), '--groupbuild', GROUP, '--targetdir', str(target), '--preset', preset,
            '--trimorphs']
-    run = subprocess.run(cmd, cwd=home, capture_output=True, text=True, timeout=7200)
+    run, answered = run_bodyslide(cmd, home, 7200)
+    for a in answered:
+        print('   watchdog:', a)
     text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
     ok = 'All group build sets processed successfully!' in text
     errors = [line for line in text.splitlines() if '[1]' in line or 'rror' in line or 'ailed' in line]

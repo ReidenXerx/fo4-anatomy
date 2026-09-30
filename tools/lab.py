@@ -74,6 +74,8 @@ def setup():
     cfg = set_tag(cfg, 'ProjectPath', str(LAB) + '\\')
     cfg = set_tag(cfg, 'OutputDataPath', str(OUT) + '\\')
     cfg = set_tag(cfg, 'DefaultSkeletonReference', 'res\\skeleton_zex.nif')
+    import garments                                   # no "No read/write permission" dialog on every build (A-59)
+    cfg = garments.own_game_path(cfg, LAB)
     (LAB / 'Config.xml').write_text(cfg, encoding='utf-8')
     print(f'lab ready at {LAB} (output {OUT}); skeleton = ZeX; sets: ' +
           ', '.join(p.name for p in (LAB / 'SliderSets').glob('*.osp')))
@@ -231,8 +233,11 @@ def automate(script, timeout):
 def build(group, preset, target, timeout):
     target = pathlib.Path(target)
     target.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run([str(LAB / 'BodySlide.exe'), '--groupbuild', group, '--targetdir', str(target),
-                        '--preset', preset, '--trimorphs'], cwd=LAB, timeout=timeout)
+    import garments                                   # minimised, and the permission warning auto-answered (A-59)
+    r, answered = garments.run_bodyslide([str(LAB / 'BodySlide.exe'), '--groupbuild', group, '--targetdir',
+                                          str(target), '--preset', preset, '--trimorphs'], LAB, timeout)
+    for a in answered:
+        print('   watchdog:', a)
     built = sorted(p.relative_to(target) for p in target.rglob('*') if p.is_file())
     print(f'BodySlide exit code {r.returncode}; {len(built)} file(s): {[str(b) for b in built][:6]}')
     return r.returncode
