@@ -1861,3 +1861,15 @@ scenes, the AAF menu's too.
 - **Hotfix (the owner chose it over waiting for the big release):** Engine 1.1.5 = 1.1.4 (4af45f1) + this fix +
   VERSION 1.1.5, fork branch hotfix-1.1.5 (dafe0f1, public). build/release/fo4-ocbpc-1.1.5.7z (sha256 6bd5f4c3...),
   symbols build/release/symbols/cbp-1.1.5-d1436669.*. Handed to Publisher-bud for VirusTotal + Nexus (owner's go there).
+
+## A-62 — garments.patch_nif places every shape when given to_body; regen proves the build (fo4-refit R-11, 2026-09-30)
+
+- **patch_nif(to_body=...):** every skinned shape goes through to_body, not only those with a node transform
+  (fo4-refit found 378 shapes with an identity node authored 120 units off the body's space). Bones it adds take
+  placed_bind(body.bind[b], m) = the body's skin-to-bone @ m, so they place the garment's vertices where its own
+  bones do. Report strings now say why: "skipped: cannot be placed", "unchanged: nothing to move".
+- **Default path (no to_body) unchanged:** byte-identical to master on 4 test garments (Nezzar_BrazilianPanty,
+  House Dress A, Maxon Coat, Combat Armor - Left Leg). Rebuild is unaffected.
+- **regen:** "All group build sets processed successfully!" is no longer taken on trust. Every member set of the
+  group must have written its .nif during the run, or it is named "not built: <set>" and the build is not ok
+  (BodySlide once skipped 9 sets and still logged success).

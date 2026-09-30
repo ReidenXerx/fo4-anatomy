@@ -38,6 +38,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import xml.etree.ElementTree as ET
 
 import hip_fold
@@ -350,12 +351,29 @@ def check(positions, before, after):
         seen.setdefault(g, i)
 
 
+def placed_bind(bind, m):
+    """A body bone's bind data for a shape whose vertex space is m (body space <- shape space; None = the body's).
+    FO4 places a vertex by bone world @ skin-to-bone @ v, so the new skin-to-bone is the body's @ m: the bone then
+    puts the shape's vertices where the shape's own bones do (fo4-refit R-11). m is rigid: its scale is kept apart."""
+    if m is None:
+        return bind
+    r, t, sc = bind['skin_rot'], bind['skin_t'], bind['scale']
+    a = [[sum(r[3 * i + k] * sc * m[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
+    det = (a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0])
+           + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]))
+    s2 = abs(det) ** (1 / 3)
+    t2 = tuple(sum(r[3 * i + k] * sc * m[k][3] for k in range(3)) + t[i] for i in range(3))
+    return dict(bind, skin_rot=tuple(a[i][j] / s2 for i in range(3) for j in range(3)), skin_t=t2, scale=s2)
+
+
 def patch_nif(body, src, dst, xfer=None, chk=None, to_body=None):
     """Patch every skinned shape of one ShapeData .nif into dst. Returns {shape: changed vertices or why not}.
     xfer/chk: another weight transfer and its proof (fo4-refit tools/refit.py, A-58); the hip fold's by default.
-    to_body(n, shape) -> 4x4 or None: carries a shape with its own node transform into the body's vertex space
-    (fo4-refit R-10: skinned vertices are placed by their bones, not the node transform); without it such a shape
-    is skipped as before."""
+    to_body(n, shape) -> 4x4 or None: carries EVERY skinned shape into the body's vertex space (fo4-refit R-10/R-11:
+    skinned vertices are placed by their bones, not the node transform, and a shape with no node transform can
+    still be authored in another space); None skips the shape. Bones added to such a shape take the body's
+    skin-to-bone composed with that matrix, so they place its vertices where its own bones do. Without to_body a
+    shape with its own node transform is skipped and the rest are taken as in the body's space, as before."""
     xfer, chk = xfer or transfer, chk or check
     n = nif.Nif(src)
     report, plans = {}, {}
@@ -364,32 +382,38 @@ def patch_nif(body, src, dst, xfer=None, chk=None, to_body=None):
         if not bones:
             continue
         m = None
-        if not identity(n, s):
-            m = to_body(n, s) if to_body else None
+        if to_body:
+            m = to_body(n, s)
             if m is None:
-                report[s.name] = 'skipped: its shape has its own transform'
+                report[s.name] = 'skipped: cannot be placed (the skeleton knows none of its bones)'
                 continue
+            if all(abs(m[i][j] - (i == j)) < 1e-6 for i in range(4) for j in range(4)):
+                m = None                                 # already in the body's space
+        elif not identity(n, s):
+            report[s.name] = 'skipped: its shape has its own transform'
+            continue
         pos = s.positions()
         if m is not None:
             pos = [tuple(float(x) for x in m[:3, :3] @ p + m[:3, 3]) for p in pos]
         before = [{bones[sl]: w for sl, w in s.skin_weights(i)} for i in range(s.count)]
         after = xfer(body, pos, before)
         if not after:
+            report[s.name] = 'unchanged: nothing to move'
             continue
         chk(pos, before, after)
         need = sorted({b for w in after.values() for b in w} - set(bones))
         missing = [b for b in need if b not in body.bind]
         if missing:
             raise SystemExit(f'{src.name}/{s.name}: the body has no bind data for {missing}')
-        plans[s.index] = (s.name, need, after, {i: sum(before[i].values()) for i in after})
-    for index, (name, need, _, _) in plans.items():     # blocks are appended: every index stays valid
+        plans[s.index] = (s.name, need, after, {i: sum(before[i].values()) for i in after}, m)
+    for index, (name, need, _, _, m) in plans.items():  # blocks are appended: every index stays valid
         if need:
             shape = next(x for x in n.shapes() if x.index == index)
-            n = reparse(n.with_bones(shape, [body.bind[b] for b in need]))
+            n = reparse(n.with_bones(shape, [placed_bind(body.bind[b], m) for b in need]))
     for s in n.shapes():
         if s.index not in plans:
             continue
-        name, _, after, sums = plans[s.index]
+        name, _, after, sums, _ = plans[s.index]
         bones, _ = n.skin(s)
         slot = {b: k for k, b in enumerate(bones)}
         for i, w in after.items():
@@ -609,8 +633,11 @@ def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_
 
 
 def regen(home, target, preset):
-    """BodySlide builds the group headless: (exit code, all built, error lines)."""
+    """BodySlide builds the group headless: (exit code, all built, error lines). 'All built' is proven, not read: every
+    member set of the group must have written its .nif during this run. BodySlide once skipped 9 sets and still logged
+    that all were built (fo4-refit R-7); a set that wrote nothing is named in the error lines as 'not built: <set>'."""
     target.mkdir(parents=True, exist_ok=True)
+    started = time.time() - 2
     log = home / 'Log_BS.txt'
     if log.exists():
         log.unlink()
@@ -622,7 +649,11 @@ def regen(home, target, preset):
     text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
     ok = 'All group build sets processed successfully!' in text
     errors = [line for line in text.splitlines() if '[1]' in line or 'rror' in line or 'ailed' in line]
-    return run.returncode, ok, errors
+    members = {name for name, gs in groups(home).items() if GROUP in gs}
+    wrote = {norm(p.relative_to(target).as_posix()) for p in target.rglob('*.nif') if p.stat().st_mtime >= started}
+    lost = sorted(s.get('name') for _, s in slider_sets(home) if s.get('name') in members and output_of(s) not in wrote)
+    errors += [f'not built: {name}' for name in lost]
+    return run.returncode, ok and not lost, errors
 
 
 def verify(target, into, core_only=True):
