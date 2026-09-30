@@ -1841,3 +1841,19 @@ scenes, the AAF menu's too.
      chain.
   The box: MessageMenuManager::Create resolved through Hook::Resolve (ids 89563/2249456, singleton 959572/4796373),
   called under __try; a runtime without the ids shows nothing and says so in cbp.log.
+
+## A-61 — The physics finds the skeleton root without case (two OG players: nothing moved, 2026-09-30)
+
+- **Reports:** weiss5214 (OG 1.10.163, MO2, MTM preset; also with the whitelist off and with Anatomy's own preset)
+  and asu (OG): no breast, butt or genital motion at all. Their logs were healthy: hook installed, 2-3 actor entries,
+  our 15 nodes created.
+- **Cause:** Thing::Update walks up to the node named "skeleton.nif" and returns when it does not find it. The
+  classic build compared BSFixedStrings, which ignores case; the Runtime Database port's G::NameIs used strcmp. FO4
+  pools node names without case, so once a skeleton rooted at "Skeleton.nif" is loaded first (darthroman's AAF Molerat,
+  found in the owner's mods), every root reads back that way and no bone moves for anyone that session.
+  CollisionHub's two skeleton lookups had the same fault.
+- **Fix (fork, Game.h, fff5d36):** NameIs compares with _stricmp. weiss5214 has darthroman's AAF creature pack
+  v1.0.4 (Watcher confirmed).
+- **Hotfix (the owner chose it over waiting for the big release):** Engine 1.1.5 = 1.1.4 (4af45f1) + this fix +
+  VERSION 1.1.5, fork branch hotfix-1.1.5 (dafe0f1, public). build/release/fo4-ocbpc-1.1.5.7z (sha256 6bd5f4c3...),
+  symbols build/release/symbols/cbp-1.1.5-d1436669.*. Handed to Publisher-bud for VirusTotal + Nexus (owner's go there).
