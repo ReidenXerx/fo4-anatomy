@@ -602,13 +602,19 @@ def _patch_one(job):
     return dst, patch_nif(_PW['body'], src, dst, _PW['xfer'], _PW['chk'], _PW['to_body'])
 
 
-def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None, workers=1):
+def build(bs, data, work, target, only=None, body=None, xfer=None, chk=None, to_body=None, workers=1, skip=None):
     """body/xfer/chk: another transfer (fo4-refit tools/refit.py, A-58); the hip fold's by default.
     workers > 1: the ShapeData files are patched by that many processes (fo4-refit: 943 sets, 36 min on one core).
     Sets that share one source file are patched once. Reports and output are the same as the serial loop's."""
     targets, left = plan(bs, data)
     if only:
         targets = [t for t in targets if any(o.lower() in t['name'].lower() for o in only)]
+    if skip:                                 # skip(target) -> why it is not built, or None (fo4-refit R-15)
+        for t in list(targets):
+            why = skip(t)
+            if why:
+                targets.remove(t)
+                left[why].append(t['name'])
     home = workspace(bs, work, target)
     body = body or Body(bs)
     print(f"body: {len(body.band)} vertices where our body's weights differ from CBBE's")

@@ -1890,3 +1890,8 @@ scenes, the AAF menu's too.
   over the target and the .anatomy-new removed.
 - **Proof (scratch builder_x17):** every rename refused as WinError 17: all 12 outputs written, none left behind,
   11 byte-identical to a normal run and build.ini different only in its date line.
+
+## A-65 — garments.build(skip=) (fo4-refit R-15, 2026-09-30)
+
+- skip(target) -> a reason or None: a target with a reason is not built and is listed under that reason in `left`.
+  None (the default, the hip fold's own build) builds every target as before.
