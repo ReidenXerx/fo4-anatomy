@@ -601,6 +601,15 @@ def main():
                     help="how the tools are packed: Nuitka (default, no bootloader), or PyInstaller with its "
                          "bootloader compiled here from source, or its stock one")
     args = ap.parse_args()
+    if args.what in ('engine', 'all'):
+        # the DLL logs "OCBPC plugin <CMake project VERSION>": 1.1.4 shipped still saying 1.1.0 and a player took it
+        # for an old DLL (asu, 2026-09-30). The engine release must carry its own number.
+        import re
+        cm = (FORK / 'CMakeLists.txt').read_text(encoding='utf-8')
+        m = re.search(r'\bVERSION\s+(\d+\.\d+\.\d+)', cm[cm.index('project('):])
+        if not m or m.group(1) != args.version:
+            raise SystemExit(f'the fork\'s CMakeLists.txt says VERSION {m.group(1) if m else "?"}, this engine release '
+                             f'is {args.version}: bump it there (and commit) first')
     commit = build_dll()                                       # every archive names the engine commit
     print(f'engine: cbp.dll from fork commit {commit}')
     if args.what == 'engine':
