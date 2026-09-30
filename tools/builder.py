@@ -20,6 +20,7 @@ Then: open BodySlide, choose "Anatomy Body" and your preset, and Build.
 """
 import argparse
 import contextlib
+import errno
 import hashlib
 import io
 import os
@@ -232,7 +233,15 @@ def main():
             gamedata.make_dirs(target.parent)
             tmp = target.with_name(target.name + '.anatomy-new')
             shutil.copyfile(src, tmp)
-            os.replace(tmp, target)                     # a crash never leaves half a file
+            try:
+                os.replace(tmp, target)                 # a crash never leaves half a file
+            except OSError as e:
+                # MO2's virtual Data can put the new file (its Overwrite) and the old one (a mod's folder) on two
+                # drives, and a rename cannot cross drives (WinError 17, mb1205 2026-09-30): write it in place
+                if getattr(e, 'winerror', None) != 17 and e.errno != errno.EXDEV:
+                    raise
+                shutil.copyfile(tmp, target)
+                os.remove(tmp)
             print(f'   {rel}  sha1 {sha(target.read_bytes())}')
         ok = True
         print('\nDone. Now open BodySlide, choose the set "Anatomy Body", your preset, and Build (or Batch '
