@@ -177,9 +177,80 @@ def check(positions, before, after):
         seen.setdefault(wid[i], i)
 
 
+MIN_BA2 = 100               # a BA2 mesh the refit changes on fewer vertices is rigid gear grazing the chest (a helmet's hem)
+NOT_OUTFIT = ('actors\\', 'supermutant', 'feralghoul', 'mannequin')
+
+
+def ba2(bs, data, out):
+    """Outfits whose game mesh loads from a BA2 and that no BodySlide set rebuilds (the owner, 2026-09-30): the built
+    mesh itself is refitted (same transfer) and written loose under `out` (a loose file wins over any archive), its
+    .tri copied unchanged (the vertices do not move). Skipped: meshes the refit barely touches (MIN_BA2), bodies and
+    creatures, and outfits made for the vanilla body (a quarter of their skin-side vertices 0.3 inside CBBE's skin:
+    the vanilla -> CBBE refit's job). Returns [(model, archive, changed vertices)]."""
+    import gamedata
+    import tempfile
+    game = gamedata.Game(data)
+    body = Change(bs)
+    bpos = body.pos
+    bn = nif.Nif(bs / 'ShapeData/Anatomy/Anatomy.nif').shape('CBBE')
+    acc = [[0.0, 0.0, 0.0] for _ in bpos]
+    for a, b, c in bn.triangles():
+        u = [bpos[b][k] - bpos[a][k] for k in range(3)]
+        v = [bpos[c][k] - bpos[a][k] for k in range(3)]
+        nrm = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0])
+        for x in (a, b, c):
+            for k in range(3):
+                acc[x][k] += nrm[k]
+    normal = [[x / (math.sqrt(sum(y * y for y in v)) or 1.0) for x in v] for v in acc]
+    by_sets = {g.output_of(s) for _, s in g.slider_sets(bs)}
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    done = []
+    for model in sorted(g.worn_female(data)):
+        rel = 'Meshes/' + model.replace('\\', '/') + '.nif'
+        where = game.find(rel)
+        if where is None or where[0] != 'archive' or model in by_sets:
+            continue
+        if any(k in model for k in NOT_OUTFIT) or model.split('\\')[-1].endswith('body'):
+            continue
+        src = tmp / 'in.nif'
+        try:
+            src.write_bytes(game.read(rel))
+            n = nif.Nif(src)
+        except Exception:
+            continue
+        changed = near = inside = 0
+        for s in n.shapes():
+            bones, _ = n.skin(s)
+            if not bones or not g.identity(n, s):
+                continue
+            pos = s.positions()
+            w = [{bones[sl]: x for sl, x in s.skin_weights(i)} for i in range(s.count)]
+            changed += len(transfer(body, pos, w))
+            for q in pos:
+                h = body.grid.within(q, 1.5)
+                if h and h[0][1] in body.band:
+                    near += 1
+                    j = h[0][1]
+                    if sum((q[k] - bpos[j][k]) * normal[j][k] for k in range(3)) < -0.3:
+                        inside += 1
+        if changed < MIN_BA2 or (near and inside / near > 0.25):
+            continue
+        dst = out / rel
+        report = g.patch_nif(body, src, dst, transfer, check)
+        tri = rel[:-4] + '.tri'
+        if game.find(tri) is not None:
+            (out / tri).write_bytes(game.read(tri))
+        a, b = nif.Nif(src), nif.Nif(dst)                  # the proof: the same vertices, only weights changed
+        for sa, sb in zip(a.shapes(), b.shapes()):
+            if sa.positions() != sb.positions():
+                raise SystemExit(f'refit ba2: {rel}/{sa.name} moved its vertices')
+        done.append((model, pathlib.Path(where[1]).name, sum(v for v in report.values() if isinstance(v, int))))
+    return done
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('what', choices=('plan', 'trial', 'build', 'regen', 'verify', 'install', 'all'))
+    ap.add_argument('what', choices=('plan', 'trial', 'build', 'regen', 'verify', 'install', 'all', 'ba2'))
     ap.add_argument('--data', type=pathlib.Path, default=AE_DATA)
     ap.add_argument('--work', type=pathlib.Path, default=WORK)
     ap.add_argument('--target', type=pathlib.Path, default=WORK / 'built')
@@ -194,6 +265,13 @@ def main():
         print(f'{len(targets)} CBBE garments worn as a woman\'s model')
         for reason, names in sorted(left.items(), key=lambda kv: -len(kv[1])):
             print(f'  left {len(names):4}: {reason}')
+        return
+    if args.what == 'ba2':
+        out = args.work / 'ba2'
+        done = ba2(bs, args.data, out)
+        print(f'{len(done)} BA2-only outfits refitted into {out}')
+        for model, arch, n in done:
+            print(f'  {n:6}  {arch:40}  {model}')
         return
     body = Change(bs)
     print(f'our body vs CBBE: {len(body.band)} skin vertices changed (3BBB + the hip fold)')

@@ -1785,3 +1785,10 @@ scenes, the AAF menu's too.
   the 31 mods it overlaps (bodyslides_f4_sd, CBBE, the outfit mods), deployed; Data holds the refits.
 - **Open:** residual breast drift (0.44 worst: the 4-bone cap / blending), loose-cloth hems between the legs (known
   hard case), the release packaging per body page.
+- **BA2-only outfits (the owner: "handle mods packed in ba2"):** `refit.py ba2` refits the built mesh itself when the
+  game loads it from an archive and no BodySlide set rebuilds it; written loose (wins over the archive), .tri copied,
+  vertices proven unmoved. Of 1,773 such worn meshes: 1,396 untouched by the change, 65 made for the vanilla body (a
+  quarter of their skin-side vertices 0.3 inside CBBE: the vanilla -> CBBE refit's job), rigid gear under 100 changed
+  vertices and bodies/creatures skipped: 183 outfits refitted, added to the dev mod (1,637 files), deployed.
+- **Next (the owner, 2026-09-30):** from a clothing mesh ALONE (no BodySlide files), make a proper BodySlide project
+  for any body: reshape, weights, every target slider conformed, rigid parts, verified (roadmap refit steps 1-5).
