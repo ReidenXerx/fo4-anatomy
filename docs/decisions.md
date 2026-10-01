@@ -1949,3 +1949,26 @@ scenes, the AAF menu's too.
   SoundPlay, and the name split from a longer tag), so Hook::CallSites hooks both (fork c5b2049). cbp log muted
   BP70SoundSexSlap, BP70SoundPenetrate, BP70SoundSpank and the BP70 voices (female/male Vanilla + Breathing) for
   both actors. OG not tried in game yet.
+
+## A-68 — Sex sounds done: what shipped, by the owner's ear (roadmap item 3, 2026-10-01)
+
+The owner tested in game ("much better", "worked like a charm") and asked for the rest to be proven in code; a
+Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM tags and the climax end to end.
+- **Engine (fo4-ocbpc, last d0a427a):** the packs' SoundPlay is muted for actors in a scene (two hooked call sites,
+  A-67); with Rapport loaded everything is muted (Rapport voices both partners), without it only the packs' BODY sounds
+  (by SNDR name, 228 SNDRs of 9 packs surveyed) so their voices still play. The override is ON by default (the owner:
+  every feature on by default; Rapport's MCM turns it off).
+- **What plays:** per actor a genital track (the entered one plays slap + thrust at the pelvis), a mouth track (slurp in,
+  the closed mouth on each stroke, an air siphon now and then), a handjob track, and per opening a contact track: a toy,
+  fingers or a fist inside (depth strokes), licking or rubbing (beats). Volume follows stroke speed, pitch jitters.
+- **Clips (Anatomy.esp SNDR 802-80A, 37 WAVs, sounds/src/PROVENANCE.md):** the owner's audition picks (no water drop,
+  the closed mouth before the slurp, his reference S4); lick/finger/handjob are placeholders from those keeps until
+  ElevenLabs has credits. Levels: no static attenuation, -12/-10 LUFS (they were barely audible at BP70's -10 dB).
+- **Events to Rapport (RFAE v3):** kinds 1 began / 2 stroke / 3 hard / 4 ended, every end with its begin's partner and
+  flags; flags oral, deep, receiver (= the one stimulated), anal, lick, hand, toy, self. Rapport answers with RFAP
+  (an SNDR at the head): pleasure moans by sex and persona, length by stroke tempo, the pain set for anal and rough
+  scenes, a climax super moan on any pack's climax tag (once per 90 s, cutting what plays; silent while her mouth is
+  full, by the owner's choice, and always the sweet set). Gulps are off for now.
+- **The microscope (4 Sonnet lenses + Rapport's):** the Nexus archive would have shipped none of the clips (release.py
+  fixed); begin/end pairing, leaving the scene, double penetration, save loads and a stale-actor read were fixed.
+- **Open, not blocking:** OG 1.10.163 is untested in game; real lick/finger/handjob clips when ElevenLabs has credits.

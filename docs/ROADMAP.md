@@ -21,7 +21,7 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    clipping vertices pushed out and re-tested. Output per outfit: a project plus a measured report. Publishing
    policy (the owner): the original mod is a requirement and credited; authors who object PM him. Start: one
    vanilla-body outfit the owner picks -> CBBE, measured, then his look in game.
-3. **Engine-driven sex sounds** (the owner's idea, 2026-09-29): body sounds (slaps, wet squelch, penetration,
+3. **DONE 2026-10-01 (A-67, A-68): Engine-driven sex sounds** (the owner's idea, 2026-09-29): body sounds (slaps, wet squelch, penetration,
    furniture creaks) made by the engine from what it measures every frame -- which opening, depth and its change,
    thrust speed, hip/butt impact speed (CollisionHub), arousal as wetness -- instead of the animation packs'
    hand-placed ones. 3D at the pelvis, loudness and pitch from the motion, many variations per kind so nothing
