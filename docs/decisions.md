@@ -2000,4 +2000,12 @@ Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM ta
   untracked: no springs on his anus at all. The fork now tracks an actor that only the preset's sex filter leaves out
   for OUR bones alone (SimObj::anatomyOnly; every other filter of the preset still applies), so his breasts-and-butt
   physics stay off exactly as the preset says.
-- **Next:** the Builder's men's stage and BodySlide project, the mucosa patch, verification, the owner's scene.
+- **Step 3 done (the Builder):** stage 9 opens the player's own BodyTalk4-Nude and -Uncut into "Anatomy Male Body" and
+  "Anatomy Male Body Uncut" (AnatomyMale.osp, BodyTalk's sliders and output, in the group "BodyTalk - Bodies" so
+  BodyTalk presets apply). The stage is optional: no BodyTalk 4, or a failure, leaves the women's body built. A first
+  rig weighed the canal by depth along the axis alone and reached the penis tip and the balls (same depth, far off the
+  axis); the canal's weights now go to its own vertices only, 166 vertices on both variants. BodySlide (the LAB) builds
+  both sets: 8874 vertices, our four bones in the skin, morphs written; at BT-Zero every original vertex sits exactly
+  where the player's BodyTalk build has it.
+- **Next:** the owner's M-M scene. The canal shows the pucker's own texels: a men's mucosa needs a texture and
+  material of ours on the men's body, so it is left for later.
