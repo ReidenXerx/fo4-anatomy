@@ -56,6 +56,9 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    Anatomy Tailor weights each garment's hanging cloth to them (by angle around the hips and by height). Done when
    legs_through.py, run with the skirt bones simulated, shows the clipping gone in crouch, sit and stride, and the
    jump GIFs agree. Coats also sway as a result.
+   Pages (the owner, 2026-10-01): every Tailor conversion page shows GIF collages of a jumping character in coats
+   and skirts WITH the Anatomy Engine and WITHOUT it (rendered by preview.py; Publisher-bud told). Open: the engine
+   as a requirement of skirt-weighted files, or a FOMOD option.
 
 ## Later (low priority)
 
