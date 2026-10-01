@@ -2007,5 +2007,5 @@ Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM ta
   axis); the canal's weights now go to its own vertices only, 166 vertices on both variants. BodySlide (the LAB) builds
   both sets: 8874 vertices, our four bones in the skin, morphs written; at BT-Zero every original vertex sits exactly
   where the player's BodyTalk build has it.
-- **Next:** the owner's M-M scene. The canal shows the pucker's own texels: a men's mucosa needs a texture and
+- **The owner's M-M scene (AE, 2026-10-01 22:56, Screenshot248):** "tested and it works amazing!" The canal shows the pucker's own texels: a men's mucosa needs a texture and
   material of ours on the men's body, so it is left for later.
