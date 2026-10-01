@@ -1,42 +1,43 @@
-=== STICKY: Every feature in Anatomy 1.1.1: the body and its physics ===
-[b]Every feature in Anatomy 1.1.1: the body and its physics[/b]
-Each item's measurements are in [url=https://github.com/ReidenXerx/fo4-anatomy/blob/master/docs/decisions.md]decisions.md[/url] (A-#).
+=== STICKY: Every feature in Anatomy 1.2.0: the body and its physics ===
+[b]Every feature in Anatomy 1.2.0: the body and its physics[/b]
+Each item's measurements are in [url=https://github.com/ReidenXerx/fo4-anatomy/blob/master/docs/decisions.md]decisions.md[/url] (A-#). [b]New[/b] marks 1.2.0.
 
 [b]The body[/b]
 [list]
 [*]A real vulva, vaginal canal and anal opening, Nahka's geometry aligned to today's CBBE. 22,488 shared vertices are exactly CBBE's; the 2,811 new or changed ones meet the skin within 0.46 units. (A-4, A-9)
-[*]Built from your own CBBE, skin and skeleton by the Anatomy Builder (the latest [font=Courier New]AnatomyBuilder[/font] zip on the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url]; the Nexus download holds the game files only). Nothing of CBBE's or Nahka's files is uploaded; Nahka's work ships as a patch, with her permission. The rebuild equals the direct build to 7×10⁻⁸. (A-23)
-[*]The genitals are their own shape with their own material, textured to your skin's tone. The seam step fell from 9.0/4.0/8.1 to 2.3/1.1/1.9 (of 255), and every texel outside the genitals is byte-identical to your skin. (A-10, A-22)
+[*]Built from your own CBBE, skin and skeleton by the AnatomyBuilder (the latest zip on the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url]). Nothing of CBBE's files is uploaded; Nahka's work ships as a patch, with her permission. (A-23)
+[*][b]New:[/b] on 3BBB when you have it (with Skeletal Adjustments for CBBE): the builder keeps 3BBB's own breast bones. (A-57)
+[*]The genitals are their own shape with their own material, textured to your skin's tone; every texel outside them is byte-identical to your skin. (A-10, A-22)
+[*][b]New:[/b] a real vaginal lining: the canal sampled one texel, now it has its own seamless unwrap (198 vertices) and a mucosa with 14 folds, wet near the entrance. The vulva is untouched. (A-54)
+[*]A closed anal canal behind the anus, angled back like a real one, so nothing shows through; an anal penis follows it. (A-50)
+[*]Light genital textures: about 53 MB -> 3 MB of video memory at 4K, texel for texel the same. (A-48)
 [*]"Opening, front", a BodySlide slider in the Anatomy category. (A-25)
-[*]The hip fold: the worst edge stretch in legs-up poses fell from 11.1x to 4.0x (sitting 10.3x to 3.8x, walking 3.5x to 2.0x). (A-30)
-[*]A real anal canal: a closed canal behind the anus, angled back like a real one and lined with a wet mucosa toned from your skin, so nothing shows through when the anus opens; an anal penis follows it (Builder 1.0.12). (A-50)
-[*]Light genital textures: the genitals use only the small tile of your skin they sample, about 53 MB -> 3 MB of video memory at 4K, texel for texel the same (Builder 1.0.10+). (A-48)
-[*]The neck seam, with Anatomy Rebuild: 14.4° median, 37.5° worst → 0.0° and 0.3°. (A-37)
+[*]The hip fold: the worst edge stretch in legs-up poses fell from 11.1x to 4.0x. (A-30) The neck seam, with Anatomy Rebuild: 14.4° median → 0.0°. (A-37)
 [/list]
 [b]Physics[/b]
 [list]
-[*]Openings open because contact pushes them, never because an animation poses them. The bones are added at run time to whatever skeleton you load, which also cured the fin tears: kneeling 2,613 torn edges → 0, lying back 3,824 → 0. (A-14, A-21)
-[*]Outer lips jiggle and squish aside. (A-13) The vaginal entrance is fitted to the partner, tuned in game over several rounds. (A-9, A-15, A-19)
-[*]The anus opens on its real ring, reproducing 94% of the source's own shape. (A-14, A-28)
-[*]Contact is one smooth tube for a penis: thrust wobble anus 0.69 → 0.21, vagina 0.26 → 0.13. (A-35)
-[*]Held props collide; a rifle or a mug does not. Super mutants' and other creatures' penis bones collide too.
-[*]Anatomy's own physics preset and collision, used only when you have no ocbp.ini of your own; any OCBP/OCBPC preset you install still takes precedence. (A-46, A-47)
+[*]Openings open because contact pushes them, never because an animation poses them; the bones are added at run time to whatever skeleton you load (fin tears: kneeling 2,613 torn edges → 0). (A-14, A-21)
+[*]Outer lips jiggle and squish aside; the inner lips part around what enters; the anus opens on its real ring. (A-13, A-14, A-15)
+[*]A penis collides as one smooth tube: thrust wobble anus 0.69 → 0.21, vagina 0.26 → 0.13. (A-35)
+[*][b]New:[/b] contact without jitter: tight contact acts as a constraint, nothing shakes when it squeezes. (A-55)
+[*][b]New:[/b] skirt physics for Anatomy Tailor's coats and dresses: 60 skirt bones at the hips pushed aside by the legs; legs through a long coat, crouch/sit/stride 24/38/14 % → 5/17/2 %. (A-70)
+[*]Held props collide; a rifle or a mug does not. Anatomy's own physics preset when you have none, following the body the builder built. (A-46, A-47, A-57)
 [/list]
-[b]The penis[/b] (AAF scenes only)
+[b]Sex, in AAF scenes[/b]
 [list]
-[*]Auto-aim into the vagina, anus or mouth the pose implies; bends along her canal; deep throat follows her head and neck; a gripping hand is recognised. (A-28, A-29)
-[*]A thinner shaft and a bigger head (×1.2 to 1.25), different per man, on BodyTalk4 without touching its files. (A-31)
-[*]A slightly redder glans, a LooksMenu overlay with an MCM switch. (A-31)
+[*]Auto-aim into the vagina, anus or mouth the pose implies, bending along the canal; deep throat follows her head; a gripping hand is recognised. (A-28, A-29)
+[*][b]New:[/b] sex sounds from the engine: every pack's canned body sounds are muted in scenes (measured on 228 sound records of 9 packs) and our own set plays from each stroke's real depth and speed: 9 kinds, 37 clips. With Rapport: moans, pain-pleasure for anal and BDSM, a climax. (A-67, A-68)
+[*]The mouth opens to what is in it; lips shrink-wrap it from 15 measured morphs; her face reacts and her brows frown with depth. (A-20, A-26, A-29, A-32)
+[*]A thinner shaft and a bigger head (×1.2 to 1.25) per man, on his bones; a slightly redder glans (LooksMenu). (A-31)
 [/list]
-[b]The mouth[/b]
+[b]Men, M-M[/b] ([b]new[/b])
 [list]
-[*]Opens to what is in it, over the animation's own expression. (A-20)
-[*]Lips shrink-wrap the shape inside, corners open or hug, and they close quickly between strokes. The real width is read, head included. (A-31, A-32)
-[*]Her face reacts while her mouth is busy, and her brows frown as he goes deeper orally. (A-26, A-29)
+[*]The builder opens BodyTalk 4's own anus on your own BodyTalk 4 (Nude and Uncut): a canal 8.5 units deep, 4 ring bones with her physics and stretch, the aim and the sounds. Build "Anatomy Male Body" in BodySlide. (A-69)
+[*]Men are simulated for Anatomy's bones even under a women-only physics preset. (A-69)
 [/list]
 
-=== STICKY: Arousal, settings, Anatomy Rebuild, and what is confirmed ===
-[b]Arousal, settings, Anatomy Rebuild, and what is confirmed[/b]
+=== STICKY: Arousal, settings, Anatomy Rebuild, and help ===
+[b]Arousal, settings, Anatomy Rebuild, and help[/b]
 
 [b]Arousal[/b]: every 3 s, each woman within about 43 m moves toward her strongest cause (A-16):
 [list]
@@ -46,19 +47,22 @@ Each item's measurements are in [url=https://github.com/ReidenXerx/fo4-anatomy/b
 [*]watching a scene within about 17 m: 0.55, 30 s
 [*]naked: 0.3, 45 s; nothing: fades, 60 s
 [/list]
-Nipples respond on top of her own body (LooksMenu). Under armour Silhouette marks heavy they stay flat, and re-show when Silhouette rebuilds her. Nothing calls into AAF; only its busy keyword is read.
+Nipples respond on top of her own body (LooksMenu). Under armour Silhouette marks heavy they stay flat, and re-show when Silhouette rebuilds her.
 
 [b]MCM, page "Anatomy"[/b] (the same defaults without MCM)
 [list]
 [*][i]Arousal nipples[/i] on: off removes every change this mod made to anyone's nipples.
-[*][i]Nipple response[/i] 1.0 (0-2) · [i]Rise speed[/i] 1.0 (0.25-4): a scene takes her halfway up in 10 s · [i]Fade speed[/i] 1.0 (0.25-4): halfway back a minute after the cause is gone.
+[*][i]Nipple response[/i] 1.0 (0-2) · [i]Rise speed[/i] 1.0 (0.25-4) · [i]Fade speed[/i] 1.0 (0.25-4).
 [*]Sources, each on: [i]Being in a scene[/i], [i]Watching a scene[/i], [i]Companions' own arousal[/i], [i]Being naked[/i].
 [*][i]Glans colour[/i] on: off takes it off every man it was given to.
 [/list]
-[b]Faces and eyes, with Rapport[/b]: Rapport's face is the one that shows in every AAF scene, lip sync is kept, and she glances into her partner's eyes for 4-7 s. (A-27, A-34)
+[b]Sounds[/b]: on by default; the switch is in Rapport's MCM. Without Rapport the engine still plays the body sounds and every pack's own voices stay. (A-68)
+[b]Faces and eyes, with Rapport[/b]: Rapport's face shows in every AAF scene, lip sync is kept, and she glances into her partner's eyes for 4-7 s now and then. (A-27, A-34)
 
-[b]Anatomy Rebuild[/b] (optional, the latest [font=Courier New]AnatomyRebuild[/font] zip on the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url]): every CBBE outfit gets the body's hip handover (up to 3.8 units of gap before; a combat-armour leg on all fours 5.10 → 2.25), and the neck seam fix. It never runs BodySlide and never moves a vertex, morph or slider. Measured on 24 outfits against our own verified pipeline, weights equal to 0.0000; a second run changes nothing; [i]--undo[/i] puts your builds back. (A-36, A-37, A-39)
+[b]Anatomy Rebuild[/b] (optional, the latest zip on the [url=https://github.com/ReidenXerx/fo4-anatomy/releases]GitHub releases page[/url]): every CBBE outfit gets the body's hip handover (a combat-armour leg on all fours 5.10 → 2.25) and the neck seam fix. It never runs BodySlide and never moves a vertex, morph or slider; [i]--undo[/i] puts your builds back. (A-36, A-37, A-39)
 
-[b]Install and safety[/b]: nothing of another mod is overwritten; the builder refuses rather than guesses and writes each file in one step, with a log; the release checks itself (records, no developer keys, every file listed back, the engine built from the public commit it names). Pre-built bodies (Zeroed, Ivy) are optional files for vanilla-skin players, with CBBE's permission and no .tri. MO2 and Vortex; Steam and GOG 1.10.163 or the Anniversary Edition 1.11.x, with Runtime Database on every version (engine 1.1.0 is tested in game on the Anniversary Edition 1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen 1.10.984 is untested). The builder finds your game from any folder inside it or from Steam's own records, reads every skin texture format, and when your CBBE isn't 2.7.2 says what to check. (A-42, A-43)
+[b]Install[/b]: Vortex or MO2; the installer checks your setup first and refuses without CBBE. Manual installs are not supported. Upgrading from 1.1.1: Engine 1.2.0, then Anatomy 1.2.0, run AnatomyBuilder 1.2.0 again, rebuild in BodySlide; saves carry on. Nothing of another mod is overwritten; the builder refuses rather than guesses. Pre-built bodies (Zeroed, Ivy) are optional files for vanilla-skin players, with CBBE's permission and no .tri; they were built with 1.1.1 (no vaginal lining). Steam and GOG 1.10.163 or the Anniversary Edition 1.11.x, with Runtime Database. (A-42, A-43)
 
-[b]Not yet confirmed in game[/b]: the genital bones kept on women outside your cell and put back at rest after a ragdoll (A-44, A-45), fisting and big-toy stretch (A-17), toys as one tube (A-38), Rapport's MCM knobs for the physics, and brows following vaginal and anal depth (A-33). [b]Known limits[/b]: in a two-hole position the aim chooses by geometry alone; men's own openings are not modelled; the wrist can show a faint line against the hands. Tell us what you see.
+[b]Something wrong?[/b] About 10 s after every load the engine writes [font=Courier New]Documents\My Games\Fallout4\F4SE\Anatomy_Health.txt[/font]: the engine, the preset, the body and every simulated actor, and a box only on a real problem. Post it in the Bugs tab. (A-60)
+
+[b]Known limits[/b]: in a two-hole position the aim chooses by geometry alone; the men's canal shows the body's own skin tone; the wrist can show a faint line against the hands.
