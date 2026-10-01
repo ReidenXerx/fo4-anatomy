@@ -14,6 +14,8 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = ROOT / 'sounds' / 'src'
 OUT = ROOT / 'build' / 'sound' / 'Sound' / 'FX' / 'Anatomy'
+# LUFS per kind (default -12): the mouth's sounds a little louder, the owner 10-02: "do mechanical blowjob sounds louder"
+LOUDNESS = {'suck': -10, 'slurp': -10}
 
 
 def main():
@@ -26,7 +28,7 @@ def main():
         for n, src in enumerate(sorted([*kind.glob('*.mp3'), *kind.glob('*.wav')]), 1):
             dst = OUT / f'{kind.name}_{n}.wav'
             subprocess.run([ffmpeg, '-loglevel', 'error', '-y', '-i', str(src), '-ac', '1', '-ar', '44100',
-                            '-af', 'loudnorm=I=-12:TP=-1.0', '-c:a', 'pcm_s16le', str(dst)], check=True)
+                            '-af', f'loudnorm=I={LOUDNESS.get(kind.name, -12)}:TP=-1.0', '-c:a', 'pcm_s16le', str(dst)], check=True)
             made.append(dst.name)
     print(f'{len(made)} clips -> {OUT}: {", ".join(made)}')
     return 0
