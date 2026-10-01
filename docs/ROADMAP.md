@@ -32,6 +32,17 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    are MUTED in scenes while it is on (the owner's poll). Open: which mod ships the clips. First research how the common packs
    fire theirs (animation annotations, their SNDR records). Our own clips (ElevenLabs sound effects, the squelch
    recipe in memory), so no permissions. Done when a scene from two different packs sounds the same and in sync.
+4. **ESL versions of outfit mods** (the owner, 2026-10-01; after item 3's test): a separate Nexus page like Anatomy
+   Tailor's, one file per outfit mod, the mod's plugin light-flagged with its new records renumbered into
+   0x800-0xFFF. Scope (the owner's pick): PURE outfit mods only -- no Papyrus scripts (an injector's
+   GetFormFromFile ids would silently miss), no plugin in the load order using it as a master, and no text config
+   in Data (RobCo Patcher INIs, AAF XMLs, any "plugin|id" reference, loose and in BA2s) naming its records; a mod
+   that fails any check is left out. Same file name, so BA2s and masters still match. Existing saves lose that mod's
+   items: the owner accepts it (each file says "new game, or lose its items"; patches for it break; made for
+   version X). The 10-01 survey of the owner's 806 active plugins: 105 full plugins add armor -- 5 fit as they are,
+   52 fit after renumbering, 48 are too big (>2048 new records; nearly all quest/world mods, plus Vtaw Wardrobe 7
+   at 2577). Tooling: our compactor (studies/esl_compact.py, survey studies/esl_survey.py, proven on BoS Recon: 4 ids, 3
+   references) grown into a tool, cross-checked by FO4Edit 4.1.5f (D:\xEdit.4.1.5f) "Check for Errors".
 
 ## Later (low priority)
 
