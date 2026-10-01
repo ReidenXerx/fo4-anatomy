@@ -23,7 +23,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     made = []
     for kind in sorted(p for p in SRC.iterdir() if p.is_dir()):
-        for n, src in enumerate(sorted(kind.glob('*.mp3')), 1):
+        for n, src in enumerate(sorted([*kind.glob('*.mp3'), *kind.glob('*.wav')]), 1):
             dst = OUT / f'{kind.name}_{n}.wav'
             subprocess.run([ffmpeg, '-loglevel', 'error', '-y', '-i', str(src), '-ac', '1', '-ar', '44100',
                             '-af', 'loudnorm=I=-16:TP=-1.5', '-c:a', 'pcm_s16le', str(dst)], check=True)
