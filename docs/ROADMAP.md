@@ -58,7 +58,10 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    jump GIFs agree. Coats also sway as a result.
    Pages (the owner, 2026-10-01): every Tailor conversion page shows GIF collages of a jumping character in coats
    and skirts WITH the Anatomy Engine and WITHOUT it (rendered by preview.py; Publisher-bud told). Open: the engine
-   as a requirement of skirt-weighted files, or a FOMOD option.
+   as a requirement of skirt-weighted files, or a FOMOD option -> SETTLED (the owner, 2026-10-01): a FOMOD option
+   "Skirt physics (needs Anatomy Engine)"; no = today's weights. Without the engine skirt-weighted cloth would freeze
+   in the standing pose (A-14's missing-bone behaviour), so it is never the only version. Tailor builds BOTH variants
+   of every garment with hanging cloth in the same run (plain + skirt), and each pack carries both for the FOMOD.
 
 ## Later (low priority)
 
