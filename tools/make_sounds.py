@@ -14,7 +14,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = ROOT / 'sounds' / 'src'
 OUT = ROOT / 'build' / 'sound' / 'Sound' / 'FX' / 'Anatomy'
-# LUFS per kind (default -12): the mouth's sounds a little louder, the owner 10-02: "do mechanical blowjob sounds louder"
+# LUFS per kind (default -12): the mouth's sounds a little louder, the owner 10-01: "do mechanical blowjob sounds louder"
 LOUDNESS = {'suck': -10, 'slurp': -10, 'siphon': -12}
 
 
@@ -23,6 +23,8 @@ def main():
     if not ffmpeg:
         raise SystemExit('ffmpeg is not on PATH')
     OUT.mkdir(parents=True, exist_ok=True)
+    for old in OUT.glob('*.wav'):   # a clip whose source is gone must not linger and ship
+        old.unlink()
     made = []
     for kind in sorted(p for p in SRC.iterdir() if p.is_dir()):
         for n, src in enumerate(sorted([*kind.glob('*.mp3'), *kind.glob('*.wav')]), 1):

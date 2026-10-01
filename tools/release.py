@@ -21,6 +21,7 @@ next-gen 1.10.984 and the Anniversary Edition 1.11.x. Its static libraries' noti
 
 Anatomy (the Nexus archive) ships:
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
+    Sound/FX/Anatomy/*.wav                                             the engine's sex sounds (A-67, make_sounds.py)
     Scripts/AnatomyAim.pex                                             the aim's scene list (A-28)
     F4SE/Plugins/F4EE/Overlays/Anatomy.esp, Materials|Textures/Overlays/Anatomy   the glans colour (A-31)
     F4SE/Plugins/Anatomy/ocbp.ini, OCBPCollisionConfig.txt             our physics lines and [Bones]
@@ -414,6 +415,10 @@ def files(version):
             BUILD / 'overlays/F4SE/Plugins/F4EE/Overlays/Anatomy.esp/overlays.json',
         'Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem': BUILD / 'overlays/Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem',
         'Textures/Overlays/Anatomy/GlansFlush.dds': BUILD / 'overlays/Textures/Overlays/Anatomy/GlansFlush.dds',
+        # A-67: every clip an SNDR in Anatomy.esp names (tools/make_sounds.py); the 2026-10-01 microscope found the
+        # Nexus archive would have shipped the 9 sounds with none of their 37 clips
+        **{f'Sound/FX/Anatomy/{c}.wav': BUILD / f'sound/Sound/FX/Anatomy/{c}.wav'
+           for _, _, clips in __import__('make_esp').SOUNDS for c in clips},
     }
 
 
