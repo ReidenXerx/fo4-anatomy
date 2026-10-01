@@ -73,13 +73,14 @@ Working genitals for Fallout 4 CBBE women: physics, arousal, contact.
 
 WHAT YOU NEED
   Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23, or the Anniversary Edition 1.11.x with its
-  F4SE; on every version, Runtime Database (Nexus 108394). Engine 1.1.0 is tested in game on the Anniversary
-  Edition 1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen
-  1.10.984 is untested.
-  The Anatomy Engine (fo4-ocbpc 1.1.0 or later, its own download), CBBE 2.7.2 (with its BodySlide
-  files) and BodySlide.
-  LooksMenu for the arousal nipples and the glans colour; AAF for scenes; MCM for the settings page.
+  F4SE; on every version, Runtime Database (Nexus 108394). Played in game on the Anniversary Edition
+  1.11.x; 1.10.163 runs the same engine build.
+  The Anatomy Engine (fo4-ocbpc 1.2.0 or later, its own download), CBBE 2.7.2 (with its BodySlide
+  files) and BodySlide. For men: BodyTalk 4 with its BodySlide files.
+  LooksMenu for the arousal nipples and the glans colour; AAF for scenes; Rapport for moans, faces
+  and glances; MCM for the settings page.
   A physics preset (e.g. MadKita's) is optional: with none, Anatomy uses its own default preset.
+  Install with Vortex or MO2: the installer checks your setup. Manual installs are not supported.
 
 INSTALL
   1. Install the Anatomy Engine, then this archive, with your mod manager. Nothing of this archive
@@ -108,6 +109,14 @@ WHAT IT DOES
   - The mouth opens to what is at the lips, over the animation's own face.
   - Women's nipples respond to arousal (scenes, watching, nudity, companions' own arousal); the MCM
     page "Anatomy" sets how much and what counts.
+  - Inside, the vaginal canal has its own lining (folds, wet near the entrance) and a closed anal
+    canal sits behind the anus.
+  - Sex sounds from the engine: every animation pack's canned body sounds are muted in scenes and our
+    own set plays from each stroke's real depth and speed. With Rapport, moans follow.
+  - Men: the builder opens BodyTalk 4's own anus (Nude and Uncut, "Anatomy Male Body" in BodySlide),
+    with a canal, physics, aim and sounds, even under a women-only physics preset.
+  - 3BBB: with 3BBB installed, the builder builds on it and keeps its breast bones.
+  - Coats and dresses refitted by Anatomy Tailor with "Skirt physics" move out of the way of the legs.
 
 CREDITS
   Nahka - the vulva and anus geometry, sliders and texture (Animated Fannies on LoversLab: "up for
@@ -134,12 +143,11 @@ Built from {FORK_URL} (commit @FORK_COMMIT@).
 
 WHAT YOU NEED
   Fallout 4 1.10.163 (Steam or GOG) with F4SE 0.6.23, or the Anniversary Edition 1.11.x with its F4SE;
-  on every version, Runtime Database (Nexus 108394). This build is tested in game on the Anniversary Edition
-  1.11.240; on 1.10.163 it replaces 1.0.0 and awaits players' confirmation; next-gen 1.10.984 is
-  untested.
+  on every version, Runtime Database (Nexus 108394). Played in game on the Anniversary Edition 1.11.x;
+  1.10.163 runs the same build.
 
 INSTALL
-  Install with your mod manager and let its cbp.dll win over any other OCBPC-based mod's (Jiggle
+  Install with Vortex or MO2 (manual installs are not supported) and let its cbp.dll win over any other OCBPC-based mod's (Jiggle
   Physics, MadKita's, OCBPC itself). Your own ocbp.ini and OCBPCollisionConfig.txt keep working as
   they are: this is the same engine, with everything new either off until a config turns it on or
   fixing OCBPC's own faults.
@@ -151,8 +159,11 @@ WHAT IT ADDS
   the game's code before patching it and stays off, logged, on any other game build.
   With Anatomy's config (Data\\F4SE\\Plugins\\Anatomy\\ocbp.ini, read after yours): run-time genital
   bones, stretch groups, props and toys as colliders, one-tube penis collision, the contact-driven
-  mouth with lips fitted to what is in it, penis aim into the right opening, per-man shape, and
-  partner glances. The full list and every setting: {FORK_URL}
+  mouth with lips fitted to what is in it, penis aim into the right opening (a man's too), per-man
+  shape, partner glances, sex sounds played from each stroke's depth and speed (the packs' own body
+  sounds muted in scenes), skirt bones that keep the legs inside coats and dresses, and a health
+  check after every load (Anatomy_Health.txt). A man left out only by a preset's femaleOnly is still
+  simulated for Anatomy's bones. The full list and every setting: {FORK_URL}
 
 LICENCES
   cbp.dll is distributed under the GNU General Public License, version 3 (fo4-ocbpc - GPL-3.0.txt),
@@ -232,6 +243,9 @@ MSBUILD = r'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBui
 def build_dll():
     """cbp.dll from the fork's committed source; returns that commit (the source players are pointed to)."""
     dirty = subprocess.run(['git', 'status', '--porcelain'], cwd=FORK, capture_output=True, text=True).stdout
+    # the agents' own tooling (bearing's generated skills and notes) is not the DLL's source and never built into it
+    tooling = ('.claude/', '.bearing/', 'CLAUDE.md', 'AGENTS.md')
+    dirty = '\n'.join(l for l in dirty.splitlines() if not l[3:].strip('"').startswith(tooling))
     if dirty.strip():
         raise SystemExit('the fork has uncommitted changes, so no published commit would be the source of '
                          f'this cbp.dll; commit them first:\n{dirty}')
@@ -245,7 +259,8 @@ def build_dll():
 
 
 BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', 'mask', 'split_genitals',
-                   'opening', 'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm', 'atlas', 'anal_canal', 'mucosa', 'vaginal_canal', 'tbbb')
+                   'opening', 'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm', 'atlas', 'anal_canal', 'mucosa', 'vaginal_canal', 'tbbb',
+                   'male_anus', 'osd', 'nif')
 REBUILD_MODULES = ('gamedata', 'garments', 'hip_fold', 'neck_seam', 'align_body', 'nif', 'osd')
 
 
@@ -487,34 +502,139 @@ def rebuild_files():
     return out
 
 
-def fomod(version, title=TITLE, steps=NEXT_STEPS, entry='Run the Anatomy Builder, then BodySlide'):
+# The FOMOD standard (nexus-tools docs/FOMOD-STANDARD.md, the owner 2026-10-01): mod managers only; what a FOMOD can see
+# hard-blocks; the first step "Checking your setup" is ONE Required option whose description is the whole checklist;
+# then one step per feature, each its card and its full text; a missing soft requirement gets a text step shown only
+# then. Cards are Publisher-bud's (nexus-tools studio/anatomy/out), shrunk to 1000 px.
+CARDS = ROOT.parent / 'nexus-tools/studio/anatomy/out'
+EXTRA_CARDS = pathlib.Path(r'D:\F4Output\cards\anatomy\fomod')
+
+ANATOMY_FOMOD = dict(
+    hard=['CBBE.esp'],
+    setup=['CBBE.esp: found',
+           'Anatomy Engine: check this yourself -- the physics, the aim, the mouth and the sounds run in it; Nexus 109434',
+           'F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org',
+           'Runtime Database: check this yourself -- finds the game\'s functions on every game version; Nexus 108394',
+           'BodySlide and Outfit Studio: check this yourself -- builds the body with your preset; Nexus 25',
+           f'AnatomyBuilder: run it after this installs -- it builds the body from your own CBBE and skin; {TOOLS_URL}',
+           'AAF, LooksMenu, Rapport, MCM: optional -- the next pages say what each one adds',
+           'Install with Vortex or MO2; manual installs are not supported.'],
+    setup_card='anatomy-pipeline.jpg',
+    features=[
+        ('Her own bones, added at run time', 'Working genitals',
+         'The vulva and anus are their own bones, added at run time to whatever skeleton your game loads: the outer '
+         'and inner lips jiggle, react and open around a penis, a hand or a toy, and the openings stretch for '
+         'something bigger, through the engine\'s collision physics. Nothing of your skeleton mod is replaced.',
+         'anatomy-rig.jpg'),
+        ('A real lining inside', 'The canals',
+         'Inside, the vaginal canal has its own lining: 14 folds, darkening deeper and turning wet near the entrance; '
+         'a closed anal canal sits behind the anus, so you never see through the body.', 'anatomy-lining.jpg'),
+        ('Men get a real anus', 'Male-male support',
+         'BodyTalk 4\'s own anus, opened, with a canal inside and the same physics and stretch as hers. In an AAF '
+         'scene the penis aims into it and follows the canal, with the engine\'s sounds and Rapport\'s anal moans. '
+         'The AnatomyBuilder makes it from your own BodyTalk 4 (Nude or Uncut): build "Anatomy Male Body" in '
+         'BodySlide.', 'anatomy-mm.jpg'),
+        ('Sex sounds from the engine', 'Sex sounds',
+         'Every animation pack sounds the same and in sync: the packs\' own canned body sounds are muted in scenes and '
+         'replaced by our own set, played by the engine from the real depth and speed of each stroke -- wet strokes, '
+         'slaps, closed-mouth blowjob sounds, licks, fingering. With Rapport, moans follow: pleasure, pain-pleasure for '
+         'anal and BDSM, climax. On by default.', 'anatomy-numbers.jpg'),
+        ('Arousal that rises and fades', 'Arousal',
+         'Scenes, nudity, watching others and a companion\'s own arousal raise it; it fades with time. Her nipples '
+         'follow it (LooksMenu). Its MCM page sets how much and what counts.', 'anatomy-arousal.jpg'),
+        ('Built on your PC, from your own CBBE', 'The Anatomy Builder',
+         'Nothing of CBBE or BodyTalk is shipped: the AnatomyBuilder reads your own CBBE (or 3BBB, when you have it, '
+         'keeping its breast bones), your skin and your skeleton, and writes the "Anatomy Body" BodySlide set. Run '
+         'it again after changing your CBBE, skin or physics preset.', 'anatomy-builder-finds.jpg'),
+    ],
+    notes=[
+        ('AAF.esm', 'Note: AAF is not active', 'Without AAF, no scenes',
+         'The genitals, their physics and the arousal from nudity work without AAF. The aim, the mouth, the sex '
+         'sounds and the arousal from scenes need AAF scenes. Everything else installs as usual.'),
+        ('LooksMenu.esp', 'Note: LooksMenu is not active', 'Without LooksMenu, no arousal nipples',
+         'The nipples that follow arousal and the glans colour are LooksMenu overlays and stay off without it. '
+         'Everything else works.'),
+        ('Rapport.esp', 'Note: Rapport is not active', 'Without Rapport, no moans',
+         'Rapport gives the moans, the faces and the glances. Without it the engine still plays the body sounds, '
+         'and every pack\'s own voices stay as they are.'),
+    ],
+)
+
+ENGINE_FOMOD = dict(
+    hard=[],
+    setup=['F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org',
+           'Runtime Database: check this yourself -- finds the game\'s functions on every game version; Nexus 108394',
+           'A physics preset (MadKita\'s, MTM, Jiggle Physics...): optional -- with none, Anatomy brings its own',
+           'Anatomy: optional -- the genitals, the aim and the sounds need its config; Nexus 109434\'s page links it',
+           'Let this cbp.dll win over any other OCBPC-based mod\'s.',
+           'Install with Vortex or MO2; manual installs are not supported.'],
+    setup_card='engine-tube.jpg',
+    features=[
+        ('One smooth tube, not a string of balls', 'Tube collision',
+         'A penis or a toy collides as one smooth tube along its length, not a row of spheres, so it never snags on '
+         'the lips or slips between two balls.', 'engine-tube.jpg'),
+        ('The shaft follows her path', 'Penis aim',
+         'In an AAF scene the penis finds the opening the animation meant -- vagina, anus, mouth or a gripping hand '
+         '-- and bends joint by joint along the canal inside, instead of passing through the body.', 'engine-aim.jpg'),
+        ('Lips that fit what is in them', 'The mouth',
+         'The mouth opens to what is at the lips, over the animation\'s own face, and the lips close round it at '
+         'its real size.', 'engine-lips.jpg'),
+        ('She looks up into his eyes', 'Glances',
+         'With Rapport, eyes meet the partner\'s for a second or two during a scene.', 'engine-glances.jpg'),
+        ('Skirt physics: legs stay inside', 'Skirt physics',
+         'Coats, dresses and skirts converted by Anatomy Tailor with "Skirt physics" move out of the way of the legs: '
+         'the engine hangs a ring of 60 bones at the hips and pushes them with the thighs and calves every frame.',
+         'skirt-physics.jpg'),
+    ],
+    notes=[],
+)
+
+
+def card(name, dest):
+    """a card into the FOMOD's images, 1000 px wide (the standard)"""
+    from PIL import Image
+    src = CARDS / name if (CARDS / name).exists() else EXTRA_CARDS / name
+    if not src.exists():
+        raise SystemExit(f'FOMOD card {name} is missing (nexus-tools studio/anatomy/out or {EXTRA_CARDS})')
+    im = Image.open(src).convert('RGB')
+    if im.width > 1000:
+        im = im.resize((1000, round(im.height * 1000 / im.width)))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    im.save(dest, quality=88)
+    return f'fomod/images/{dest.name}'
+
+
+def fomod_std(version, title, spec, stage):
+    """info.xml and ModuleConfig.xml per the standard; the cards are written into stage/fomod/images"""
     info = (f'<?xml version="1.0" encoding="UTF-8"?>\n<fomod>\n    <Name>{escape(title)}</Name>\n    <Author>{AUTHOR}</Author>\n'
-            f'    <Version>{version}</Version>\n    <Description>{escape(steps)}</Description>\n</fomod>\n')
-    config = f"""<?xml version="1.0" encoding="UTF-8"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
-    <moduleName>{escape(title)}</moduleName>
-    <requiredInstallFiles>
-        <folder source="Data" destination="" />
-    </requiredInstallFiles>
-    <installSteps order="Explicit">
-        <installStep name="After installing">
-            <optionalFileGroups order="Explicit">
-                <group name="Next steps" type="SelectAll">
-                    <plugins order="Explicit">
-                        <plugin name="{escape(entry)}">
-                            <description>{escape(steps)}</description>
-                            <typeDescriptor>
-                                <type name="Required" />
-                            </typeDescriptor>
-                        </plugin>
-                    </plugins>
-                </group>
-            </optionalFileGroups>
-        </installStep>
-    </installSteps>
-</config>
-"""
-    return info, config
+            f'    <Version>{version}</Version>\n</fomod>\n')
+    img = lambda n: card(n, stage / 'fomod/images' / n)
+
+    def step(name, group, option, desc, image=None, visible=''):
+        im = f'\n              <image path="{image}"/>' if image else ''
+        return (f'    <installStep name="{escape(name)}">{visible}\n      <optionalFileGroups order="Explicit">\n'
+                f'        <group name="{escape(group)}" type="SelectAll">\n          <plugins order="Explicit">\n'
+                f'            <plugin name="{escape(option)}">\n              <description>{escape(desc)}</description>{im}\n'
+                '              <typeDescriptor><type name="Required"/></typeDescriptor>\n            </plugin>\n'
+                '          </plugins>\n        </group>\n      </optionalFileGroups>\n    </installStep>\n')
+    first = img(spec['setup_card'])
+    x = ('<?xml version="1.0" encoding="UTF-8"?>\n<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+         'xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">\n'
+         f'  <moduleName>{escape(title)}</moduleName>\n  <moduleImage path="{first}"/>\n')
+    if spec['hard']:
+        x += ('  <moduleDependencies operator="And">\n' + ''.join(
+            f'    <fileDependency file="{escape(h)}" state="Active"/>\n' for h in spec['hard']) + '  </moduleDependencies>\n')
+    x += '  <requiredInstallFiles>\n    <folder source="Data" destination="" priority="0"/>\n  </requiredInstallFiles>\n'
+    x += '  <installSteps order="Explicit">\n'
+    x += step('Checking your setup', 'Your setup', 'Your setup', '\n'.join(spec['setup']), first)
+    for name, option, desc, c in spec['features']:
+        x += step(name, 'This feature', option, desc, img(c))
+    for plugin, name, option, desc in spec['notes']:
+        vis = (f'\n      <visible><dependencies operator="Or"><fileDependency file="{escape(plugin)}" state="Missing"/>'
+               f'<fileDependency file="{escape(plugin)}" state="Inactive"/></dependencies></visible>')
+        x += step(name, 'Read this', option, desc, None, vis)
+    x += '  </installSteps>\n</config>\n'
+    return info, x
 
 
 def sha256(path):
@@ -549,7 +669,7 @@ def pack_zip(name, version, wanted, readme_name, readme):
     return archive
 
 
-def pack(name, version, wanted, readme_name, readme, fomod_args=None, extras=None, no_binaries=False):
+def pack(name, version, wanted, readme_name, readme, fomod_spec=None, extras=None, no_binaries=False):
     """One archive: every file present, a README, a FOMOD page if asked, and every file listed back.
     extras: {name at the archive's root: source}. no_binaries: refuse any .exe/.dll/.pyd anywhere in it."""
     missing = [str(src) for src in wanted.values() if not src.exists()]
@@ -562,11 +682,12 @@ def pack(name, version, wanted, readme_name, readme, fomod_args=None, extras=Non
         dst = stage / 'Data' / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-    if fomod_args:
-        info, config = fomod(version, *fomod_args)
+    if fomod_spec:
+        title, spec = fomod_spec
         (stage / 'fomod').mkdir(parents=True, exist_ok=True)
+        info, config = fomod_std(version, title, spec, stage)
         (stage / 'fomod/info.xml').write_text(info, encoding='utf-8')
-        (stage / 'fomod/ModuleConfig.xml').write_text(config, encoding='utf-8')
+        (stage / 'fomod/ModuleConfig.xml').write_bytes(b'\xef\xbb\xbf' + config.encode('utf-8'))   # UTF-8 with BOM
         import xml.etree.ElementTree as ET
         ET.parse(stage / 'fomod/info.xml')
         ET.parse(stage / 'fomod/ModuleConfig.xml')             # both must at least be well-formed
@@ -619,7 +740,7 @@ def main():
     print(f'engine: cbp.dll from fork commit {commit}')
     if args.what == 'engine':
         pack(ENGINE, args.version, engine_files(), f'{ENGINE} - README.txt',
-             ENGINE_README.replace('@FORK_COMMIT@', commit))
+             ENGINE_README.replace('@FORK_COMMIT@', commit), (ENGINE_TITLE, ENGINE_FOMOD))
     if args.what in ('all', 'anatomy'):
         wanted = files(args.version)
         sys.path.insert(0, str(ROOT / 'tools'))
@@ -628,7 +749,7 @@ def main():
         print(face_section(wanted['F4SE/Plugins/Anatomy/ocbp.ini'].read_text(encoding='utf-8')))
         pack(NAME, args.version, wanted, f'{NAME} - README.txt',
              README.replace('@FORK_COMMIT@', commit),   # the tools version on their own (A-40): the
-             (TITLE, NEXT_STEPS, 'Get the Anatomy Builder, run it, then BodySlide'),   # texts say 'latest'
+             (TITLE, ANATOMY_FOMOD),                    # the texts say 'the latest' AnatomyBuilder zip
              extras={f'{NAME} - LICENSE.txt': ROOT / 'LICENSE'}, no_binaries=True)
     if args.what in ('all', 'builder'):
         build_exe(version=args.version, bootloader=args.bootloader)
