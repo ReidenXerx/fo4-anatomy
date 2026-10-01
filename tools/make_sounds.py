@@ -26,7 +26,7 @@ def main():
         for n, src in enumerate(sorted([*kind.glob('*.mp3'), *kind.glob('*.wav')]), 1):
             dst = OUT / f'{kind.name}_{n}.wav'
             subprocess.run([ffmpeg, '-loglevel', 'error', '-y', '-i', str(src), '-ac', '1', '-ar', '44100',
-                            '-af', 'loudnorm=I=-16:TP=-1.5', '-c:a', 'pcm_s16le', str(dst)], check=True)
+                            '-af', 'loudnorm=I=-12:TP=-1.0', '-c:a', 'pcm_s16le', str(dst)], check=True)
             made.append(dst.name)
     print(f'{len(made)} clips -> {OUT}: {", ".join(made)}')
     return 0
