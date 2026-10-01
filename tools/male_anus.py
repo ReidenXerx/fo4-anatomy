@@ -90,7 +90,7 @@ def bone_points(centre, axis, front):
             'L': ac._add(centre, ac._mul(left, REACH['L'])), 'R': ac._add(centre, ac._mul(left, -REACH['R']))}
 
 
-def rig(nif_path, centre, axis, front):
+def rig(nif_path, centre, axis, front, first_new):
     """Add the four anus stretch bones to the body's skin (nif.with_bones) and weigh the pucker and the canal's first
     rings to them: up to SHARE, shared between the two bones nearest the vertex's angle around the axis, fading over
     RIM_FADE beyond the ring and CANAL_FADE into the canal. Returns {bone: its offset in Pelvis_skin's frame}."""
@@ -138,10 +138,10 @@ def rig(nif_path, centre, axis, front):
         radial = ac._sub(rel, ac._mul(axis, d))
         r = _m.sqrt(ac._dot(radial, radial))
         ring_r = 0.53
-        if d <= 0.3:                                       # the pucker around the opening
-            f = max(0.0, min(1.0, 1.0 - (r - ring_r) / RIM_FADE)) if d > -0.8 else 0.0
-        else:                                              # the canal
-            f = max(0.0, min(1.0, 1.0 - (d - 0.3) / CANAL_FADE))
+        if i < first_new:                                  # BodyTalk's own skin: the pucker around the opening
+            f = max(0.0, min(1.0, 1.0 - (r - ring_r) / RIM_FADE)) if -0.8 < d <= 0.3 else 0.0
+        else:                                              # the canal's own vertices (an axis-only test reached the
+            f = max(0.0, min(1.0, 1.0 - (d - 0.3) / CANAL_FADE))   # penis tip and the balls: same depth, far off it)
         f *= SHARE
         if f <= 0.005 or r < 1e-4:
             continue
@@ -194,10 +194,88 @@ def build(nif_path, osd_path=None):
     """open the pucker, stitch the canal, add and weigh our anus bones; returns (report, [BonesMale] rows, [Aim] keys)"""
     import osd as osd_module
     centre, axis, front, path = ring(nif_path)
+    import nif
+    first_new = nif.Nif(nif_path).shape('BaseMaleBody:0').count
     line = ac.build(nif_path, osd_path, osd_module if osd_path else None, spec=spec(floor_uv(nif_path)))
-    local, touched = rig(nif_path, centre, axis, front)
+    local, touched = rig(nif_path, centre, axis, front, first_new)
     rows, aim = engine_keys(nif_path, centre, axis, path, local)
     return f'{line}; our 4 anus bones added, {touched} vertices weighted to them', rows, aim
+
+
+# ---- the Builder's men's stage: the player's own BodyTalk 4, opened, as a slider set of ours
+BT_OSP = 'Tools/BodySlide/SliderSets/BodyTalk4.osp'
+BT_FOLDER = 'Tools/BodySlide/ShapeData/BodyTalk4'
+FOLDER = 'AnatomyMale'
+VARIANTS = {'BodyTalk4': ('Nude', 'Anatomy Male Body'), 'BodyTalk4-Uncut': ('Uncut', 'Anatomy Male Body Uncut')}
+OUTPUTS = [f'Tools/BodySlide/SliderSets/{FOLDER}.osp', f'Tools/BodySlide/SliderGroups/{FOLDER}.xml'] + \
+          [f'Tools/BodySlide/ShapeData/{FOLDER}/{FOLDER}-{v}.{x}' for v, _ in VARIANTS.values() for x in ('nif', 'osd')]
+# in BodyTalk's own group, so the player's BodyTalk presets show for it, and BodySlide's group filter finds it
+GROUPS = ('<?xml version="1.0" encoding="UTF-8"?>\n<SliderGroups>\n    <Group name="BodyTalk - Bodies">\n' +
+          ''.join(f'        <Member name="{ours}"/>\n' for _, ours in VARIANTS.values()) + '    </Group>\n'
+          '    <Group name="Anatomy">\n' + ''.join(f'        <Member name="{ours}"/>\n' for _, ours in VARIANTS.values()) +
+          '    </Group>\n</SliderGroups>\n')
+
+
+def slider_sets(osp_text):
+    """BodyTalk4.osp's Nude and Uncut sets, renamed and pointed at our opened copies: same sliders, same output
+    (MaleBody), so building ours replaces BodyTalk's build exactly as building BodyTalk's replaces ours"""
+    import re
+    blocks = []
+    for m in re.finditer(r'<SliderSet name="([^"]+)">.*?</SliderSet>', osp_text, re.S):
+        name = m.group(1)
+        if name not in VARIANTS:
+            continue
+        v, ours = VARIANTS[name]
+        b = m.group(0).replace(f'<SliderSet name="{name}">', f'<SliderSet name="{ours}">', 1)
+        b = re.sub(r'<DataFolder>[^<]*</DataFolder>', f'<DataFolder>{FOLDER}</DataFolder>', b, count=1)
+        b = re.sub(r'<SourceFile>[^<]*</SourceFile>', f'<SourceFile>{FOLDER}-{v}.nif</SourceFile>', b, count=1)
+        b = b.replace('DataFolder="BodyTalk4"', f'DataFolder="{FOLDER}"')
+        refs = re.findall(r'>([^<>\\]+)\.osd\\', b)
+        b = b.replace(f'>BodyTalk4-{v}.osd\\', f'>{FOLDER}-{v}.osd\\')
+        if any(r != f'BodyTalk4-{v}' for r in refs):
+            raise ValueError(f'{name}: slider data from {sorted(set(refs))}, not only BodyTalk4-{v}.osd')
+        if 'BodyTalk4' in b.replace('BodyTalk4-', ''):
+            raise ValueError(f'{name}: a BodyTalk4 path left in our set')
+        blocks.append(b)
+    if len(blocks) != len(VARIANTS):
+        raise ValueError(f'BodyTalk4.osp has {len(blocks)} of the sets {sorted(VARIANTS)}')
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<SliderSetInfo version="1">\n    ' + '\n    '.join(blocks) + \
+        '\n</SliderSetInfo>\n'
+
+
+def stage(game, work):
+    """Open the player's BodyTalk 4 (Nude and Uncut) into work/: {published path: produced file}, or None when BodyTalk 4
+    is not installed. Says when the opening is not where the shipped engine keys put it (another BodyTalk version)."""
+    import physics_design as pd
+    sources = [BT_OSP] + [f'{BT_FOLDER}/BodyTalk4-{v}.{x}' for v, _ in VARIANTS.values() for x in ('nif', 'osd')]
+    if any(game.find(rel) is None for rel in sources):
+        return None
+    for rel in sources:
+        print(f'   input {game.describe(rel)}')
+    produced = {}
+    shape_dir = pathlib.Path(work) / 'ShapeData' / FOLDER
+    shape_dir.mkdir(parents=True, exist_ok=True)
+    for v, ours in VARIANTS.values():
+        nif_path, osd_path = shape_dir / f'{FOLDER}-{v}.nif', shape_dir / f'{FOLDER}-{v}.osd'
+        nif_path.write_bytes(game.read(f'{BT_FOLDER}/BodyTalk4-{v}.nif'))
+        osd_path.write_bytes(game.read(f'{BT_FOLDER}/BodyTalk4-{v}.osd'))
+        report, rows, aim = build(nif_path, osd_path)
+        print(f'   {ours}: {report}')
+        got = {r.split('=')[0]: [float(x) for x in r.split('=')[1].split(',')[1:]] for r in rows}
+        off = max(abs(a - b) for k, p in pd.MEN_ANUS_BONES.items() for a, b in zip(got[k], p))
+        if off > 0.01:
+            print(f'   WARNING: {ours}\'s opening is {off:.3f} from where the engine aims (physics_design.MEN_ANUS_*, '
+                  'measured on BodyTalk 4 3.8): the penis may miss it')
+        for path in (nif_path, osd_path):
+            produced[f'Tools/BodySlide/ShapeData/{FOLDER}/{path.name}'] = path
+    osp = pathlib.Path(work) / f'{FOLDER}.osp'
+    osp.write_text(slider_sets(game.read(BT_OSP).decode('utf-8-sig')), encoding='utf-8')
+    produced[f'Tools/BodySlide/SliderSets/{FOLDER}.osp'] = osp
+    groups = pathlib.Path(work) / f'{FOLDER}-groups.xml'
+    groups.write_text(GROUPS, encoding='utf-8')
+    produced[f'Tools/BodySlide/SliderGroups/{FOLDER}.xml'] = groups
+    assert set(produced) == set(OUTPUTS)
+    return produced
 
 
 if __name__ == '__main__':

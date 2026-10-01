@@ -16,6 +16,9 @@ writes are paths no other mod ships, so nothing needs resolving in a mod manager
     Tools/BodySlide/SliderSets/Anatomy.osp, Tools/BodySlide/ShapeData/Anatomy/*,
     Tools/BodySlide/SliderGroups/Anatomy.xml, Tools/BodySlide/SliderCategories/Anatomy.xml,
     Textures/Anatomy/FemaleBody_d/n/s.dds, Materials/Anatomy/AnatomyGenitals.bgsm
+and, when BodyTalk 4 is installed, the men's body with the anus opened (A-69):
+    Tools/BodySlide/SliderSets/AnatomyMale.osp, Tools/BodySlide/ShapeData/AnatomyMale/*,
+    Tools/BodySlide/SliderGroups/AnatomyMale.xml
 Then: open BodySlide, choose "Anatomy Body" and your preset, and Build.
 """
 import argparse
@@ -267,6 +270,23 @@ def main():
             atlas.apply(ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', gt.ANATOMY_OUT)))
         run_stage('8. the anal canal mucosa (A-50)', lambda: print(anal_canal.paint_maps(gt.ANATOMY_OUT, atlas.LAST)))
         run_stage('8b. the vaginal canal mucosa (A-54)', lambda: print(vaginal_canal.paint_maps(gt.ANATOMY_OUT, atlas.LAST)))
+        # A-69: the men's anus, on the player's own BodyTalk 4 (Nude and Uncut) when it is installed. Optional: a
+        # failure here says so and leaves the women's body to be written
+        import male_anus
+        men = {}
+
+        def men_stage():
+            got = male_anus.stage(game, work / 'men')
+            if got is None:
+                print("   BodyTalk 4 is not installed (its BodyTalk4.osp, Nude and Uncut files): no men's body")
+            else:
+                men.update(got)
+        try:
+            run_stage("9. the men's anus, on BodyTalk 4 (A-69)", men_stage)
+        except Exception as e:                       # SystemExit included: the women's body still gets written
+            men.clear()
+            print(f"   the men's body was NOT built: {e}")
+            traceback.print_exc()
 
         # ---- publish into Data (or --out): our own paths only
         produced = {
@@ -293,7 +313,8 @@ def main():
         produced['F4SE/Plugins/Anatomy/build.ini'] = built
         if set(produced) != set(OUTPUTS):
             raise SystemExit('internal: the output list changed')
-        dest = pathlib.Path(args.out) if args.out else data
+        produced.update(men)                            # A-69: the men's files (male_anus.OUTPUTS), when built
+        dest =pathlib.Path(args.out) if args.out else data
         print(f'\n=== writing to {dest}')
         for rel, src in produced.items():
             target = dest / rel
@@ -313,6 +334,9 @@ def main():
         ok = True
         print('\nDone. Now open BodySlide, choose the set "Anatomy Body", your preset, and Build (or Batch '
               'Build with "Anatomy Body" ticked). Re-run this builder after changing your CBBE, skin or physics preset (ocbp.ini).')
+        if men:
+            print('Men: build "Anatomy Male Body" (or "Anatomy Male Body Uncut") with your BodyTalk preset, in place of '
+                  'BodyTalk4: the same body, with the anus opened.')
     except SystemExit as e:
         print(f'\nSTOPPED: {e.code}')
     except Exception:
