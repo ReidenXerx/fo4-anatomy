@@ -43,6 +43,11 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    52 fit after renumbering, 48 are too big (>2048 new records; nearly all quest/world mods, plus Vtaw Wardrobe 7
    at 2577). Tooling: our compactor (studies/esl_compact.py, survey studies/esl_survey.py, proven on BoS Recon: 4 ids, 3
    references) grown into a tool, cross-checked by FO4Edit 4.1.5f (D:\xEdit.4.1.5f) "Check for Errors".
+   **Plus optional distribution** (the owner, 2026-10-01): every file's FOMOD asks whether to add the outfits to the
+   world (NPCs, vendors, containers), written against the NEW ids we assign, so it cannot drift. To decide when we
+   get there (poll): the mechanism (RobCo Patcher INIs, already in the owner's list, vs a Papyrus injector), which
+   lists, and how often. It may also widen the scope: a mod whose only blocker is its OWN injector script could ship
+   with that script left out and ours offered instead.
 
 ## Later (low priority)
 
