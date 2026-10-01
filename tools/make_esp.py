@@ -37,9 +37,9 @@ SOUNDS = [                     # (form id, EDID, clips)
     (0x01000805, 'AnatomySoundSlurp', [f'slurp_{i}' for i in range(1, 5)]),   # a shaft enters a mouth (at the head)
     (0x01000806, 'AnatomySoundSuck', [f'suck_{i}' for i in range(1, 7)]),   # the closed mouth moving (most strokes)
     (0x01000807, 'AnatomySoundSiphon', ['siphon_1', 'siphon_2']),   # air slipping between lips and skin (now and then)
-    (0x01000808, 'AnatomySoundLick', [f'lick_{i}' for i in range(1, 5)]),   # a tongue on her (on a beat while it is there)
-    (0x01000809, 'AnatomySoundFinger', ['finger_1', 'finger_2']),   # fingers in or on her
-    (0x0100080A, 'AnatomySoundHandjob', ['handjob_1', 'handjob_2']),   # a hand stroking a shaft
+    (0x01000808, 'AnatomySoundLick', [f'lick_{i}' for i in range(1, 7)]),   # a tongue on her (on a beat while it is there)
+    (0x01000809, 'AnatomySoundFinger', [f'finger_{i}' for i in range(1, 6)]),   # fingers in or on her
+    (0x0100080A, 'AnatomySoundHandjob', [f'handjob_{i}' for i in range(1, 6)]),   # a hand stroking a shaft
 ]
 SOUND_CATEGORY = 0x000DDDC5
 SOUND_OUTPUT = 0x000428B6
