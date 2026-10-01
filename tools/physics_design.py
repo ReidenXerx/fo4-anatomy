@@ -112,6 +112,17 @@ STRETCH = {'Labia': dict(group=1, knee=2.4, gain=3.0, max=1.5, axis=VAGINA_AXIS)
 STRETCH_BONES = {b: b + '_Stretch' for b in ('AnatLip_L', 'AnatLip_R', 'AnatAnus_F', 'AnatAnus_B',
                                               'AnatAnus_L', 'AnatAnus_R')}
 
+# The men's anus (A-69): the same four ring bones, sections and stretch, opened in BodyTalk 4's own pucker, which
+# sits lower and further back than the women's. Measured by tools/male_anus.py on BodyTalk4-Nude (2026-10-01) and
+# already in Pelvis_skin's frame, so they go to the fork as they are: [BonesMale] (where each ring bone rests on a man)
+# and [Aim] anusM/anusInM/anusPathM (the opening a penis aims at). His axis is 3 degrees off hers (0.917,0.400 vs
+# 0.892,0.451), so [Anus]'s stretch axis serves both.
+MEN_ANUS_BONES = {'AnatAnus_F': (-4.493298, -2.523268, 0.000237), 'AnatAnus_B': (-3.813600, -4.081475, 0.000239),
+                  'AnatAnus_L': (-4.213423, -3.164882, 1.000238), 'AnatAnus_R': (-4.213422, -3.164883, -0.999762)}
+MEN_ANUS_AIM = dict(anusM='-4.21342,-3.16488,0.00024', anusInM='0.91659,0.39982,0.00000',
+                    anusPathM='-4.213,-3.165,0.000;-3.526,-2.865,0.000;-2.839,-2.565,0.000;-0.882,-2.981,0.000;'
+                              '1.074,-3.397,0.000;3.030,-3.813,0.000;4.204,-4.062,0.000')
+
 # Props (A-17, the fork's [Props]): whatever an animation hangs on a hand's AnimObject nodes (DR pack's
 # dildos and bat) collides along its rendered length. The hands' WEAPON nodes are left out on purpose:
 # a rifle held against her chest would squash her breasts.

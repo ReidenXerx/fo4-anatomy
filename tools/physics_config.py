@@ -230,7 +230,7 @@ def aim_keys(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None):
 
     keys = dict(AIM, chain='|'.join(AIM_CHAIN), vagina=fmt(point(pd.VAGINA_CENTRE)), vaginaIn=fmt(axis(pd.VAGINA_AXIS)),
                 vaginaPath=path(pd.VAGINA_PATH), anus=fmt(point(pd.ANUS_CENTRE)), anusIn=fmt(axis(pd.ANUS_AXIS)),
-                anusPath=path(pd.ANUS_PATH))
+                anusPath=path(pd.ANUS_PATH), **pd.MEN_ANUS_AIM)
     for sex, head, neck, key in (('female', head_f, neck_f, 'F'), ('male', head_m, neck_m, 'M')):
         if head is not None:
             mouth = (MOUTH[f'{sex}X'], MOUTH[f'{sex}Y'], MOUTH[f'{sex}Z'])
@@ -286,6 +286,8 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
               '[Shape]'] + [f'{k}={v}' for k, v in SHAPE.items()]
     lines += ['', '; our nodes, created at run time under the skeleton the actor loaded: name=parent,x,y,z',
               '[Bones]'] + [f'{n}={p},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, p, l in bone_table(pelvis_world)]
+    lines += ['', '; the same nodes on a man where his body differs (A-69: BodyTalk\'s anus): name=parent,x,y,z',
+              '[BonesMale]'] + [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in pd.MEN_ANUS_BONES.items()]
     return '\n'.join(lines) + '\n'
 
 

@@ -1988,5 +1988,16 @@ Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM ta
   0-15 degrees the walls keep 2.7-3.9 units of flesh; from 45 they come out through the cleft). On BodyTalk4-Nude: 96
   triangles off, a loop of 12, 157 vertices / 276 triangles, 8.5 deep, slider data carried; open edges 54 before and
   after (BodyTalk's own cuts), every original vertex unchanged. The canal samples the pucker's own texels for now.
-- **Next:** bones and weights (our AnatAnus_* at run time on men), physics and the tube, the aim target on men (engine),
-  the Builder's men's stage and BodySlide project, the mucosa patch, verification, the owner's scene.
+- **Step 2 done (rig + engine):** male_anus.py adds the women's four ring bones as AnatAnus_*_Stretch to the men's skin
+  (nif.with_bones; each one Pelvis_skin's bind translated to its rest point) and weighs the pucker and the canal's
+  first rings to them: at most 0.6 of a vertex (the women's fit peaked there, A-14), split between the two bones around
+  its angle, fading over 1.0 beyond the ring and 1.5 into the canal. On BodyTalk4-Nude 481 vertices, 77 skin bones,
+  weights sum to 1, at most 4 per vertex, no new open edges. The fork (runtime-database): [BonesMale] gives a man's
+  rest offset for a node of ours (Bones.cpp RestOf, at creation and at every re-rest); [Aim] anusM/anusInM/anusPathM
+  give his opening, aimed at only when his skin names our AnatAnus_F (so plain BodyTalk is never aimed into). Values
+  in physics_design.MEN_ANUS_*; his axis is 3 degrees off hers, so [Anus]'s springs and stretch serve both.
+- **Men under a femaleOnly preset:** CBBE 3BBB's and MadKita's ocbp.ini say femaleOnly=1, which left every man
+  untracked: no springs on his anus at all. The fork now tracks an actor that only the preset's sex filter leaves out
+  for OUR bones alone (SimObj::anatomyOnly; every other filter of the preset still applies), so his breasts-and-butt
+  physics stay off exactly as the preset says.
+- **Next:** the Builder's men's stage and BodySlide project, the mucosa patch, verification, the owner's scene.
