@@ -15,7 +15,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = ROOT / 'sounds' / 'src'
 OUT = ROOT / 'build' / 'sound' / 'Sound' / 'FX' / 'Anatomy'
 # LUFS per kind (default -12): the mouth's sounds a little louder, the owner 10-02: "do mechanical blowjob sounds louder"
-LOUDNESS = {'suck': -10, 'slurp': -10}
+LOUDNESS = {'suck': -10, 'slurp': -10, 'siphon': -12}
 
 
 def main():

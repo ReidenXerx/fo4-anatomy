@@ -33,9 +33,10 @@ TES4_LIGHT = 0x200
 SOUNDS = [                     # (form id, EDID, clips)
     (0x01000802, 'AnatomySoundSlap', ['slap_1', 'slap_2']),
     (0x01000803, 'AnatomySoundSquelch', ['squelch_1', 'squelch_2']),
-    (0x01000804, 'AnatomySoundThrust', [f'thrust_{i}' for i in range(1, 7)]),
+    (0x01000804, 'AnatomySoundThrust', [f'thrust_{i}' for i in range(1, 6)]),
     (0x01000805, 'AnatomySoundSlurp', [f'slurp_{i}' for i in range(1, 5)]),   # a shaft enters a mouth (at the head)
-    (0x01000806, 'AnatomySoundSuck', [f'suck_{i}' for i in range(1, 7)]),
+    (0x01000806, 'AnatomySoundSuck', [f'suck_{i}' for i in range(1, 7)]),   # the closed mouth moving (most strokes)
+    (0x01000807, 'AnatomySoundSiphon', ['siphon_1', 'siphon_2']),   # air slipping between lips and skin (now and then)
 ]
 SOUND_CATEGORY = 0x000DDDC5
 SOUND_OUTPUT = 0x000428B6
