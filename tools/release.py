@@ -518,6 +518,8 @@ ANATOMY_FOMOD = dict(
            'BodySlide and Outfit Studio: check this yourself -- builds the body with your preset; Nexus 25',
            f'AnatomyBuilder: run it after this installs -- it builds the body from your own CBBE and skin; {TOOLS_URL}',
            'AAF, LooksMenu, Rapport, MCM: optional -- the next pages say what each one adds',
+           # the owner, 2026-10-02: Anatomy wins every conflict, in the collection and for every player
+           'Let Anatomy and the Anatomy Engine win EVERY file conflict with any other mod.',
            'Install with Vortex or MO2; manual installs are not supported.'],
     setup_card='anatomy-pipeline.jpg',
     features=[
@@ -566,7 +568,7 @@ ENGINE_FOMOD = dict(
            'Runtime Database: check this yourself -- finds the game\'s functions on every game version; Nexus 108394',
            'A physics preset (MadKita\'s, MTM, Jiggle Physics...): optional -- with none, Anatomy brings its own',
            'Anatomy: optional -- the genitals, the aim and the sounds need its config; Nexus 109434\'s page links it',
-           'Let this cbp.dll win over any other OCBPC-based mod\'s.',
+           'Let the Anatomy Engine (and Anatomy) win EVERY file conflict with any other mod: cbp.dll above all.',
            'Install with Vortex or MO2; manual installs are not supported.'],
     setup_card='engine-tube.jpg',
     features=[
