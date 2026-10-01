@@ -1,0 +1,95 @@
+=== ARTICLE: Bodies and genitals ===
+[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-anatomy@8dbfadad254d1073a017109fcbfda9f966b8dd74/docs/img/lining.jpg[/img][/center]
+
+[size=4][b]Bodies and genitals[/b][/size]
+One line each: the feature, and the hard thing it solved.
+
+[list]
+[*][b]Dynamic labia.[/b] No skeleton women load has genital bones, and shipping one would fight every skeleton mod. Anatomy adds 9 bones at run time, under whatever skeleton loaded: inner lips that part around what enters (collision spheres of 1.7 units), outer lips that jiggle softer.
+[*][b]A real lining inside (new).[/b] The canal used to sample one texel: a flat colour. Now it has its own seamless unwrap (198 vertices) and a painted mucosa with 14 folds, wet near the entrance. The vulva is untouched.
+[*][b]A closed anal canal.[/b] Looking into the anus no longer shows the inside of the body.
+[*][b]Working openings on YOUR CBBE.[/b] Nahka's geometry, fitted to your own CBBE; the shared skin stays byte-identical, so every outfit and preset still fits.
+[*][b]Their own shape and material.[/b] Separately textured genitals; your own skin everywhere else.
+[*][b]Light textures.[/b] 53 MB down to 3 MB, Steam Deck friendly.
+[*][b]Anatomy on 3BBB (new).[/b] 3BBB moves the breasts on its own bones and CBBE's weights fight it. The builder now builds on 3BBB when you have it and keeps those bones.
+[*][b]Hip and neck.[/b] A softer pelvis-to-thigh handover on the body, and on your built CBBE outfits with AnatomyRebuild; the neck ring faces the way the head does.
+[/list]
+[i]The two pre-built bodies on the Files tab were built with Anatomy 1.1.1: no vaginal lining. Run the AnatomyBuilder for it.[/i]
+
+=== ARTICLE: The physics engine ===
+[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-ocbpc@5b6d9837d62b2c86fc7e26e83d6282d1e7e8f185/docs/img/skirt.jpg[/img][/center]
+
+[size=4][b]The physics engine[/b][/size]
+The Anatomy Engine is our own build of OCBPC (cbp.dll).
+
+[list]
+[*][b]One smooth tube.[/b] A chain of spheres snags on the lips and lets things slip between the balls. Every penis and toy collides as one tube.
+[*][b]Stretch.[/b] Openings widen to fit what is inside, fisting and toys included.
+[*][b]Contact without jitter (new).[/b] Tight contact acts as a constraint, so nothing shakes when it squeezes.
+[*][b]Skirt physics (new).[/b] Skinning cannot drape, so legs pass through coats and dresses. The engine hangs 60 bones at the hips (12 around × 5 down), moves them every frame and lets the legs push them aside. Legs through a long coat, crouching / sitting / striding: 24 / 38 / 14 % → 5 / 17 / 2 %. Never worse on any garment tested. For Anatomy Tailor's coats and dresses installed with that option.
+[*][b]Every loaded actor[/b], and right after a ragdoll.
+[*][b]Its own physics preset[/b] when you have none, following the body the AnatomyBuilder built (CBBE or 3BBB).
+[*][b]A health check (new).[/b] About 10 s after every load, Anatomy_Health.txt names the engine, the preset and who it covers, the body and whether its weights match, the builder's stamp, every simulated actor and the sounds. A box appears only when something is really wrong.
+[*][b]The AE crash family, fixed.[/b] Run-time nodes started with garbage reference counts and were freed under the body's skin; they are now zeroed first.
+[*][b]One cbp.dll[/b] for 1.10.163 and the Anniversary Edition, through Runtime Database. Nothing of another mod is overwritten.
+[/list]
+
+=== ARTICLE: Arousal and sex ===
+[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-ocbpc@5b6d9837d62b2c86fc7e26e83d6282d1e7e8f185/docs/img/sounds.jpg[/img][/center]
+
+[size=4][b]Arousal and sex[/b][/size]
+[list]
+[*][b]Sex sounds from the engine (new).[/b] Animation packs fire canned sounds from timings, unrelated to contact, and each pack is different. An engine hook mutes them in scenes (measured on 228 sound records of 9 packs), and our own loudness-matched set plays from each stroke's real depth and speed: 9 kinds, 37 clips. On by default. Lick, finger and handjob use stand-in clips until their own recordings.
+[*][b]With Rapport: voices.[/b] Moans in each partner's own voice, painful pleasure for the one receiving in anal and rough scenes, a climax.
+[*][b]Penis aim.[/b] Animations are made for other bodies, so the shaft goes through thighs and bellies. Here it locks onto the opening the animation meant (vagina, anus, mouth, a gripping hand) and bends joint by joint along the canal: it captures within 35° and 5 units, and keeps within 45° and 8.
+[*][b]The mouth.[/b] The face is the game's undocumented animation data, reverse-engineered: the mouth opens to what is at the lips, and the lips are fitted round it from 15 measured morphs per sex.
+[*][b]Glances (with Rapport).[/b] Eyes meet the partner's, 4-7 seconds now and then.
+[*][b]Arousal.[/b] Rises from scenes, nudity, watching and a companion's own arousal, and fades with time; nipples follow.
+[*][b]A shaped penis.[/b] A slightly thinner shaft and a bigger head on every man's bones at run time, and a redder glans with LooksMenu.
+[/list]
+[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-ocbpc@4fd97d389a06af8af74607de29174308dd41a491/docs/img/aim.jpg[/img][/center]
+
+=== ARTICLE: Men and M-M ===
+[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-anatomy@8dbfadad254d1073a017109fcbfda9f966b8dd74/docs/img/mm.jpg[/img][/center]
+
+[size=4][b]Men and M-M[/b][/size]
+[list]
+[*][b]Men get a real anus (new).[/b] BodyTalk 4 has a closed pucker and no anus bones. Anatomy opens BodyTalk's own anus on your own BodyTalk 4: a canal 8.5 units deep, 157 new vertices, 4 ring bones.
+[*][b]It moves like hers.[/b] The same ring physics and stretch: it opens around the shaft and settles back.
+[*][b]Aim and sounds.[/b] The penis aims into it and follows the canal; the engine's sounds play, and with Rapport, its anal moans.
+[*][b]Women-only presets too.[/b] Most physics presets simulate women only; men are simulated for Anatomy's bones anyway.
+[*][b]Nothing of BodyTalk is shipped.[/b] The AnatomyBuilder builds "Anatomy Male Body" (or "... Uncut") sets in BodyTalk's own BodySlide group, so your BodyTalk presets apply. Plain BodyTalk men are never aimed into.
+[*]Needs BodyTalk 4 with its BodySlide files. Inside, the canal shows the body's own skin tone for now.
+[/list]
+
+=== ARTICLE: The AnatomyBuilder ===
+[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-anatomy@497c254d44fa1fc28df6db8fe1fb50269bb6e963/docs/img/pipeline.jpg[/img][/center]
+
+[size=4][b]The AnatomyBuilder[/b][/size]
+[list]
+[*][b]Built on your PC.[/b] Redistributing CBBE or BodyTalk needs their authors' permission, so only Nahka's own work ships, as a patch applied to YOUR CBBE: 0 CBBE or BodyTalk files in the download.
+[*][b]Finds the game anywhere[/b] (Steam, GOG, MO2), reads every skin texture format, and writes across drives under MO2.
+[*][b]New in 1.2.0:[/b] a 3BBB stage and a men's stage.
+[*][b]AnatomyRebuild[/b] puts the outfit and neck fixes on your own BodySlide builds.
+[*][b]Download:[/b] [url=https://github.com/ReidenXerx/fo4-anatomy/releases/tag/v1.2.0]GitHub, v1.2.0[/url]. VirusTotal 0/75: [url=https://www.virustotal.com/gui/file/f93eb0dd1abcd53dc2fbfc08922eaa63291483b17260dae812d9d2024b30bf7e]AnatomyBuilder.exe[/url], [url=https://www.virustotal.com/gui/file/eebf55daaf3edbdea266c40aa543c2127a02eecd88821600a61fd453aa463051]AnatomyRebuild.exe[/url].
+[/list]
+
+=== ARTICLE: Compatibility and settings ===
+[size=4][b]Compatibility and settings[/b][/size]
+
+[b]Needs:[/b] Anatomy Engine 1.2.0, F4SE, Runtime Database, CBBE 2.7.2 with its BodySlide files, BodySlide. Install with Vortex or MO2; manual installs are not supported.
+[b]Optional:[/b] AAF, Rapport, LooksMenu, MCM, BodyTalk 4 with its BodySlide files (for M-M), 3BBB with Skeletal Adjustments for CBBE, any physics preset (Anatomy brings its own).
+
+[b]With AAF alone:[/b] aim, the mouth and lips, the sex body sounds, arousal from scenes, tube collision, stretch and toys, M-M.
+[b]With Rapport too:[/b] moans, face expressions, glances, brows by depth, and the sound switch in its MCM.
+[b]Without AAF:[/b] the genitals, the physics, nudity arousal and skirt physics still work.
+
+[b]Upgrading from 1.1.1:[/b]
+[list=1]
+[*]Install Anatomy Engine 1.2.0, then Anatomy 1.2.0, over the old ones.
+[*]Run AnatomyBuilder 1.2.0 again.
+[*]In BodySlide, rebuild "Anatomy Body"; for men, build "Anatomy Male Body" (or "... Uncut") instead of BodyTalk4.
+[/list]
+Existing saves carry on.
+
+[b]Settings:[/b] Anatomy's MCM has one page (Arousal, 9 controls). The engine reads its ocbp.ini; Rapport's MCM drives its knobs, the sound switch included.
