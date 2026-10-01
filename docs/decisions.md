@@ -2009,3 +2009,31 @@ Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM ta
   where the player's BodyTalk build has it.
 - **The owner's M-M scene (AE, 2026-10-01 22:56, Screenshot248):** "tested and it works amazing!" The canal shows the pucker's own texels: a men's mucosa needs a texture and
   material of ours on the men's body, so it is left for later.
+
+## A-70 — Skirt bones: hanging cloth the legs push (roadmap 5, the owner 2026-10-01: "make skirts bones anatomy module rn")
+
+- **Why:** legs come through coats and dresses (fo4-refit R-18); weights alone cannot drape, so the engine moves
+  extra bones the cloth is weighted to.
+- **The ring (tools/skirt.py, measured into tools/skirt_rest.py):** 12 columns (every 30 degrees, column 0 at the
+  front) x 5 levels (2, 12, 24, 36, 50 below the crotch), each node 0.8 outside the legs' convex outline at its level, in
+  the skeleton's bind pose: women on Anatomy.nif's CBBE reference and the women's skeleton (crotch z 65.22), men on
+  BodyTalk4-Nude and the men's skeleton (crotch z 64.25; the penis and scrotum are excluded by their weights, the
+  crotch is the lowest midline point just behind the hip joints). [Bones] / [BonesMale] create them under
+  Pelvis_skin like our genital nodes, on an actor whose skin names them.
+- **The solver (fo4-ocbpc Skirt.cpp, the same steps as skirt.Solver):** in Pelvis_skin's frame, so the pelvis
+  carries the cloth and a step can be limited (maxStep 2: the first try let the spring pull cloth THROUGH a raised
+  thigh in one frame). Damped Verlet toward rest, a little gravity, the waist level held within 4, columns keeping
+  their length both ways (no stretch, no bunching on a lap), neighbours not tearing. The legs are four capsules from
+  the skeleton's own leg nodes; each node has its own clearance from each (the capsule radius plus 0.6, never more
+  than its distance at rest: a leg is not round, and a capsule pushed nodes 12 units while standing still). A touched
+  node goes straight out unless that is the far side from its column; one a leg LANDED on (an AAF scene snapped into
+  its pose) goes to its column's side; a column segment a leg's axis passes through sends its lower node over. At
+  rest every node is within 0.6 of its rest.
+- **The weights:** only cloth that follows nothing but the pelvis takes the skirt (share x (1 - its weight on leg
+  bones)). Replacing the authors' leg weights made it far WORSE (40-80% of covered leg skin through, against 1-7%):
+  the skirt nodes only move where a leg reaches them.
+- **Measured (fo4-refit studies/legs_skirt.py, % of covered leg skin through the cloth, crouch / sit / stride, the
+  pose snapped):** black widow coat 24/38/14 -> 5/17/2, slinky dress 24/25/20 -> 11/22/6, house dress 7/6/5 -> 2/5/1,
+  western duster 2/3/1 -> 1/3/1. Never worse on a garment tested.
+- **The engine reads Section() safely now:** INIReader::Section throws on a section the file lacks; [Bones],
+  [BonesMale] and the skirt's sections are read only when present (an older ini, or the engine without Anatomy's).

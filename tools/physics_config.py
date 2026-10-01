@@ -27,6 +27,8 @@ import pathlib
 import re
 
 import physics_design as pd
+import skirt
+import skirt_rest
 import zex_bones as zb
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -286,8 +288,17 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
               '[Shape]'] + [f'{k}={v}' for k, v in SHAPE.items()]
     lines += ['', '; our nodes, created at run time under the skeleton the actor loaded: name=parent,x,y,z',
               '[Bones]'] + [f'{n}={p},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, p, l in bone_table(pelvis_world)]
-    lines += ['', '; the same nodes on a man where his body differs (A-69: BodyTalk\'s anus): name=parent,x,y,z',
+    lines += [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in skirt_rest.SKIRT_BONES.items()]
+    lines += ['', '; the same nodes on a man where his body differs (A-69: BodyTalk\'s anus; his skirt ring): '
+              'name=parent,x,y,z',
               '[BonesMale]'] + [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in pd.MEN_ANUS_BONES.items()]
+    lines += [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in skirt_rest.SKIRT_M_BONES.items()]
+    # roadmap 5: the skirt solver (tools/skirt.py, Skirt.cpp) and each skirt node's clearance from the legs
+    lines += ['', '; skirt bones (roadmap 5): hanging cloth the legs push; tools/skirt.py measured these',
+              '[Skirt]', 'enabled=1', f'columns={skirt.COLUMNS}', f'levels={len(skirt.LEVELS)}', f'prefix={skirt.PREFIX}']
+    lines += [f'{k}={",".join(f"{x:g}" for x in v) if isinstance(v, tuple) else f"{v:g}"}' for k, v in skirt.SOLVER.items()]
+    for sec, table in (('SkirtClear', skirt_rest.SKIRT_CLEAR), ('SkirtClearMale', skirt_rest.SKIRT_M_CLEAR)):
+        lines += ['', f'[{sec}]'] + [f'{n}={",".join(f"{x:.3f}" for x in v)}' for n, v in table.items()]
     return '\n'.join(lines) + '\n'
 
 
