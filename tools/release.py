@@ -580,7 +580,7 @@ ENGINE_FOMOD = dict(
          'The mouth opens to what is at the lips, over the animation\'s own face, and the lips close round it at '
          'its real size.', 'engine-lips.jpg'),
         ('She looks up into his eyes', 'Glances',
-         'With Rapport, eyes meet the partner\'s for a second or two during a scene.', 'engine-glances.jpg'),
+         'With Rapport, eyes meet the partner\'s for 4-7 seconds now and then during a scene.', 'engine-glances.jpg'),
         ('Skirt physics: legs stay inside', 'Skirt physics',
          'Coats, dresses and skirts converted by Anatomy Tailor with "Skirt physics" move out of the way of the legs: '
          'the engine hangs a ring of 60 bones at the hips and pushes them with the thighs and calves every frame.',

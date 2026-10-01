@@ -1302,6 +1302,10 @@ scenes, the AAF menu's too.
 
 ## A-34 — Glances: into the partner's eyes for a second or two (the owner, 2026-09-25)
 
+- **Superseded timing (the owner, 2026-10-02): 4-7 seconds now and then** is the latest decision (Rapport decides who
+  looks and for how long; the engine turns the eye). Engine 1.2.0's installer still says "a second or two": fixed in
+  tools/release.py for the next release.
+
 - **Ask:** "its glance in the partnet eyes. for ex during blowjob time to time glances on 1-2 seconds maybe in
   another poses / if u know people love it during sex".
 - **Split with Rapport:** Rapport decides who looks at whom, when and for how long, and sends 'RFAG' (24 bytes:
