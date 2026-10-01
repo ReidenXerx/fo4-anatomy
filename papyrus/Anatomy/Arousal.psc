@@ -80,11 +80,13 @@ Keyword _refit                   ; Silhouette's refit marker keyword, None witho
 
 Event OnInit()
 	Setup()
+	CheckSetup()
 	StartTimer(TICK_SECONDS, TICK)
 EndEvent
 
 Event Actor.OnPlayerLoadGame(Actor akSender)
 	Setup()                                  ; plugins may have come or gone since the save
+	CheckSetup()
 	_lastTick = -1.0                         ; the real-time clock restarts with the game
 	StartTimer(TICK_SECONDS, TICK)
 EndEvent
@@ -109,6 +111,26 @@ Event Silhouette:Bridge.OnActorGenerated(Silhouette:Bridge akSender, Var[] akArg
 		Show(k)
 	EndIf
 EndEvent
+
+; What the installer cannot see (nexus-tools docs/FOMOD-STANDARD.md rule 3: a FOMOD sees plugins only), said in game
+; at every load, only when wrong: F4SE, and the Anatomy Engine loaded and new enough. The engine registers with F4SE
+; as "OCBPC plugin" (the classic name, which Rapport sends to). F4SE 0.7.x (NG, AE) reports its packed version
+; (1.2.0 = 0x01020000, the owner's AE f4se.log); OG's 0.6.23 reports the classic build's 24, so there the check can
+; only see that it loaded. Runtime Database is a data file, not a plugin: an engine that cannot load names it too.
+Int Property ENGINE_MIN = 16908288 AutoReadOnly          ; 0x01020000: Anatomy Engine 1.2.0
+
+Function CheckSetup()
+	If F4SE.GetVersion() <= 0 && F4SE.GetVersionMinor() <= 0
+		Debug.MessageBox("Anatomy: F4SE is not running.\n\nAnatomy and the Anatomy Engine need F4SE (f4se.silverlock.org). Start the game through f4se_loader.exe, or through your mod manager's F4SE entry.")
+		Return
+	EndIf
+	Int engine = F4SE.GetPluginVersion("OCBPC plugin")
+	If engine <= 0
+		Debug.MessageBox("Anatomy: the Anatomy Engine is not loaded.\n\nThe genitals' physics, the aim, the mouth and the sounds run in it. Install the Anatomy Engine (Nexus 109434) and Runtime Database (Nexus 108394), and check Documents\\My Games\\Fallout4\\F4SE\\f4se.log for cbp.dll.")
+	ElseIf engine > 255 && engine < ENGINE_MIN
+		Debug.MessageBox("Anatomy: the Anatomy Engine is older than 1.2.0.\n\nAnatomy 1.2 needs Engine 1.2.0 or later (Nexus 109434). If you installed it, another mod's cbp.dll (OCBPC, Jiggle Physics, a physics preset) is winning: let the Anatomy Engine win every file conflict.")
+	EndIf
+EndFunction
 
 Function Setup()
 	RegisterForRemoteEvent(Game.GetPlayer(), "OnPlayerLoadGame")

@@ -512,11 +512,17 @@ EXTRA_CARDS = pathlib.Path(r'D:\F4Output\cards\anatomy\fomod')
 ANATOMY_FOMOD = dict(
     hard=['CBBE.esp'],
     setup=['CBBE.esp: found',
-           'Anatomy Engine: check this yourself -- the physics, the aim, the mouth and the sounds run in it; Nexus 109434',
-           'F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org',
+           'Fallout 4: 1.10.163 (Steam or GOG) or the Anniversary Edition 1.11.x',
+           'Anatomy Engine 1.2.0 or later: check this yourself -- the physics, the aim, the mouth and the sounds run in '
+           'it; Nexus 109434. Anatomy says so in game at every load if it is missing or older',
+           'F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org. Anatomy says so in game if it is not running',
            'Runtime Database: check this yourself -- finds the game\'s functions on every game version; Nexus 108394',
+           'CBBE 2.7.2 with its BodySlide files: check this yourself -- the builder reads its BodySlide set; Nexus 15',
            'BodySlide and Outfit Studio: check this yourself -- builds the body with your preset; Nexus 25',
            f'AnatomyBuilder: run it after this installs -- it builds the body from your own CBBE and skin; {TOOLS_URL}',
+           '3BBB: optional -- with Skeletal Adjustments for CBBE (Nexus 39006) the builder builds on 3BBB (Nexus 48978)',
+           'BodyTalk 4 with its BodySlide files: optional -- for men and M-M (Nexus 72310)',
+           'ZeX - ZaZ Extended Skeleton for men: optional -- the penis aim needs its Penis_00 to Penis_05 chain',
            'AAF, LooksMenu, Rapport, MCM: optional -- the next pages say what each one adds',
            # the owner, 2026-10-02: Anatomy wins every conflict, in the collection and for every player
            'Let Anatomy and the Anatomy Engine win EVERY file conflict with any other mod.',
@@ -564,8 +570,10 @@ ANATOMY_FOMOD = dict(
 
 ENGINE_FOMOD = dict(
     hard=[],
-    setup=['F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org',
+    setup=['Fallout 4: 1.10.163 (Steam or GOG) or the Anniversary Edition 1.11.x',
+           'F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org',
            'Runtime Database: check this yourself -- finds the game\'s functions on every game version; Nexus 108394',
+           'ZeX - ZaZ Extended Skeleton for men: optional -- the penis aim needs its Penis_00 to Penis_05 chain',
            'A physics preset (MadKita\'s, MTM, Jiggle Physics...): optional -- with none, Anatomy brings its own',
            'Anatomy: optional -- the genitals, the aim and the sounds need its config; Nexus 109434\'s page links it',
            'Let the Anatomy Engine (and Anatomy) win EVERY file conflict with any other mod: cbp.dll above all.',
