@@ -1972,3 +1972,21 @@ Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM ta
 - **The microscope (4 Sonnet lenses + Rapport's):** the Nexus archive would have shipped none of the clips (release.py
   fixed); begin/end pairing, leaving the scene, double penetration, save loads and a stale-actor read were fixed.
 - **Open, not blocking:** OG 1.10.163 is untested in game; real lick/finger/handjob clips when ElevenLabs has credits.
+
+## A-69 — The men's anus, on BodyTalk 4's own pucker (the owner 2026-10-01: "players desperately wait it on nexus")
+
+- **What was missing:** the engine made vagina and anus aim targets only on women with our bones (Aim.cpp returned for
+  males), and BodyTalk 4 has no opening: male-male anal had no aim, depth, sounds or Rapport events.
+- **The owner's pick:** open BodyTalk's OWN pucker (not a transplant of Nahka's): BodyTalk4-Nude/-Uncut model a closed
+  pucker on Anus_01-04 (145 vertices, ~0.6 deep); NeverNude has none and stays as it is. Built on the player's own
+  BodyTalk like the women's body is on their CBBE: nothing of BodyTalk ships (a pre-built male body would need its
+  author's permission, the owner's act).
+- **Step 1 done:** anal_canal.py takes a Spec (WOMEN = A-50's values; proven byte-identical on the unopened women's body:
+  nif 30f8994b, osd 6e1f9f97 before and after). tools/male_anus.py: the opening = the pucker within 0.6 of its axis at
+  any depth (its anus weights form a ring, not a disk; 0.6 gives one loop of 12, radius 0.53); the canal straight in
+  1.5 along the measured axis (0, 0.40, 0.92), then up the pelvis tilted 12 degrees back (studies/male_anus_probe.py: at
+  0-15 degrees the walls keep 2.7-3.9 units of flesh; from 45 they come out through the cleft). On BodyTalk4-Nude: 96
+  triangles off, a loop of 12, 157 vertices / 276 triangles, 8.5 deep, slider data carried; open edges 54 before and
+  after (BodyTalk's own cuts), every original vertex unchanged. The canal samples the pucker's own texels for now.
+- **Next:** bones and weights (our AnatAnus_* at run time on men), physics and the tube, the aim target on men (engine),
+  the Builder's men's stage and BodySlide project, the mucosa patch, verification, the owner's scene.

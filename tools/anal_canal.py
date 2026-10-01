@@ -20,6 +20,24 @@ import math
 import struct
 
 import nif
+from dataclasses import dataclass
+
+
+@dataclass
+class Spec:
+    """One body's anus: where its cup is, how its floor is found, where the canal goes. WOMEN is A-50's, unchanged;
+    MEN (the owner 2026-10-01, A-69) opens BodyTalk 4's own pucker."""
+    shape: str
+    centre: tuple
+    axis: tuple
+    path_offsets: tuple
+    radius: float = 1.0
+    floor: float = 0.30             # the floor is the cup's part deeper than this share of its depth (None: any) ...
+    cup_r: float = 2.2              # ... within this distance of the centre ...
+    open_r: float = 1.1             # ... and this close to its axis
+    mucosa_uv: tuple = (0.3875, 0.7750, 0.4875, 0.8750)
+    pelvis: str = 'Pelvis_Rear_skin'
+
 
 SHAPE = 'AnatomyGenitals'
 ANUS_CENTRE, ANUS_AXIS = (0.0, -1.58, -54.07), (0.0, 0.45, 0.89)
@@ -31,6 +49,7 @@ FLOOR = 0.30          # the cup is opened from 30% of its depth: its floor sat 1
 MUCOSA_UV = (0.3875, 0.7750, 0.4875, 0.8750)   # full-skin UV: inside the genitals' 1/4 tile, outside their island
 PELVIS = 'Pelvis_Rear_skin'
 LOOP_UVS = []
+WOMEN = Spec(SHAPE, ANUS_CENTRE, ANUS_AXIS, PATH_OFFSETS, RADIUS, FLOOR, mucosa_uv=MUCOSA_UV, pelvis=PELVIS)
 
 
 def _sub(a, b):
@@ -58,14 +77,14 @@ def _unit(a):
     return _mul(a, 1 / n)
 
 
-def floor_loop(pos, tris):
+def floor_loop(pos, tris, spec=WOMEN):
     """(the cup-floor triangles to remove, the loop left around them as vertex indices in order)."""
-    axis = _unit(ANUS_AXIS)
-    cup = {i for i, p in enumerate(pos) if math.dist(p, ANUS_CENTRE) < 2.2}
-    depth = {i: _dot(_sub(pos[i], ANUS_CENTRE), axis) for i in cup}
+    axis = _unit(spec.axis)
+    cup = {i for i, p in enumerate(pos) if math.dist(p, spec.centre) < spec.cup_r}
+    depth = {i: _dot(_sub(pos[i], spec.centre), axis) for i in cup}
     top = max(depth.values())
-    radial = {i: math.dist(pos[i], _add(ANUS_CENTRE, _mul(axis, depth[i]))) for i in cup}
-    floor = {i for i in cup if depth[i] > FLOOR * top and radial[i] < 1.1}
+    radial = {i: math.dist(pos[i], _add(spec.centre, _mul(axis, depth[i]))) for i in cup}
+    floor = {i for i in cup if (spec.floor is None or depth[i] > spec.floor * top) and radial[i] < spec.open_r}
     drop = [k for k, t in enumerate(tris) if all(v in floor for v in t)]
     if len(drop) < 4:
         raise ValueError(f'the cup has no floor to open ({len(drop)} triangles)')
@@ -101,28 +120,30 @@ def floor_loop(pos, tris):
     return drop, [rep[v] for v in loop]
 
 
-def plan(nif_path):
+def plan(nif_path, spec=WOMEN):
     """Measure only: the floor to open and the canal's centreline, for a report before anything is written."""
-    s = nif.Nif(nif_path).shape(SHAPE)
+    n = nif.Nif(nif_path)
+    s = n.shape(spec.shape)
     pos, tris = s.positions(), s.triangles()
-    drop, loop = floor_loop(pos, tris)
+    drop, loop = floor_loop(pos, tris, spec)
     centre = tuple(sum(pos[i][k] for i in loop) / len(loop) for k in range(3))
-    return drop, loop, centre, [centre] + [_add(centre, o) for o in PATH_OFFSETS]
+    return drop, loop, centre, [centre] + [_add(centre, o) for o in spec.path_offsets]
 
 
-def build(nif_path, osd_path=None, osd_module=None, uv_map=None):
+def build(nif_path, osd_path=None, osd_module=None, uv_map=None, spec=WOMEN):
     """Open the cup's floor and stitch the canal onto it, in place; returns a report line. uv_map: for a body whose
     genitals already sample their tile (A-48), the full-skin UV -> tile UV mapping."""
     n = nif.Nif(nif_path)
-    s = n.shape(SHAPE)
+    s = n.shape(spec.shape)
     pos, tris = s.positions(), s.triangles()
     bones, _ = n.skin(s)
     slot = {b: k for k, b in enumerate(bones)}
+    PELVIS, RADIUS, SHAPE = spec.pelvis, spec.radius, spec.shape
     if PELVIS not in slot:
         raise ValueError(f'the genitals\' skin has no {PELVIS}')
-    drop, loop = floor_loop(pos, tris)
+    drop, loop = floor_loop(pos, tris, spec)
     centre = tuple(sum(pos[i][k] for i in loop) / len(loop) for k in range(3))
-    path = [centre] + [_add(centre, o) for o in PATH_OFFSETS]
+    path = [centre] + [_add(centre, o) for o in spec.path_offsets]
     samples = [(0, 0.0)] + [(seg, q) for seg in range(len(path) - 1) for q in (0.5, 1.0)]
     side = (1.0, 0.0, 0.0)
     up0 = _unit(_cross(_unit(_sub(path[1], path[0])), side))
@@ -134,7 +155,7 @@ def build(nif_path, osd_path=None, osd_module=None, uv_map=None):
     weights0 = [dict((bones[sl], w) for sl, w in s.skin_weights(i)) for i in loop]
     global LOOP_UVS
     LOOP_UVS = [s.uv(i) for i in loop]                   # the rim's own texels: the mucosa's base tone
-    u0, v0, u1, v1 = MUCOSA_UV
+    u0, v0, u1, v1 = spec.mucosa_uv
 
     new_pos, new_w, new_uv, rings = [], [], [], []
     for ring, (seg, q) in enumerate(samples[:-1]):          # the last sample is the cap's tip
@@ -174,7 +195,7 @@ def build(nif_path, osd_path=None, osd_module=None, uv_map=None):
     ref = next(t for k, t in enumerate(tris) if k not in dropset and len(loopset & set(t)) >= 2)
     rn = _cross(_sub(pos[ref[1]], pos[ref[0]]), _sub(pos[ref[2]], pos[ref[0]]))
     rc = _mul(_add(_add(pos[ref[0]], pos[ref[1]]), pos[ref[2]]), 1 / 3)
-    rh_inward = _dot(rn, _sub(_add(ANUS_CENTRE, _mul(_unit(ANUS_AXIS), 0.5)), rc)) > 0
+    rh_inward = _dot(rn, _sub(_add(spec.centre, _mul(_unit(spec.axis), 0.5)), rc)) > 0
 
     def oriented(tri):
         a, b, c = (new_pos[x] for x in tri)
