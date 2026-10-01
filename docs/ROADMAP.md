@@ -48,6 +48,14 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    get there (poll): the mechanism (RobCo Patcher INIs, already in the owner's list, vs a Papyrus injector), which
    lists, and how often. It may also widen the scope: a mod whose only blocker is its OWN injector script could ship
    with that script left out and ours offered instead.
+5. **Collided skirt bones for coats and dresses** (the owner, 2026-10-01; after item 4): legs come through hanging
+   cloth when they bend (the jump GIFs). Reweighting alone was measured and rejected (fo4-refit R-18,
+   studies/legs_through.py: 10-30% at best, the clipping moves rather than goes, strong settings tear edges 41x).
+   The fix: the engine adds a ring of skirt bone chains at the hips at run time (as it adds the genital bones; the
+   women's skeleton has none), swings them with its physics and pushes them out of the thigh and calf colliders;
+   Anatomy Tailor weights each garment's hanging cloth to them (by angle around the hips and by height). Done when
+   legs_through.py, run with the skirt bones simulated, shows the clipping gone in crouch, sit and stride, and the
+   jump GIFs agree. Coats also sway as a result.
 
 ## Later (low priority)
 
