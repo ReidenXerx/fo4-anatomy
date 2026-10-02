@@ -67,6 +67,7 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    file carries a small light plugin of ours (no scripts) with the sets (LVLI "use all") and outfits (OTFT); RobCo INIs
    put them into vanilla lists. Women-only sets never go into lists that dress men: female templates only (RobCo
    outfitDefault/filters), or vendors/loot. strong_PA (NPC-only power armour) gets the flag, no distribution.
+   The 31 sets (fo4-refit data/esl_sets.json, renders D:/F4Output/esl/sets) APPROVED by the owner, 2026-10-02.
 5. **Collided skirt bones for coats and dresses** (the owner, 2026-10-01; after item 4): legs come through hanging
    cloth when they bend (the jump GIFs). Reweighting alone was measured and rejected (fo4-refit R-18,
    studies/legs_through.py: 10-30% at best, the clipping moves rather than goes, strong settings tear edges 41x).
