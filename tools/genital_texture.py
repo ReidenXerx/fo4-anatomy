@@ -306,15 +306,23 @@ def build(src, nahka_name, kind, geometry):
     mask, island, ring, facts = geometry(src.w)
     own = src.top()
     nah_full, rings = nahka_texture(nahka_name)
-    nah = nah_full.reduce(nah_full.size[0] // src.w) if nah_full.size[0] != src.w else nah_full
+    # her maps are 4K: a smaller skin takes a box reduction, a bigger one (8K skins) or an odd size a resample
+    full = nah_full.size[0]
+    if full == src.w:
+        nah = nah_full
+    elif full > src.w and full % src.w == 0:
+        nah = nah_full.reduce(full // src.w)
+    else:
+        nah = nah_full.resize((src.w, src.h), Image.BICUBIC if src.w > full else Image.BOX)
     report = dict(facts)
     fit = None
     if kind != 'normal':
         om, n = ring_means(own, ring, kind == 'colour')
         if rings is not None:
-            if str(src.w) not in rings:
-                raise SystemExit(f'{nahka_name}: no crotch-skin means for a {src.w} texture (have {sorted(rings)})')
-            nm = rings[str(src.w)]
+            # a mean over the crotch ring hardly depends on the size: an unlisted size takes the nearest one's
+            near = min(rings, key=lambda k: abs(int(k) - src.w))
+            nm = rings[near]
+            report['nahka_ring_size'] = int(near)
         else:
             nm, _ = ring_means(nah, ring, kind == 'colour')
         report.update(ring_texels=n, owner_ring=[round(x, 4) for x in om], nahka_ring=[round(x, 4) for x in nm])
