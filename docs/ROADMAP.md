@@ -85,6 +85,10 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
 - **The vaginal canal's interior, improved** (the owner promised it to demonjemiy, 2026-10-02).
 - **Volumetric fluids** (demonjemiy, 2026-10-02; the owner: a big job, not now): dripping meshes instead of
   LL's flat overlays, e.g. inside after sex. References: Skyrim SE mods 77506 and 79014.
+- **Futanari + strap-ons** (demonjemiy's top asks, 2026-10-02): futanari options that work with the Anatomy Engine
+  and 3BBB; strap-ons/toys that collide properly (LL strap-on mods are awkward or broken, the ZeX strap-on fork needs
+  outdated files). His idea: our own toy/strap-on fork on Nexus, or ask the strap-on author for one. The owner's
+  answer: toys already work when the object is tagged correctly. Later ideas: OCum-like and inflation-like systems.
 - **Polish**: arousal cools down across a game-time jump (sleep/wait: today it ticks on real time and carries
   through a long sleep, fading over the next minute; Arousal.psc Tick); the wrist line; the small colour bias of the repainted genital patch on DXT1 skins; more pre-built
   presets if asked.
