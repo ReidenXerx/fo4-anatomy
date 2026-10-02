@@ -48,6 +48,18 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    get there (poll): the mechanism (RobCo Patcher INIs, already in the owner's list, vs a Papyrus injector), which
    lists, and how often. It may also widen the scope: a mod whose only blocker is its OWN injector script could ship
    with that script left out and ours offered instead.
+   SETTLED (the owner's poll, 2026-10-02): the page is **"Anatomy Tailor - ESL"**; distribution by **RobCo Patcher
+   INIs** (nothing in saves, gone on uninstall, OG and AE); NPCs wear them, vendors sell them, loot and containers
+   carry them; **non-lore-friendly outfits** (e.g. Vtaw's cosplays) are NOT spread around: they are rewards in chests
+   we pick at specific quest spots and behind tough enemies; **how often is the player's pick in the FOMOD**.
+   SCOPE WIDENED (the owner, 2026-10-02, after fo4-refit tools/esl.py's survey: 5 of 105 armor mods pass the strict
+   rules): (a) outfit-adjacent records allowed (an armor enchantment, a chest or book that carries the outfit; quest
+   and world mods stay out); (b) a mod's OWN extra plugins (its CBBE variant, LL integration, tAE patch) are made
+   light in the same file with their references rewritten; (c) a mod's OWN RobCo INIs ship rewritten at the same
+   path. Other authors' patches that need the old ids: the FOMOD warns when one is active and the hub page links our
+   distribution ("the originals' distribution does not work with the light version; we made our own"). Why rewrite
+   rather than leave: a light plugin's ids are masked to 12 bits, so an old id left in an INI or patch can resolve
+   to a DIFFERENT record of ours, not just fail.
 5. **Collided skirt bones for coats and dresses** (the owner, 2026-10-01; after item 4): legs come through hanging
    cloth when they bend (the jump GIFs). Reweighting alone was measured and rejected (fo4-refit R-18,
    studies/legs_through.py: 10-30% at best, the clipping moves rather than goes, strong settings tear edges 41x).
