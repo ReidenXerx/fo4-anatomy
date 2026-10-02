@@ -62,6 +62,9 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    "Skirt physics (needs Anatomy Engine)"; no = today's weights. Without the engine skirt-weighted cloth would freeze
    in the standing pose (A-14's missing-bone behaviour), so it is never the only version. Tailor builds BOTH variants
    of every garment with hanging cloth in the same run (plain + skirt), and each pack carries both for the FOMOD.
+   OPEN (2026-10-02, fo4-refit studies/skirt_gif.py, the real solver on the preview jump): coats and closed dresses
+   keep the thighs covered (hunter longcoat, slinky dress), but a SLIT dress (vtaw wardrobe5 Dress) throws its front
+   panel out flat on the landing: the filter should leave slit cloth plain, or the weights follow the slit.
 
 ## Later (low priority)
 
