@@ -112,6 +112,7 @@ One order for the whole family: the body, Anatomy, Silhouette and Rapport. It's 
 [*][b]AAF Themes.[/b] The animation packs build on it.
 [*][b]Animation packs.[/b] Rapport reads their positions, trees and tags to choose a scene and finish it, so more packs with position trees mean better scenes: Atomic Lust, BP70, Rufgt's Animations (the main M/M content), ZaZOut4 with Zaz Particle Effects, the CHAK pack, Vioxsis Strap-ons (F/F content).
 [*][b]ZeX skeleton[/b]: optional, for the penis aim (the engine turns the penis toward its target along ZeX's penis bones).
+[*][b]UAP Moans[/b]: fine to keep. While our sounds are on, Rapport silences it; with them off it plays as before.
 [*][b]UAP.[/b] It gives the packs consistent tags and position trees, and Rapport's scene choice was built on it. Its pair tags are what let same-sex pairs get their own animations.
 [/list]
 [b]Skip[/b]
@@ -119,7 +120,6 @@ One order for the whole family: the body, Anatomy, Silhouette and Rapport. It's 
 [*][b]AAF Sex 'Em Up[/b] and [b]AAF Autonomy Enhanced[/b]: they do Rapport's job, and Rapport stops their quests anyway.
 [*][b]CumOverlays[/b]: its overlays stack with Rapport's aftermath (Commonwealth Moisturizer), and Rapport turns it off in its scenes.
 [*][b]Moan and voice sound patches[/b] that change the animations' own sounds: with our sounds on, they do nothing.
-[*][b]UAP Moans[/b]: it plays moans as AAF dialogue, which our mute doesn't reach, so you'd hear two sets of moans. Remove it with our sounds on, or use setup 2.
 [*][b]Any other CBP / OCBP / OCBPC physics plugin[/b] (cbp.dll): the Anatomy Engine IS that plugin, extended; two copies fight over one file.
 [*][b]Animated Fannies or another genital body replacer[/b]: Anatomy's builder already applies Nahka's genitals to your own CBBE, and a replacer overwrites the body.
 [/list]
@@ -131,7 +131,7 @@ Use Vortex or MO2.
 [*]F4SE, [url=https://www.nexusmods.com/fallout4/mods/108394]Runtime Database[/url], BodySlide and Outfit Studio.
 [*][url=https://www.nexusmods.com/fallout4/mods/15]CBBE[/url], WITH its BodySlide files.
 [*]Optional: [url=https://www.nexusmods.com/fallout4/mods/48978]3BBB[/url] and [url=https://www.nexusmods.com/fallout4/mods/39006]Skeletal Adjustments for CBBE[/url]. 3BBB is CBBE's mesh with extra breast, butt and thigh physics bones, and its BodySlide files are what the builder needs to build on it. For plain CBBE, skip both.
-[*]LooksMenu, AAF with AAF Themes and its animation packs (see the LoversLab list above), MCM, then [url=https://www.nexusmods.com/fallout4/mods/109219]Rapport[/url] for the scenes, plus [url=https://www.nexusmods.com/fallout4/mods/109225]Chemistry[/url] (NPCs find each other) and/or [url=https://www.nexusmods.com/fallout4/mods/109433]Overture[/url] (you ask someone). Rapport alone starts nothing.
+[*]LooksMenu, AAF with AAF Themes and its animation packs (see the LoversLab list above), MCM, then [url=https://www.nexusmods.com/fallout4/mods/109219]Rapport[/url] for the scenes (it needs Anatomy and the Anatomy Engine, step 5), plus [url=https://www.nexusmods.com/fallout4/mods/109225]Chemistry[/url] (NPCs find each other) and/or [url=https://www.nexusmods.com/fallout4/mods/109433]Overture[/url] (you ask someone). Rapport alone starts nothing.
 [*]The [url=https://www.nexusmods.com/fallout4/mods/109434]Anatomy Engine[/url], then [url=https://www.nexusmods.com/fallout4/mods/109435]Anatomy[/url]. Let both win every file conflict.
 [*][url=https://www.nexusmods.com/fallout4/mods/109439]Silhouette[/url], last of the body mods. Its plugin is light, so its place in the load order doesn't matter.
 [/list]
@@ -174,7 +174,7 @@ No need to delete anything.
 [*][b]Our sounds (default).[/b] Keep the MCM switch "Anatomy's sex sounds" ON (Rapport > Bodies & faces > Sounds). The Anatomy Engine then mutes the animations' own sounds during AAF scenes. In their place it plays Rapport's moans, with a voice and temperament per NPC timed to the strokes, and Anatomy's body sounds. EAFT/UAP moan and voice patches only change what the animations would play, and that gets muted, so they do nothing here.
 [*][b]Your patched pack sounds.[/b] Turn "Anatomy's sex sounds" OFF. The packs sound exactly as before, with your patches, and Rapport's moans and Anatomy's body sounds stay silent. Rapport never plays moans over unmuted packs.
 [/list]
-One exception for setup 1: a sound mod that plays its sounds from its own scripts or as dialogue during scenes, rather than through the animations, isn't covered by the mute and would play on top. UAP Moans is one. Remove that kind, or use setup 2.
+With setup 1, the animations' own sounds and AAF dialogue moans (UAP Moans and the like) are both replaced by ours. If a mod you use still plays its own sex sounds in our scenes, tell us in the Bugs tab.
 
 [size=4][b][color=#ffb547]Questions players asked[/color][/b][/size]
 [b]Plain CBBE had no physics, even after the steps.[/b]
@@ -186,7 +186,7 @@ One exception for setup 1: a sound mod that plays its sounds from its own script
 [b]Where do I pick the physics preset? There's no installer page for it.[/b]
 [spoiler]Nowhere: it's automatic, see "The physics preset" above.[/spoiler]
 [b]Do face-expression mods and head remeshes work?[/b]
-[spoiler]Expression mods: yes. The engine opens the mouth and moves the brows by adding to the face's own expression weights, and takes the stronger of its value and the animation's, so expressions from AAF or other mods still play. Head remeshes: yes, if they keep Fallout 4's facial morphs (their .tri with the vanilla expressions), which most do; a head without them can't open its mouth for us or for anything else.[/spoiler]
+[spoiler]During our scenes our faces win: the animation's and other mods' expressions don't show through (the blink is our own), and they come back after the scene. Head remeshes need Fallout 4's facial morphs (their .tri with the vanilla expressions); most keep them, and a head without them can't open its mouth for us or for anything else.[/spoiler]
 [b]In some animations the labia fold inward.[/b]
 [spoiler]In a few animations (a BP70 doggy, a shower one) the inner labia can fold inward instead of wrapping. It's known and being fixed.[/spoiler]
 [b]I changed a skin overlay in LooksMenu and the genitals don't match.[/b]
