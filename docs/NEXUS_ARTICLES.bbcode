@@ -93,3 +93,104 @@ The Anatomy Engine is our own build of OCBPC (cbp.dll).
 Existing saves carry on.
 
 [b]Settings:[/b] Anatomy's MCM has one page (Arousal, 9 controls). The engine reads its ocbp.ini; Rapport's MCM drives its knobs, the sound switch included.
+
+=== ARTICLE: Setup guide - from body to scenes ===
+[size=5][b][color=#ffb547]Setup guide: from the body to the scenes[/color][/b][/size]
+One order for the whole family: the body, Anatomy, Silhouette and Rapport. It's built from the questions a player asked us step by step, and it ends with everything working.
+
+[size=4][b][color=#ffb547]What you do NOT need[/color][/b][/size]
+[list]
+[*][b]A separate physics preset[/b] (MTM / OCBP and the like). Anatomy brings its own and picks the one for the body you built. One you install anyway is optional, and it takes over.
+[*][b]Moan and voice patches for the animation packs[/b] (EAFT's and UAP's sound patches, other NSFW sound packs that change what the animations play). With our sounds on, the engine mutes the packs' own sounds, so those patches change nothing. See "Sounds" below. Not the UAP animation patch itself: Rapport uses it.
+[*][b]True Wasteland Body.[/b] It matters only for hybrid presets that mix 3BBB with TWB.
+[*][b]OBody.[/b] It's a Skyrim mod. In Fallout 4, Silhouette is the per-NPC body picker.
+[/list]
+[size=4][b][color=#ffb547]From LoversLab: take and skip[/color][/b][/size]
+[b]Take[/b]
+[list]
+[*][b]AAF[/b] (Advanced Animation Framework). Required: Rapport drives it.
+[*][b]AAF Themes.[/b] The animation packs build on it.
+[*][b]Animation packs.[/b] Rapport reads their positions, trees and tags to choose a scene and finish it, so more packs with position trees mean better scenes: Atomic Lust, BP70, Rufgt's Animations (the main M/M content), ZaZOut4 with Zaz Particle Effects, the CHAK pack, Vioxsis Strap-ons (F/F content).
+[*][b]ZeX skeleton[/b]: optional, for the penis aim (the engine turns the penis toward its target along ZeX's penis bones).
+[*][b]UAP.[/b] It gives the packs consistent tags and position trees, and Rapport's scene choice was built on it. Its pair tags are what let same-sex pairs get their own animations.
+[/list]
+[b]Skip[/b]
+[list]
+[*][b]AAF Sex 'Em Up[/b] and [b]AAF Autonomy Enhanced[/b]: they do Rapport's job, and Rapport stops their quests anyway.
+[*][b]CumOverlays[/b]: its overlays stack with Rapport's aftermath (Commonwealth Moisturizer), and Rapport turns it off in its scenes.
+[*][b]Moan and voice sound patches[/b] that change the animations' own sounds: with our sounds on, they do nothing.
+[*][b]UAP Moans[/b]: it plays moans as AAF dialogue, which our mute doesn't reach, so you'd hear two sets of moans. Remove it with our sounds on, or use setup 2.
+[*][b]Any other CBP / OCBP / OCBPC physics plugin[/b] (cbp.dll): the Anatomy Engine IS that plugin, extended; two copies fight over one file.
+[*][b]Animated Fannies or another genital body replacer[/b]: Anatomy's builder already applies Nahka's genitals to your own CBBE, and a replacer overwrites the body.
+[/list]
+Creature packs are fine to keep for other mods; Rapport only pairs humans, ghouls and synths, so it never uses them.
+
+[size=4][b][color=#ffb547]1. Install, in this order[/color][/b][/size]
+Use Vortex or MO2.
+[list=1]
+[*]F4SE, [url=https://www.nexusmods.com/fallout4/mods/108394]Runtime Database[/url], BodySlide and Outfit Studio.
+[*][url=https://www.nexusmods.com/fallout4/mods/15]CBBE[/url], WITH its BodySlide files.
+[*]Optional: [url=https://www.nexusmods.com/fallout4/mods/48978]3BBB[/url] and [url=https://www.nexusmods.com/fallout4/mods/39006]Skeletal Adjustments for CBBE[/url]. 3BBB is CBBE's mesh with extra breast, butt and thigh physics bones, and its BodySlide files are what the builder needs to build on it. For plain CBBE, skip both.
+[*]LooksMenu, AAF with AAF Themes and its animation packs (see the LoversLab list above), MCM, then [url=https://www.nexusmods.com/fallout4/mods/109219]Rapport[/url] for the scenes, plus [url=https://www.nexusmods.com/fallout4/mods/109225]Chemistry[/url] (NPCs find each other) and/or [url=https://www.nexusmods.com/fallout4/mods/109433]Overture[/url] (you ask someone). Rapport alone starts nothing.
+[*]The [url=https://www.nexusmods.com/fallout4/mods/109434]Anatomy Engine[/url], then [url=https://www.nexusmods.com/fallout4/mods/109435]Anatomy[/url]. Let both win every file conflict.
+[*][url=https://www.nexusmods.com/fallout4/mods/109439]Silhouette[/url], last of the body mods. Its plugin is light, so its place in the load order doesn't matter.
+[/list]
+
+[size=4][b][color=#ffb547]2. Build, in this order[/color][/b][/size]
+[list=1]
+[*]Run the [b]AnatomyBuilder[/b] (GitHub, the latest release) once. It reads your CBBE or 3BBB, your skin and your physics setup.
+[*]In BodySlide, build [b]"Anatomy Body"[/b], not "CBBE Body", with "Build Morphs" ticked.
+[list]
+[*][b]With Silhouette[/b]: use a ZEROED preset: "CBBE Zeroed Sliders" for women, "BT - Zero" for men. Silhouette shapes each NPC in game through the morphs, so a body built from any other preset stacks with them and every NPC looks wrong. Silhouette checks the body you built and warns in game if it isn't zeroed.
+[*][b]Without Silhouette[/b]: build with the preset you like.
+[/list]
+[*]In the same BodySlide session, batch-build your outfits the same way, so clothes follow the body.
+[*]Men (optional, BodyTalk 4): build "Anatomy Male Body" (or "... Uncut") instead of BodyTalk4. With Silhouette, build it from "BT - Zero".
+[*]Optional: run AnatomyRebuild after every BodySlide build.
+[/list]
+[b]Changed your CBBE or 3BBB, your skin or your physics preset?[/b] Run the builder again, then BodySlide (steps 1 to 3).
+
+[size=4][b][color=#ffb547]The physics preset: automatic[/color][/b][/size]
+There's no installer choice because none is needed. Anatomy ships one preset for CBBE and one for 3BBB, and the builder writes the one for the body it built. The engine uses it whenever you have no ocbp.ini of your own.
+[list]
+[*][b]With 3BBB[/b]: 3BBB ships its own ocbp.ini, so its preset is the one in use, and that works too. To use Anatomy's tuned preset instead, hide 3BBB's F4SE/Plugins/ocbp.ini in your mod manager and run the builder again.
+[*][b]To check[/b]: Documents/My Games/Fallout4/F4SE/Anatomy_Health.txt, written about 10 s after every load, names the preset in use and warns if it doesn't fit your body.
+[/list]
+
+[size=4][b][color=#ffb547]Silhouette in game[/color][/b][/size]
+[list]
+[*]Every NPC gets a body the first time you meet them, and keeps it. Named characters (Piper, Cait, the mayor...) have their own.
+[*]To pick one yourself: MCM > Silhouette > "The NPC in your sights", bind the picker window's hotkey, aim at the NPC and press it. A click puts a body on them live; Apply keeps it, Cancel puts back what they had.
+[*]Your own character: the "Me" button in the window.
+[*]Besides the hotkey, the same MCM page has buttons for the picker window: one for the NPC you aimed at in the half minute before, and one on the Bodies page for you.
+[*]Since 0.3.2 the dead are left alone: Silhouette changes no corpse's body.
+[*]One body mod is enough. If you have no supported body for a sex (CBBE for women, BodyTalk for men), Silhouette leaves that sex alone and tells you once in game.
+[*]Silhouette needs no other BodySlide presets. Your own presets join the picker by themselves.
+[/list]
+
+[size=4][b][color=#ffb547]Sounds: pick one of two setups[/color][/b][/size]
+No need to delete anything.
+[list=1]
+[*][b]Our sounds (default).[/b] Keep the MCM switch "Anatomy's sex sounds" ON (Rapport > Bodies & faces > Sounds). The Anatomy Engine then mutes the animations' own sounds during AAF scenes. In their place it plays Rapport's moans, with a voice and temperament per NPC timed to the strokes, and Anatomy's body sounds. EAFT/UAP moan and voice patches only change what the animations would play, and that gets muted, so they do nothing here.
+[*][b]Your patched pack sounds.[/b] Turn "Anatomy's sex sounds" OFF. The packs sound exactly as before, with your patches, and Rapport's moans and Anatomy's body sounds stay silent. Rapport never plays moans over unmuted packs.
+[/list]
+One exception for setup 1: a sound mod that plays its sounds from its own scripts or as dialogue during scenes, rather than through the animations, isn't covered by the mute and would play on top. UAP Moans is one. Remove that kind, or use setup 2.
+
+[size=4][b][color=#ffb547]Questions players asked[/color][/b][/size]
+[b]Plain CBBE had no physics, even after the steps.[/b]
+[spoiler]The body has to be built through the AnatomyBuilder, then "Anatomy Body" in BodySlide (step 2 above), not "CBBE Body".[/spoiler]
+[b]Can I use 3BBB?[/b]
+[spoiler]Yes, since Anatomy 1.2: the builder builds on 3BBB when you have it. Install Skeletal Adjustments for CBBE with it.[/spoiler]
+[b]The 3BBB page lists True Wasteland Body. Do I need it?[/b]
+[spoiler]No. TWB matters only for hybrid presets that mix 3BBB with TWB.[/spoiler]
+[b]Where do I pick the physics preset? There's no installer page for it.[/b]
+[spoiler]Nowhere: it's automatic, see "The physics preset" above.[/spoiler]
+[b]Do face-expression mods and head remeshes work?[/b]
+[spoiler]Expression mods: yes. The engine opens the mouth and moves the brows by adding to the face's own expression weights, and takes the stronger of its value and the animation's, so expressions from AAF or other mods still play. Head remeshes: yes, if they keep Fallout 4's facial morphs (their .tri with the vanilla expressions), which most do; a head without them can't open its mouth for us or for anything else.[/spoiler]
+[b]In some animations the labia fold inward.[/b]
+[spoiler]In a few animations (a BP70 doggy, a shower one) the inner labia can fold inward instead of wrapping. It's known and being fixed.[/spoiler]
+[b]I changed a skin overlay in LooksMenu and the genitals don't match.[/b]
+[spoiler]The builder bakes one skin, the one installed; overlays applied in LooksMenu aren't baked in, and the engine doesn't re-bake in real time. If you change your installed skin, run the builder and BodySlide again.[/spoiler]
+
+[size=4][b][color=#ffb547]Something wrong?[/color][/b][/size]
+Send Anatomy_Health.txt (Documents/My Games/Fallout4/F4SE) to the Bugs tab of the mod in question, with what you did and what you saw.
