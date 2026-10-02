@@ -15,6 +15,7 @@ Every stage proves itself or stops (align, weights, verification, the split, the
 writes are paths no other mod ships, so nothing needs resolving in a mod manager:
     Tools/BodySlide/SliderSets/Anatomy.osp, Tools/BodySlide/ShapeData/Anatomy/*,
     Tools/BodySlide/SliderGroups/Anatomy.xml, Tools/BodySlide/SliderCategories/Anatomy.xml,
+    Tools/BodySlide/SliderPresets/Anatomy.xml (the "Anatomy Zeroed Sliders" preset),
     Textures/Anatomy/FemaleBody_d/n/s.dds, Materials/Anatomy/AnatomyGenitals.bgsm
 and, when BodyTalk 4 is installed, the men's body with the anus opened (A-69):
     Tools/BodySlide/SliderSets/AnatomyMale.osp, Tools/BodySlide/ShapeData/AnatomyMale/*,
@@ -50,6 +51,7 @@ OUTPUTS = {                                         # published path -> produced
     'Tools/BodySlide/ShapeData/Anatomy/Anatomy.osd': None,
     'Tools/BodySlide/SliderGroups/Anatomy.xml': None,
     'Tools/BodySlide/SliderCategories/Anatomy.xml': None,
+    'Tools/BodySlide/SliderPresets/Anatomy.xml': None,
     'Textures/Anatomy/FemaleBody_d.dds': None,
     'Textures/Anatomy/FemaleBody_n.dds': None,
     'Textures/Anatomy/FemaleBody_s.dds': None,
@@ -63,6 +65,13 @@ FEMALE_SKELETON = 'Meshes/Actors/Character/CharacterAssets/female/skeleton.nif' 
 GROUPS = ('<?xml version="1.0" encoding="UTF-8"?>\n<SliderGroups>\n'
           '    <Group name="CBBE">\n        <Member name="Anatomy Body"/>\n    </Group>\n'
           '    <Group name="Anatomy">\n        <Member name="Anatomy Body"/>\n    </Group>\n</SliderGroups>\n')
+# CBBE's own "CBBE Zeroed Sliders" under our name: every slider at 0, so a body (and its outfits) built with it is the
+# shape Silhouette's run-time morphs start from. In the CBBE group too, so it is there when building CBBE outfits.
+PRESET = ('<?xml version="1.0" encoding="UTF-8"?>\n<SliderPresets>\n'
+          '    <Preset name="Anatomy Zeroed Sliders" set="Anatomy Body">\n'
+          '        <Group name="CBBE"/>\n        <Group name="Anatomy"/>\n'
+          '        <SetSlider name="Ankles" size="big" value="0"/>\n'
+          '    </Preset>\n</SliderPresets>\n')
 
 
 class Tee(io.TextIOBase):
@@ -302,6 +311,9 @@ def main():
         groups = work / 'Anatomy.xml'
         groups.write_text(GROUPS, encoding='utf-8')
         produced['Tools/BodySlide/SliderGroups/Anatomy.xml'] = groups
+        preset = work / 'AnatomyPreset.xml'
+        preset.write_text(PRESET, encoding='utf-8')
+        produced['Tools/BodySlide/SliderPresets/Anatomy.xml'] = preset
         # A-57: Anatomy's preset for THIS body; the engine reads it (before the shipped CBBE default) when the player has
         # no ocbp.ini of their own
         kind = '-3bbb' if on_3bbb else ''
