@@ -60,6 +60,13 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    distribution ("the originals' distribution does not work with the light version; we made our own"). Why rewrite
    rather than leave: a light plugin's ids are masked to 12 bits, so an old id left in an INI or patch can resolve
    to a DIFFERENT record of ours, not just fail.
+   DISTRIBUTION (the owner's poll, 2026-10-02): NON-LORE = Vtaw Wardrobe 5, Vtaw Utility Pack 1, Apal Leotard, DX
+   Naughty Secretary, MM69 Wraith Cyber Armor -> only rewards in chests at single spots I propose and the owner
+   approves; the Naughty Secretary set is also Geneva's own outfit (RobCo outfitDefault). Modular mods get SETS we
+   compose from their own pieces (no slot overlap), distributed as sets. RobCo cannot create records, so each mod's
+   file carries a small light plugin of ours (no scripts) with the sets (LVLI "use all") and outfits (OTFT); RobCo INIs
+   put them into vanilla lists. Women-only sets never go into lists that dress men: female templates only (RobCo
+   outfitDefault/filters), or vendors/loot. strong_PA (NPC-only power armour) gets the flag, no distribution.
 5. **Collided skirt bones for coats and dresses** (the owner, 2026-10-01; after item 4): legs come through hanging
    cloth when they bend (the jump GIFs). Reweighting alone was measured and rejected (fo4-refit R-18,
    studies/legs_through.py: 10-30% at best, the clipping moves rather than goes, strong settings tear edges 41x).
