@@ -78,6 +78,13 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
 - **The aim**: tolerate extra nodes between Penis_00..05 (erection mods); optionally prefer the scene's own tag.
 - **Built, not yet seen in game**: genitals staying on actors outside your cell and after a ragdoll (A-44/45),
   next-gen 1.10.984, toys as one tube, fisting and big-toy stretch, brows by vaginal and anal depth.
+- **Labia fold inward in some animations** (demonjemiy, Discord via Watcher, 2026-10-02; screenshots coming): the
+  inner labia close or fold INWARD and the penis clips through instead of being wrapped. Named: BP70 doggy, a
+  shower animation; a cowgirl variant wraps fine. Likely the approach angle from behind vs the labia colliders'
+  push direction. His idea: an MCM labia preset, "bigger, more rigid" to "almost off".
+- **The vaginal canal's interior, improved** (the owner promised it to demonjemiy, 2026-10-02).
+- **Volumetric fluids** (demonjemiy, 2026-10-02; the owner: a big job, not now): dripping meshes instead of
+  LL's flat overlays, e.g. inside after sex. References: Skyrim SE mods 77506 and 79014.
 - **Polish**: arousal cools down across a game-time jump (sleep/wait: today it ticks on real time and carries
   through a long sleep, fading over the next minute; Arousal.psc Tick); the wrist line; the small colour bias of the repainted genital patch on DXT1 skins; more pre-built
   presets if asked.
