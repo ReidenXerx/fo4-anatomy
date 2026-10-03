@@ -269,3 +269,15 @@ On the 3BBB page, a BodySlide holding nothing but these files rebuilt all 3,518 
 [*]It is an installer option on the 16 outfit mods marked (skirt physics) on the page. It needs Anatomy Engine 1.2.0 or later: without the engine those hems stay frozen in the standing pose.[/*]
 [*]Fallout 4 draws at most 200 bones per piece, so a garment that would pass 190 with the skirt bones stays plain.[/*]
 [/list]
+
+=== ARTICLE: Anatomy Tailor ESL and Distribution - under the hood ===
+[size=4][b]Making a plugin light[/b][/size]
+The original plugin, made light. Same file name, so the mod's BA2s and the plugins that need it still load.
+Renumbered and rewired: the new records move into the light range and every reference to them is rewritten.
+
+[size=4][b]Checking the result[/b][/size]
+xEdit's own dump of every light copy reads the same as the original: 0 differing lines across the 12. The same check caught both faults we planted to test it.
+
+[size=4][b]How the distribution works[/b][/size]
+It goes through [url=https://www.nexusmods.com/fallout4/mods/69798]RobCo Patcher[/url], with nothing baked into your save; the installer asks how often (rare, uncommon, common). Lore-friendly outfits go to the NPCs who fit them, vendors and loot; the others are only rewards, in 16 chests at single places.
+31 outfit sets, composed from the modular mods' own pieces.
