@@ -28,7 +28,7 @@ The Anatomy Engine is our own build of OCBPC (cbp.dll).
 [*][b]Contact without jitter (new).[/b] Tight contact acts as a constraint, so nothing shakes when it squeezes.
 [*][b]Skirt physics, follow mode (new in 1.2.4).[/b] Skinning cannot drape, so legs pass through coats and dresses. The engine hangs 60 bones at the hips (12 around × 5 down) and, since 1.2.4, each one rides the legs instead of swinging; cloth hugging the hips moves like the skin. Legs through a tight dress, crouching / sitting / striding: 24 / 25 / 20 % → 2 / 5 / 1 %. For Anatomy Tailor's coats and dresses installed with that option. The whole story: [url=https://www.nexusmods.com/fallout4/articles/6680]Skirt physics: cloth that follows the legs[/url].
 [*][b]Every loaded actor[/b], and right after a ragdoll.
-[*][b]Its own physics preset[/b] when you have none, following the body the AnatomyBuilder built (CBBE or 3BBB).
+[*][b]Its own physics preset[/b], following the body the AnatomyBuilder built (CBBE or 3BBB). Don't add another one (MTM / OCBP and the like): it is incompatible. 3BBB's own preset, which comes with 3BBB, is the exception.
 [*][b]A health check (new).[/b] About 10 s after every load, Anatomy_Health.txt names the engine, the preset and who it covers, the body and whether its weights match, the builder's stamp, every simulated actor and the sounds. A box appears only when something is really wrong.
 [*][b]The AE crash family, fixed.[/b] Run-time nodes started with garbage reference counts and were freed under the body's skin; they are now zeroed first.
 [*][b]One cbp.dll[/b] for 1.10.163 and the Anniversary Edition, through Runtime Database. Nothing of another mod is overwritten.
@@ -78,7 +78,7 @@ The Anatomy Engine is our own build of OCBPC (cbp.dll).
 [size=4][b]Compatibility and settings[/b][/size]
 
 [b]Needs:[/b] Anatomy Engine 1.2.0, F4SE, Runtime Database, CBBE 2.7.2 with its BodySlide files, BodySlide. Install with Vortex or MO2; manual installs are not supported.
-[b]Optional:[/b] AAF, Rapport, LooksMenu, MCM, BodyTalk 4 with its BodySlide files (for M-M), 3BBB with Skeletal Adjustments for CBBE, any physics preset (Anatomy brings its own).
+[b]Optional:[/b] AAF, Rapport, LooksMenu, MCM, BodyTalk 4 with its BodySlide files (for M-M), 3BBB with Skeletal Adjustments for CBBE. Not another physics preset: Anatomy brings its own, and another one is incompatible.
 
 [b]With AAF alone:[/b] aim, the mouth and lips, the sex body sounds, arousal from scenes, tube collision, stretch and toys, M-M.
 [b]With Rapport too:[/b] moans, face expressions, glances, brows by depth, and the sound switch in its MCM.
@@ -100,7 +100,7 @@ One order for the whole family: the body, Anatomy, Silhouette and Rapport. It's 
 
 [size=4][b][color=#ffb547]What you do NOT need[/color][/b][/size]
 [list]
-[*][b]A separate physics preset[/b] (MTM / OCBP and the like). Anatomy brings its own and picks the one for the body you built. One you install anyway is optional, and it takes over.
+[*][b]A separate physics preset[/b] (MTM / OCBP, MadKita's, Jiggle Physics presets and the like). It is incompatible: Anatomy brings its own, made for the body you built, and another one replaces it, so the breasts and butt move wrong. 3BBB's own preset, which comes with 3BBB, is the exception.
 [*][b]Moan and voice patches for the animation packs[/b] (EAFT's and UAP's sound patches, other NSFW sound packs that change what the animations play). With our sounds on, the engine mutes the packs' own sounds, so those patches change nothing. See "Sounds" below. Not the UAP animation patch itself: Rapport uses it.
 [*][b]True Wasteland Body.[/b] It matters only for hybrid presets that mix 3BBB with TWB.
 [*][b]OBody.[/b] It's a Skyrim mod. In Fallout 4, Silhouette is the per-NPC body picker.
@@ -148,10 +148,10 @@ Use Vortex or MO2.
 [*]Men (optional, BodyTalk 4): build "Anatomy Male Body" (or "... Uncut") instead of BodyTalk4. With Silhouette, build it from "BT - Zero".
 [*]Optional: run AnatomyRebuild after every BodySlide build.
 [/list]
-[b]Changed your CBBE or 3BBB, your skin or your physics preset?[/b] Run the builder again, then BodySlide (steps 1 to 3).
+[b]Changed your CBBE or 3BBB, or your skin?[/b] Run the builder again, then BodySlide (steps 1 to 3).
 
 [size=4][b][color=#ffb547]The physics preset: automatic[/color][/b][/size]
-There's no installer choice because none is needed. Anatomy ships one preset for CBBE and one for 3BBB, and the builder writes the one for the body it built. The engine uses it whenever you have no ocbp.ini of your own.
+There's no installer choice because none is needed. Anatomy ships one preset for CBBE and one for 3BBB, and the builder writes the one for the body it built. Don't install another physics preset (MTM / OCBP and the like): it is incompatible.
 [list]
 [*][b]With 3BBB[/b]: 3BBB ships its own ocbp.ini, so its preset is the one in use, and that works too. To use Anatomy's tuned preset instead, hide 3BBB's F4SE/Plugins/ocbp.ini in your mod manager and run the builder again.
 [*][b]To check[/b]: Documents/My Games/Fallout4/F4SE/Anatomy_Health.txt, written about 10 s after every load, names the preset in use and warns if it doesn't fit your body.
@@ -185,7 +185,7 @@ With setup 1, the animations' own sounds and AAF dialogue moans (UAP Moans and t
 [b]The 3BBB page lists True Wasteland Body. Do I need it?[/b]
 [spoiler]No. TWB matters only for hybrid presets that mix 3BBB with TWB.[/spoiler]
 [b]Where do I pick the physics preset? There's no installer page for it.[/b]
-[spoiler]Nowhere: it's automatic, see "The physics preset" above.[/spoiler]
+[spoiler]Nowhere: it's automatic, see "The physics preset" above. Don't install another one; it is incompatible.[/spoiler]
 [b]Do face-expression mods and head remeshes work?[/b]
 [spoiler]During our scenes our faces win: the animation's and other mods' expressions don't show through (the blink is our own), and they come back after the scene. Head remeshes need Fallout 4's facial morphs (their .tri with the vanilla expressions); most keep them, and a head without them can't open its mouth for us or for anything else.[/spoiler]
 [b]In some animations the labia fold inward.[/b]

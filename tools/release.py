@@ -79,7 +79,8 @@ WHAT YOU NEED
   files) and BodySlide. For men: BodyTalk 4 with its BodySlide files.
   LooksMenu for the arousal nipples and the glans colour; AAF for scenes; Rapport for moans, faces
   and glances; MCM for the settings page.
-  A physics preset (e.g. MadKita's) is optional: with none, Anatomy uses its own default preset.
+  Anatomy brings its own physics preset. Don't install another one (MTM / OCBP, MadKita's and the
+  like): it is incompatible. 3BBB's own preset, which comes with 3BBB, is the exception.
   Install with Vortex or MO2: the installer checks your setup. Manual installs are not supported.
 
 INSTALL
@@ -97,7 +98,7 @@ INSTALL
   3. BodySlide: choose "Anatomy Body", your preset, Build (or Batch Build). The category "Anatomy"
      has "Opening, front": extra opening toward the front, on top of the built-in one (0% leaves
      it as designed).
-  Re-run the builder after changing your CBBE, skin or physics preset (ocbp.ini).
+  Re-run the builder after changing your CBBE, 3BBB or skin.
   4. Optional, Anatomy Rebuild (the latest AnatomyRebuild zip, same page): run it after every
      BodySlide build. It gives your built outfits the body's hip handover and the body's neck its seam fix, which BodySlide itself
      cannot carry.
@@ -553,7 +554,7 @@ ANATOMY_FOMOD = dict(
         ('Built on your PC, from your own CBBE', 'The Anatomy Builder',
          'Nothing of CBBE or BodyTalk is shipped: the AnatomyBuilder reads your own CBBE (or 3BBB, when you have it, '
          'keeping its breast bones), your skin and your skeleton, and writes the "Anatomy Body" BodySlide set. Run '
-         'it again after changing your CBBE, skin or physics preset.', 'anatomy-builder-finds.jpg'),
+         'it again after changing your CBBE, 3BBB or skin.', 'anatomy-builder-finds.jpg'),
     ],
     notes=[
         ('AAF.esm', 'Note: AAF is not active', 'Without AAF, no scenes',
@@ -574,7 +575,8 @@ ENGINE_FOMOD = dict(
            'F4SE: check this yourself -- runs every DLL mod; f4se.silverlock.org',
            'Runtime Database: check this yourself -- finds the game\'s functions on every game version; Nexus 108394',
            'ZeX - ZaZ Extended Skeleton for men: optional -- the penis aim needs its Penis_00 to Penis_05 chain',
-           'A physics preset (MadKita\'s, MTM, Jiggle Physics...): optional -- with none, Anatomy brings its own',
+           'Another physics preset (MadKita\'s, MTM, Jiggle Physics...): incompatible -- Anatomy brings its own '
+           '(3BBB\'s own preset is the exception)',
            'Anatomy: optional -- the genitals, the aim and the sounds need its config; Nexus 109434\'s page links it',
            'Let the Anatomy Engine (and Anatomy) win EVERY file conflict with any other mod: cbp.dll above all.',
            'Install with Vortex or MO2; manual installs are not supported.'],
