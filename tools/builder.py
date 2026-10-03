@@ -157,6 +157,8 @@ def main():
     ap.add_argument('--body', choices=('auto', 'cbbe', '3bbb'), default='auto',
                     help='the body to build on (default: 3BBB when it is installed and your physics preset drives its '
                          'breast bones, else CBBE)')
+    ap.add_argument('--no-player-preset', action='store_true',
+                    help='build as for a player without an ocbp.ini of their own (the prebuilt bodies, A-72)')
     import gamedata
     args = gamedata.parse_args(ap, FROZEN)
     log_path = HERE / 'AnatomyBuilder.log'
@@ -171,6 +173,13 @@ def main():
         import gamedata
         game = gamedata.Game(data)
         print(f'Data: {data}; {len(game.plugins)} plugins active, {len(game.archives)} archives')
+        if getattr(args, 'no_player_preset', False):
+            # A-72: a prebuilt body is for players with no preset of their own (another preset is incompatible), so
+            # the build must not follow whatever ocbp.ini this Data happens to carry
+            find = game.find
+            game.find = lambda rel, _f=find: None if rel.replace('\\', '/').lower() == 'f4se/plugins/ocbp.ini' \
+                else _f(rel)
+            print('   preset: built as for a player without an ocbp.ini of their own')
 
         # ---- what it reads, and from where (CBBE's file names come from its own slider set)
         import align_body as ab

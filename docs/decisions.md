@@ -2041,3 +2041,27 @@ Sonnet trace and Rapport's own trace proved the anal pain set, the rough/BDSM ta
   western duster 2/3/1 -> 1/3/1. Never worse on a garment tested.
 - **The engine reads Section() safely now:** INIReader::Section throws on a section the file lacks; [Bones],
   [BonesMale] and the skirt's sections are read only when present (an older ini, or the engine without Anatomy's).
+
+## A-71 — Skirt follow mode (the owner 2026-10-03: "sacrifice natural cloth, it's much better than clipping")
+
+- **The skirt nodes FOLLOW the legs (Engine 1.2.4, [Skirt] mode=follow, default; mode=swing keeps A-70's solver).**
+  Each node's rest point is stored in its leg segment's bind frame ([SkirtFollow] / [SkirtFollowMale], skirt.py
+  follow_table; levels 0-2 the thigh, 3-4 the calf) and placed with the leg's live transform, blended between the legs
+  along the hip-to-hip line (Pelvis_skin's local z). Stateless.
+- **Second skin (fo4-refit skirt_variant):** garment vertices within 2.5 of the reference body (fading out by 3.5),
+  40 below to 12 above the crotch, take the body's weights; genital bones excluded. This band was what A-70 left
+  clipping (it keeps the author's pelvis weights and the skirt never weights it).
+- **Measured (fo4-refit studies/legs_follow.py, 9 garments x crouch / sit / stride):** all 4.3/4.9/3.3 % today ->
+  3.2/4.6/1.2 swing -> 1.8/3.2/0.8 follow; slinky dress 24/25/20 -> 2/5/1; black widow coat 24/38/14 -> 0/18/0.
+  Loose coats stay within a point. Cost: no sway, more stretch between the legs.
+- **Rejected first:** a bigger ring sized to Ivy's thighs (holes moved, did not shrink; reverted).
+
+## A-72 — Prebuilt bodies ship (the owner 2026-10-03: "noobs are very struggling with using anatomy building")
+
+Overturns A-2's shipping half and anatomy-release-plan's "nothing third-party redistributed" for the bodies only:
+the Anatomy page gets prebuilt bodies, CBBE and 3BBB women and BodyTalk 4 men, built at ZEROED sliders with their
+.tri morphs (LooksMenu BodyGen / Silhouette shape them in game). The owner's call, including the .tri although the
+CBBE team asked for none ("not strictly a requirement"). The repo still holds no third-party asset: the tool that
+builds them is committed, the bodies are outputs. The genitals' texture is baked from CBBE's own skin (the default
+most players have); another skin gets a tone mismatch until the player runs the AnatomyBuilder. The AnatomyBuilder
+stays for everyone with their own CBBE, skin or preset.
