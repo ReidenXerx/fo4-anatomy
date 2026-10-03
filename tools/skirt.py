@@ -402,6 +402,46 @@ def follow_points(table, rest_names, world):
     return np.array(out)
 
 
+def follow_points_v2(table, rest_names, rest, world):
+    """FOLLOW v2 (the owner's photo, 2026-10-03: in a deep crouch the rear hem shot up behind her in slabs): every
+    level rides the THIGH (a hem does not fold with the calf), and a leg only PUSHES cloth outward: the part of a
+    node's move that points into the body (the rear panel when the thighs go forward) is dropped, so that cloth
+    keeps hanging from the hips. The table's thigh-frame points are used for every level (thigh_table)."""
+    Pinv = np.linalg.inv(world['pelvis_skin'])
+    rest = np.asarray(rest, float)
+    nl = len(LEVELS)
+    out_dir = np.zeros_like(rest)
+    for l in range(nl):
+        idx = [c * nl + l for c in range(COLUMNS)]
+        ctr = rest[idx].mean(0)
+        for i in idx:
+            v = rest[i] - ctr
+            out_dir[i] = v / (np.linalg.norm(v) or 1.0)
+    pts = []
+    for i, n in enumerate(rest_names):
+        _seg, wl, *q = table[n]
+        pl = Pinv @ world['lleg_thigh'] @ np.r_[q[0:3], 1.0]
+        pr = Pinv @ world['rleg_thigh'] @ np.r_[q[3:6], 1.0]
+        d = wl * pl[:3] + (1 - wl) * pr[:3] - rest[i]
+        inward = d @ out_dir[i]
+        if inward < 0:
+            d = d - inward * out_dir[i]
+        pts.append(rest[i] + d)
+    return np.array(pts)
+
+
+def thigh_table(rest, skel_world):
+    """follow_table with every level in the THIGH frame (FOLLOW v2)"""
+    t = follow_table(rest, skel_world)
+    P = m4(*skel_world['Pelvis_skin'])
+    inv = {sd: np.linalg.inv(m4(*skel_world[f'{sd}Leg_Thigh'])) for sd in 'LR'}
+    out = {}
+    for n, (seg, wl, *_q) in t.items():
+        w = P @ np.r_[np.asarray(rest[n], float), 1.0]
+        out[n] = (0, wl, *(inv['L'] @ w)[:3], *(inv['R'] @ w)[:3])
+    return out
+
+
 def clearances(rest, radii, pelvis_bind, joints_bind, params=SOLVER):
     """(bones, 4): each bone's clearance from each leg capsule (L thigh, L calf, R thigh, R calf, Solver.capsules'
     order): the capsule's radius plus the margin, but never more than the bone's own distance from it at rest; then
@@ -442,7 +482,7 @@ def _knn1(src, dst):
     return out
 
 
-def skirt_weights(G, tri, B, rest_world, crotch, follows=None):
+def skirt_weights(G, tri, B, rest_world, crotch, follows=None, knee=None):
     """G: garment vertices (world bind); tri: its triangles; B: body vertices (world bind); rest_world: (COLUMNS, NL, 3)
     world rests; crotch: world z. -> (f (N,), idx (N,4) into names(), w (N,4)) -- the skirt part of each vertex's
     weights; f is the share it takes (0: none). follows (N,): the share of the vertex's own weights on leg bones. Cloth
@@ -481,6 +521,11 @@ def skirt_weights(G, tri, B, rest_world, crotch, follows=None):
             l0 = int(np.where(zs >= q[2])[0][-1])
             l1 = l0 + 1
             tl = (zs[l0] - q[2]) / (zs[l0] - zs[l1])
+            if knee is not None and l1 == KNEE_LEVEL:
+                # across the knee (FOLLOW rides the thigh above KNEE_LEVEL, the calf from it): cloth above the knee takes
+                # no calf, the calf's share starts at the knee (the owner, 2026-10-04: Ivy sitting, the Red dress's hem
+                # hung down from her horizontal thigh, as if her leg were straight)
+                tl = 0.0 if q[2] >= knee else (knee - q[2]) / (knee - zs[l1])
         ctr = centres[l0] * (1 - tl) + centres[l1] * tl
         a = math.atan2(q[0] - ctr[0], q[1] - ctr[1]) % (2 * math.pi)
         x = a / (2 * math.pi) * COLUMNS
