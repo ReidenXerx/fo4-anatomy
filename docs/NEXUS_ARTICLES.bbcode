@@ -238,3 +238,34 @@ Cloth no longer sways on its own, and it stretches a little between the legs whe
 
 [size=4][b]What you need[/b][/size]
 Anatomy Engine 1.2.4 and Anatomy 1.2.2 (follow mode needs both; older versions swing), and an Anatomy Tailor pack installed with the "Skirt physics" option. Men's coats get it too, on BodyTalk.
+
+=== ARTICLE: Anatomy Tailor - under the hood ===
+[size=4][b]What this covers[/b][/size]
+How the Anatomy Tailor refits are made and checked. It backs both Anatomy Tailor pages (3BBB and BodyTalk). The measured numbers below come from the 3BBB refits. The skirt physics have their own article: [url=https://www.nexusmods.com/fallout4/articles/6680]How it works[/url].
+
+[size=4][b]Clothes follow the body: weights from the skin[/b][/size]
+[list]
+[*]Each outfit vertex takes the body's weight change from the 6 nearest body vertices.[/*]
+[*]The change applies in full within 1.0 unit of the skin and fades out by 2.5, so loose hems keep the author's weights.[/*]
+[*]The author's weight sum is kept, at most 4 bones are used per vertex, and nothing crosses the midline.[/*]
+[*]Measured: under a 1-unit breast bounce the garment drifted 0.44 from the skin instead of 1.53 (95th percentile 0.12 instead of 0.45). On the butt it drifted 0.07 instead of 0.37.[/*]
+[/list]
+[size=4][b]Outfits that never had BodySlide files[/b][/size]
+[list]
+[*]A real BodySlide project is made from the mesh alone.[/*]
+[*]The preset each outfit was built at is detected: 3.4% poke-through, against the best possible 3.3%, on 24 outfits.[/*]
+[*]Every CBBE slider is conformed from the 6 nearest body vertices. BodySlide then rebuilds the original to within 0.016-0.031 units.[/*]
+[/list]
+[size=4][b]Outfits made for the vanilla body[/b][/size]
+They are first carried onto CBBE through BodySlide's own VanillaToCBBE reference. The body poking through went from 7.0% to 4.8% (from 7.7% to 4.6% across all outfits without sets).
+
+[size=4][b]Checked before packing[/b][/size]
+On the 3BBB page, a BodySlide holding nothing but these files rebuilt all 3,518 of them byte-identical, meaning exactly the same as the originals; on the BodyTalk page, all 2,324 of its files. A refit whose rebuilt morphs differ from the original build is refused and left out; 3 were.
+
+[size=4][b]Skirt bones[/b][/size]
+[list]
+[*]Skinning cannot drape: long coats, dresses and skirts follow the thighs, so the legs pass through the cloth.[/*]
+[*]The skirt option weights the hems to a ring of 60 bones at the hips. The Anatomy Engine moves the ring every frame and the legs push it aside.[/*]
+[*]It is an installer option on the 16 outfit mods marked (skirt physics) on the page. It needs Anatomy Engine 1.2.0 or later: without the engine those hems stay frozen in the standing pose.[/*]
+[*]Fallout 4 draws at most 200 bones per piece, so a garment that would pass 190 with the skirt bones stays plain.[/*]
+[/list]
