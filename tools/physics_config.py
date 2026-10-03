@@ -299,8 +299,17 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
     lines += ['', '; skirt bones (roadmap 5): hanging cloth the legs push; tools/skirt.py measured these',
               '[Skirt]', 'enabled=1', f'columns={skirt.COLUMNS}', f'levels={len(skirt.LEVELS)}', f'prefix={skirt.PREFIX}']
     lines += [f'{k}={",".join(f"{x:g}" for x in v) if isinstance(v, tuple) else f"{v:g}"}' for k, v in skirt.SOLVER.items()]
+    # the owner, 2026-10-03: the nodes FOLLOW the legs (no clipping, no sway); mode=swing brings back the solver
+    lines += ['mode=follow']
     for sec, table in (('SkirtClear', skirt_rest.SKIRT_CLEAR), ('SkirtClearMale', skirt_rest.SKIRT_M_CLEAR)):
         lines += ['', f'[{sec}]'] + [f'{n}={",".join(f"{x:.3f}" for x in v)}' for n, v in table.items()]
+    import skeleton
+    for sec, rest, skel in (('SkirtFollow', skirt_rest.SKIRT_BONES, skeleton.OUT),
+                            ('SkirtFollowMale', skirt_rest.SKIRT_M_BONES, zb.SKELETON)):
+        lines += ['', f'; follow mode: segment (0 thigh, 1 calf), left-leg share, the rest point in the left and the '
+                      f'right leg\'s bind frame', f'[{sec}]']
+        lines += [f'{n}={v[0]},{v[1]:.4f},' + ','.join(f'{x:.4f}' for x in v[2:]) for n, v in
+                  skirt.follow_table(rest, zb.skeleton_world(skel)).items()]
     return '\n'.join(lines) + '\n'
 
 

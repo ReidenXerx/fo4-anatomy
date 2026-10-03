@@ -358,6 +358,50 @@ class Solver:
         return self.p - self.rest
 
 
+KNEE_LEVEL = 3                            # follow mode: levels from this one down ride the calf, the rest the thigh
+
+
+def follow_table(rest, skel_world):
+    """FOLLOW mode (the owner, 2026-10-03: trade natural cloth for no clipping; fo4-refit studies/skirt_follow.py):
+    every skirt node copies its legs rigidly instead of swinging. Per node: (segment 0 thigh / 1 calf, its share of
+    the left leg, its rest point in the left leg segment's bind frame (3), in the right one's (3)). Points in a leg's
+    own frame are physical, so the engine places them with that leg's live transform whatever its matrix layout, and
+    blends the two legs by the share (the side columns take one leg, the front and back ones between the legs both).
+    The leg bones' bind frames agree across the skeletons players load (vanilla vs DFS: 0.02 degrees)."""
+    P = m4(*skel_world['Pelvis_skin'])
+    Pinv = np.linalg.inv(P)
+    leg = {(sd, seg): np.linalg.inv(m4(*skel_world[f'{sd}Leg_{seg}'])) for sd in 'LR' for seg in ('Thigh', 'Calf')}
+    # the side: along the line from the right hip joint to the left one, in Pelvis_skin's frame (its z, not x)
+    hl = (Pinv @ m4(*skel_world['LLeg_Thigh'])[:, 3])[:3]
+    hr = (Pinv @ m4(*skel_world['RLeg_Thigh'])[:, 3])[:3]
+    across = hl - hr
+    out = {}
+    for c in range(COLUMNS):
+        for l in range(len(LEVELS)):
+            n = name(c, l)
+            r = np.asarray(rest[n], float)
+            w = P @ np.r_[r, 1.0]
+            seg = 'Calf' if l >= KNEE_LEVEL else 'Thigh'
+            t = float(np.clip((r - hr) @ across / (across @ across), 0.0, 1.0))
+            out[n] = (1 if seg == 'Calf' else 0, t * t * (3 - 2 * t),
+                      *(leg['L', seg] @ w)[:3], *(leg['R', seg] @ w)[:3])
+    return out
+
+
+def follow_points(table, rest_names, world):
+    """the engine's FOLLOW rule, for the offline renders: each node's Pelvis_skin-local point from the live leg
+    transforms (world: lower-case bone name -> 4x4 world)"""
+    Pinv = np.linalg.inv(world['pelvis_skin'])
+    out = []
+    for n in rest_names:
+        seg, wl, *q = table[n]
+        s = 'calf' if seg else 'thigh'
+        pl = Pinv @ world[f'lleg_{s}'] @ np.r_[q[0:3], 1.0]
+        pr = Pinv @ world[f'rleg_{s}'] @ np.r_[q[3:6], 1.0]
+        out.append(wl * pl[:3] + (1 - wl) * pr[:3])
+    return np.array(out)
+
+
 def clearances(rest, radii, pelvis_bind, joints_bind, params=SOLVER):
     """(bones, 4): each bone's clearance from each leg capsule (L thigh, L calf, R thigh, R calf, Solver.capsules'
     order): the capsule's radius plus the margin, but never more than the bone's own distance from it at rest; then
