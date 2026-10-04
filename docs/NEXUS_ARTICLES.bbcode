@@ -17,8 +17,6 @@ One line each: the feature, and the hard thing it solved.
 [i]The two pre-built bodies on the Files tab were built with Anatomy 1.1.1: no vaginal lining. Run the AnatomyBuilder for it.[/i]
 
 === ARTICLE: The physics engine ===
-[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-ocbpc@5b6d9837d62b2c86fc7e26e83d6282d1e7e8f185/docs/img/skirt.jpg[/img][/center]
-
 [size=4][b]The physics engine[/b][/size]
 The Anatomy Engine is our own build of OCBPC (cbp.dll).
 
@@ -26,7 +24,6 @@ The Anatomy Engine is our own build of OCBPC (cbp.dll).
 [*][b]One smooth tube.[/b] A chain of spheres snags on the lips and lets things slip between the balls. Every penis and toy collides as one tube.
 [*][b]Stretch.[/b] Openings widen to fit what is inside, fisting and toys included.
 [*][b]Contact without jitter (new).[/b] Tight contact acts as a constraint, so nothing shakes when it squeezes.
-[*][b]Skirt physics, follow mode (new in 1.2.4).[/b] Skinning cannot drape, so legs pass through coats and dresses. The engine hangs 60 bones at the hips (12 around × 5 down) and, since 1.2.4, each one rides the legs instead of swinging; cloth hugging the hips moves like the skin. Legs through a tight dress, crouching / sitting / striding: 24 / 25 / 20 % → 2 / 5 / 1 %. For Anatomy Tailor's coats and dresses installed with that option. The whole story: [url=https://www.nexusmods.com/fallout4/articles/6680]Skirt physics: cloth that follows the legs[/url].
 [*][b]Every loaded actor[/b], and right after a ragdoll.
 [*][b]Its own physics preset[/b], following the body the AnatomyBuilder built (CBBE or 3BBB). Don't add another one (MTM / OCBP and the like): it is incompatible. 3BBB's own preset, which comes with 3BBB, is the exception.
 [*][b]A health check (new).[/b] About 10 s after every load, Anatomy_Health.txt names the engine, the preset and who it covers, the body and whether its weights match, the builder's stamp, every simulated actor and the sounds. A box appears only when something is really wrong.
@@ -82,7 +79,7 @@ The Anatomy Engine is our own build of OCBPC (cbp.dll).
 
 [b]With AAF alone:[/b] aim, the mouth and lips, the sex body sounds, arousal from scenes, tube collision, stretch and toys, M-M.
 [b]With Rapport too:[/b] moans, face expressions, glances, brows by depth, and the sound switch in its MCM.
-[b]Without AAF:[/b] the genitals, the physics, nudity arousal and skirt physics still work.
+[b]Without AAF:[/b] the genitals, the physics and nudity arousal still work.
 
 [b]Upgrading from 1.1.1:[/b]
 [list=1]
@@ -196,53 +193,9 @@ With setup 1, the animations' own sounds and AAF dialogue moans (UAP Moans and t
 [size=4][b][color=#ffb547]Something wrong?[/color][/b][/size]
 Send Anatomy_Health.txt (Documents/My Games/Fallout4/F4SE) to the Bugs tab of the mod in question, with what you did and what you saw.
 
-=== ARTICLE: Skirt physics - cloth that follows the legs ===
-[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-ocbpc@c7faba1b5a1024012af80673cc25c859a84d383a/docs/img/tailor-skirt-collage-v3.gif[/img][/center]
-[center][size=2]Offline render without Fallout's Havok cloth; refits keep each garment's own cloth physics.[/size][/center]
-
-[size=5][b][color=#ffb547]Skirt physics: cloth that follows the legs[/color][/b][/size]
-Since Anatomy Engine 1.2.4, legs stay under coats, dresses and skirts, tight ones included. This is how, and what it costs.
-
-[size=4][b]Why legs go through cloth[/b][/size]
-Fallout 4 moves clothes the way it moves skin: every vertex follows a few bones. That is fine for a sleeve and wrong for a skirt. A coat's hanging cloth follows the pelvis, so when a thigh swings forward in a crouch, a sit or a stride, it goes straight through. Skinning cannot drape.
-
-[size=4][b]What did not work[/b][/size]
-[list]
-[*][b]Weights alone.[/b] Letting the cloth follow the legs a little only moves the clipping somewhere else: 10 to 30 % better at best.
-[*][b]A swinging skirt (Engine 1.2.0 to 1.2.3).[/b] 60 bones at the hips, 12 around and 5 down, swinging on their own and pushed aside by the legs. Hanging cloth got much better, but cloth that hugs the hips kept its own pelvis weights, which the skirt never touched. A tight dress in a crouch still clipped 16 %.
-[*][b]A bigger skirt.[/b] Sized to a thick-thighed body instead of slim CBBE. The holes moved but did not shrink, so we threw it away.
-[/list]
-
-[size=4][b]The idea: stop simulating, follow[/b][/size]
-The author's idea: if the cloth can't drape, let it copy the legs.
-[list]
-[*][b]Every skirt bone rides its legs.[/b] Each of the 60 bones remembers where it sits in the frame of a leg: the thigh for the top three rows, the calf for the bottom two. Every frame the engine places it where that leg carried it. The side columns follow one leg; the front and back ones blend both, by how far they sit to each side.
-[*][b]No lag, no snapping.[/b] There is no simulation state, so an AAF scene that starts in a deep pose has the cloth in place on its first frame.
-[*][b]A second skin at the hips.[/b] Anatomy Tailor gives cloth that sits on the body (within 2.5 units, fading out by 3.5, from 40 below to 12 above the crotch) the body's own weights. That band now moves exactly like the skin under it, which is what fixed the tight dresses.
-[*][b]Any skeleton.[/b] The leg bones of the skeletons players use agree to 0.02°, so the same table fits them all.
-[/list]
-
-[center][img]https://cdn.jsdelivr.net/gh/ReidenXerx/fo4-ocbpc@7b6d20f40f1ddb7dd56810491e60ba4afead3ead/docs/img/skirt-follow-tight-dress.png[/img][/center]
-
-[size=4][b]Measured[/b][/size]
-Nine coats and dresses, each in three poses. The count is the leg skin that the hanging cloth covers when standing and that ends up in front of it.
-[list]
-[*][b]All nine, crouching / sitting / striding:[/b] 4.3 / 4.9 / 3.3 % today → 3.2 / 4.6 / 1.2 % swinging → [b]1.8 / 3.2 / 0.8 %[/b] following.
-[*][b]A tight slinky dress:[/b] 24 / 25 / 20 % → 16 / 23 / 6 % → [b]2 / 5 / 1 %[/b].
-[*][b]The Black Widow coat:[/b] 24 / 38 / 14 % → 14 / 27 / 2 % → [b]0 / 18 / 0 %[/b].
-[*][b]A house dress:[/b] 7 / 6 / 5 % → 3 / 4 / 1 % → [b]1 / 2 / 0 %[/b].
-[*][b]Loose coats[/b] (Valentine's coat, the trench coat) were already low and stay within a point of where they were.
-[/list]
-
-[size=4][b]The trade[/b][/size]
-Cloth no longer sways on its own, and it stretches a little between the legs when they spread. Stretch reads far better than holes. If you prefer the old sway, set [font=Courier New]mode=swing[/font] under [font=Courier New][Skirt][/font] in Data/F4SE/Plugins/Anatomy/ocbp.ini.
-
-[size=4][b]What you need[/b][/size]
-Anatomy Engine 1.2.4 and Anatomy 1.2.2 (follow mode needs both; older versions swing), and an Anatomy Tailor pack installed with the "Skirt physics" option. Men's coats get it too, on BodyTalk.
-
 === ARTICLE: Anatomy Tailor - under the hood ===
 [size=4][b]What this covers[/b][/size]
-How the Anatomy Tailor refits are made and checked. It backs both Anatomy Tailor pages (3BBB and BodyTalk). The measured numbers below come from the 3BBB refits. The skirt physics have their own article: [url=https://www.nexusmods.com/fallout4/articles/6680]How it works[/url].
+How the Anatomy Tailor refits are made and checked. It backs both Anatomy Tailor pages (3BBB and BodyTalk). The measured numbers below come from the 3BBB refits.
 
 [size=4][b]Clothes follow the body: weights from the skin[/b][/size]
 [list]
@@ -262,14 +215,6 @@ They are first carried onto CBBE through BodySlide's own VanillaToCBBE reference
 
 [size=4][b]Checked before packing[/b][/size]
 On the 3BBB page, a BodySlide holding nothing but these files rebuilt all 3,518 of them byte-identical, meaning exactly the same as the originals; on the BodyTalk page, all 2,324 of its files. A refit whose rebuilt morphs differ from the original build is refused and left out; 3 were.
-
-[size=4][b]Skirt bones[/b][/size]
-[list]
-[*]Skinning cannot drape: long coats, dresses and skirts follow the thighs, so the legs pass through the cloth.[/*]
-[*]The skirt option weights the hems to a ring of 60 bones at the hips. The Anatomy Engine moves the ring every frame and the legs push it aside.[/*]
-[*]It is an installer option on the 16 outfit mods marked (skirt physics) on the page. It needs Anatomy Engine 1.2.0 or later: without the engine those hems stay frozen in the standing pose.[/*]
-[*]Fallout 4 draws at most 200 bones per piece, so a garment that would pass 190 with the skirt bones stays plain.[/*]
-[/list]
 
 === ARTICLE: Anatomy Tailor ESL and Distribution - under the hood ===
 [size=4][b]Making a plugin light[/b][/size]
