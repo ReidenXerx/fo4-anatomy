@@ -2065,3 +2065,19 @@ CBBE team asked for none ("not strictly a requirement"). The repo still holds no
 builds them is committed, the bodies are outputs. The genitals' texture is baked from CBBE's own skin (the default
 most players have); another skin gets a tone mismatch until the player runs the AnatomyBuilder. The AnatomyBuilder
 stays for everyone with their own CBBE, skin or preset.
+
+## A-73 — Skirt follow mode withdrawn (the owner 2026-10-04: "our follow mode doesn't work properly, use plain")
+
+Overturns A-71's shipping half. The Tailor packs go Plain only (fo4-refit fomod_pack --no-skirt), Ivy's bundles take
+no skirt builds, the follow-mode article (6680), collage and feature lines come off the pages. The engine keeps the
+code (with plain meshes it moves nothing). What the night of testing found, in game, owner's eyes:
+- **A real engine bug, fixed and shipped (Engine 1.2.6):** the skirt found the legs by name across the whole actor
+  tree and took a copy of RLeg_Thigh off Visible Favorites' holstered pistol; the right columns froze. Legs are now
+  searched under Pelvis with an ancestry check (also Sound's pelvis). See shared memory fo4-getobjectbyname.
+- **Second skin cannot be tuned to work:** glued to the skin, cloth parts from its own inner layers (the Red dress's
+  Panty, fixed by glue_layers) and, below the crotch, tears from the cloth on the skirt nodes beside it (hem spikes
+  sitting, 14-20x stretch); limited to the hips, the legs come through. Every compromise failed one of the two.
+- **Offline proofs did not predict the game:** skirt_check.py and legs_follow.py passed versions the owner saw clip
+  or tear (Havok cloth, physics bones and idle poses are invisible offline). A garment change is proven in game.
+- **Why a "constant gap" cannot be had:** linear skinning keeps no distances; hanging cloth has no skin under it to
+  copy, so whatever it follows parts from something when the legs bend. A real gap needs a per-frame cloth solver.
