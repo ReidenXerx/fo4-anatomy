@@ -554,6 +554,9 @@ def own_game_path(text, folder):
                   text, count=1, flags=re.S)
     text = re.sub(r'<WarnMissingGamePath>[^<]*</WarnMissingGamePath>',
                   '<WarnMissingGamePath>false</WarnMissingGamePath>', text)
+    # a BodySlide never started has TargetGame -1 and opens its game Setup window, which waits for a click even in a
+    # headless build (2026-10-05: the AE install's fresh BodySlide, under a CROSS Cybernetics refit)
+    text = re.sub(r'<TargetGame>[^<]*</TargetGame>', '<TargetGame>3</TargetGame>', text)
     return text
 
 
