@@ -42,21 +42,13 @@ HERE = pathlib.Path(sys.executable).parent if FROZEN else pathlib.Path(__file__)
 
 
 def own_version():
-    """the exe's file version (release.py writes it), so every log says which builder ran; 'source' when not packed"""
-    if not FROZEN:
-        return 'source'
+    """the release's version (release.py writes data/version.txt next to the exe), so every log says which builder
+    ran; 'source' when not packed. A plain file, not the exe's version resource read through version.dll: that call
+    tipped Windows Defender's ML into flagging 1.2.4's first build (Trojan:Script/Wacatac.C!ml, 2026-10-05)"""
     try:
-        import ctypes
-        exe = sys.executable
-        size = ctypes.windll.version.GetFileVersionInfoSizeW(exe, None)
-        buf = ctypes.create_string_buffer(size)
-        ctypes.windll.version.GetFileVersionInfoW(exe, 0, size, buf)
-        p, n = ctypes.c_void_p(), ctypes.c_uint()
-        ctypes.windll.version.VerQueryValueW(buf, '\\', ctypes.byref(p), ctypes.byref(n))
-        ms, ls = ctypes.cast(p, ctypes.POINTER(ctypes.c_uint32))[2:4]
-        return f'{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}'
-    except Exception:
-        return '?'
+        return (HERE / 'data' / 'version.txt').read_text(encoding='utf-8').strip() or '?'
+    except OSError:
+        return 'source' if not FROZEN else '?'
 if not FROZEN:
     sys.path.insert(0, str(HERE))
 ROOT = HERE.parent

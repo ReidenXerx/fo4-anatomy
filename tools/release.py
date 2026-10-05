@@ -448,6 +448,8 @@ def builder_files():
         'AnatomyBuilder/licences/Pillow LICENSE.txt': pillow_licence(),
         'AnatomyBuilder/data/nahka_patch.json.gz': BUILD / 'patch/nahka_patch.json.gz',
     }
+    if (BUILD / 'builder-version.txt').exists():                 # the builder's log names it (own_version)
+        out['AnatomyBuilder/data/version.txt'] = BUILD / 'builder-version.txt'
     # A-57: the builder writes the preset for the body it built (tools/default_preset.py, both bodies)
     for name in ('ocbp-default.ini', 'OCBPCollisionConfig-default.txt', 'ocbp-default-3bbb.ini',
                  'OCBPCollisionConfig-default-3bbb.txt'):
@@ -765,6 +767,7 @@ def main():
              extras={f'{NAME} - LICENSE.txt': ROOT / 'LICENSE'}, no_binaries=True)
     if args.what in ('all', 'builder'):
         build_exe(version=args.version, bootloader=args.bootloader)
+        (BUILD / 'builder-version.txt').write_text(args.version, encoding='utf-8')
         wanted = builder_files()
         if not any(k.endswith('AnatomyBuilder.exe') for k in wanted):
             raise SystemExit('PyInstaller ran but left no AnatomyBuilder.exe in build/dist/AnatomyBuilder')
