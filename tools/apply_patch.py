@@ -153,8 +153,20 @@ def build(data, patch, out):
     # as it is, Nahka's the blend at her neighbours. TWB's presets list the "CBBE" group, which holds the Anatomy Body.
     srcs = {dname: cosd for _, _, dname, _ in csliders}
     twb = bs / 'SliderSets/True Wasteland Body.osp'
+    tset = None
     if twb.exists():
-        tset, tsliders = ab.read_set(twb, 'True Wasteland Body')
+        # the set by its usual name, else the file's first set: a TWB version with another set name is skipped or
+        # read, never a reason to stop the build
+        import xml.etree.ElementTree as ET
+        try:
+            names = [s.get('name') for s in ET.parse(twb).getroot().iter('SliderSet')]
+        except ET.ParseError:
+            names = []
+        if names:
+            tset, tsliders = ab.read_set(twb, 'True Wasteland Body' if 'True Wasteland Body' in names else names[0])
+        else:
+            print('   True Wasteland Body: its slider set file reads no set; its sliders are left out')
+    if tset is not None:
         have = {n.lower() for n, *_ in csliders}
         tosd = {}
         extra = []
