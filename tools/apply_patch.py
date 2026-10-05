@@ -26,6 +26,7 @@ import pathlib
 import struct
 
 import align_body as ab
+import gamedata
 import make_patch
 import nif
 import osd
@@ -154,7 +155,7 @@ def build(data, patch, out):
     srcs = {dname: cosd for _, _, dname, _ in csliders}
     twb = bs / 'SliderSets/True Wasteland Body.osp'
     tset = None
-    if twb.exists():
+    if gamedata.present(twb):  # not exists(): under MO2 stat misses virtual files (gamedata.present)
         # the set by its usual name, else the file's first set: a TWB version with another set name is skipped or
         # read, never a reason to stop the build
         import xml.etree.ElementTree as ET
@@ -177,7 +178,7 @@ def build(data, patch, out):
             if name.lower() in have or not fpart:
                 continue
             path = bs / 'ShapeData' / tset.findtext('DataFolder') / fpart
-            if not path.exists():
+            if not gamedata.present(path):
                 continue
             if fpart not in tosd:
                 tosd[fpart] = osd.read(path)
