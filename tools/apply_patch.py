@@ -166,6 +166,9 @@ def build(data, patch, out):
             tset, tsliders = ab.read_set(twb, 'True Wasteland Body' if 'True Wasteland Body' in names else names[0])
         else:
             print('   True Wasteland Body: its slider set file reads no set; its sliders are left out')
+    else:
+        print('   True Wasteland Body: not seen (no Tools/BodySlide/SliderSets/True Wasteland Body.osp in this Data; '
+              'under MO2, run the AnatomyBuilder from MO2)')
     if tset is not None:
         have = {n.lower() for n, *_ in csliders}
         tosd = {}

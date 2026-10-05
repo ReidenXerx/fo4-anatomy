@@ -39,6 +39,24 @@ import traceback
 # modules with __compiled__ instead, and its sys.executable is the exe itself
 FROZEN = bool(getattr(sys, 'frozen', False)) or '__compiled__' in globals()
 HERE = pathlib.Path(sys.executable).parent if FROZEN else pathlib.Path(__file__).resolve().parent
+
+
+def own_version():
+    """the exe's file version (release.py writes it), so every log says which builder ran; 'source' when not packed"""
+    if not FROZEN:
+        return 'source'
+    try:
+        import ctypes
+        exe = sys.executable
+        size = ctypes.windll.version.GetFileVersionInfoSizeW(exe, None)
+        buf = ctypes.create_string_buffer(size)
+        ctypes.windll.version.GetFileVersionInfoW(exe, 0, size, buf)
+        p, n = ctypes.c_void_p(), ctypes.c_uint()
+        ctypes.windll.version.VerQueryValueW(buf, '\\', ctypes.byref(p), ctypes.byref(n))
+        ms, ls = ctypes.cast(p, ctypes.POINTER(ctypes.c_uint32))[2:4]
+        return f'{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}'
+    except Exception:
+        return '?'
 if not FROZEN:
     sys.path.insert(0, str(HERE))
 ROOT = HERE.parent
@@ -168,7 +186,7 @@ def main():
     work = pathlib.Path(tempfile.mkdtemp(prefix='AnatomyBuilder-'))
     ok = False
     try:
-        print(f'Anatomy Builder ({time.strftime("%Y-%m-%d %H:%M")}); log: {log_path}')
+        print(f'Anatomy Builder {own_version()} ({time.strftime("%Y-%m-%d %H:%M")}); log: {log_path}')
         data = find_data(args.data)
         import gamedata
         game = gamedata.Game(data)
