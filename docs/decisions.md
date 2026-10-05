@@ -2081,3 +2081,17 @@ code (with plain meshes it moves nothing). What the night of testing found, in g
   or tear (Havok cloth, physics bones and idle poses are invisible offline). A garment change is proven in game.
 - **Why a "constant gap" cannot be had:** linear skinning keeps no distances; hanging cloth has no skin under it to
   copy, so whatever it follows parts from something when the legs bend. A real gap needs a per-frame cloth solver.
+
+## A-74 — True Wasteland Body sliders on the Anatomy body (the owner 2026-10-05: "yeah go on")
+
+A player's TWB presets left the Anatomy body at CBBE's base (bundesgrenzschutz, Discord 10-04): the builder made the
+set from CBBE's alone. TWB (Nexus 36410) is CBBE's body vertex for vertex (22,708 vertices, same positions and UVs,
+measured) with 95 sliders of its own in its set's local osd ("The Wasteland Body.osd"); its other 83 are CBBE's.
+- **What (tools/apply_patch.py, stage 1):** when Tools/BodySlide/SliderSets/True Wasteland Body.osp is installed, its
+  sliders that CBBE's set lacks join CBBE's and are carried the same way (CBBE's vertices take the data as it is,
+  Nahka's the blend at her neighbours); split_genitals moves them onto AnatomyGenitals like every slider. TWB's
+  presets list the "CBBE" group, which holds the Anatomy Body, so they show for it.
+- **Measured:** BodySlide built the Anatomy body and TWB's own with TWB's ".AmazonGoddess" (114 sliders, up to 6.7
+  units): every shared vertex's preset offset agrees within 0.03 (half-float storage); the bases differ only at the
+  feet (CBBE's physics body vs its plain one, <= 0.125). A full builder run: 192 sliders, "Athlete" on 20,718 body and
+  2,712 genital vertices.

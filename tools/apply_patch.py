@@ -147,8 +147,31 @@ def build(data, patch, out):
     near = patch['near']
     data_out = {}
     zero = (0.0, 0.0, 0.0)
+    # True Wasteland Body (Nexus 36410) when installed (the owner, 2026-10-05: a player's TWB presets left the body at
+    # CBBE's base): TWB is CBBE's body vertex for vertex (same 22,708 positions and UVs, measured), with sliders of its
+    # own in its set's local osd. Those join CBBE's here and are carried the same way: CBBE's vertices take TWB's data
+    # as it is, Nahka's the blend at her neighbours. TWB's presets list the "CBBE" group, which holds the Anatomy Body.
+    srcs = {dname: cosd for _, _, dname, _ in csliders}
+    twb = bs / 'SliderSets/True Wasteland Body.osp'
+    if twb.exists():
+        tset, tsliders = ab.read_set(twb, 'True Wasteland Body')
+        have = {n.lower() for n, *_ in csliders}
+        tosd = {}
+        extra = []
+        for name, attrs, dname, fpart in tsliders:
+            if name.lower() in have or not fpart:
+                continue
+            path = bs / 'ShapeData' / tset.findtext('DataFolder') / fpart
+            if not path.exists():
+                continue
+            if fpart not in tosd:
+                tosd[fpart] = osd.read(path)
+            srcs[dname] = tosd[fpart]
+            extra.append((name, attrs, dname, fpart))
+        csliders = list(csliders) + extra
+        print(f'   True Wasteland Body: {len(extra)} of its sliders join CBBE\'s')
     for name, attrs, dname, _ in csliders:
-        cd = cosd.get(dname, {})
+        cd = srcs[dname].get(dname, {})
         dev = patch['deviation'].get(name, {})
         diffs = {out_of[i]: d for i, d in cd.items() if i in out_of}
         for k in range(len(records)):
