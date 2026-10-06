@@ -255,8 +255,15 @@ def build_dll():
     subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/build-rd.ps1'],
                    cwd=FORK, check=True, stdout=subprocess.DEVNULL)
     third_party_notices()
-    return subprocess.run(['git', 'rev-parse', '--short=12', 'HEAD'], cwd=FORK, capture_output=True,
-                          text=True, check=True).stdout.strip()
+    commit = subprocess.run(['git', 'rev-parse', '--short=12', 'HEAD'], cwd=FORK, capture_output=True,
+                            text=True, check=True).stdout.strip()
+    # the DLL and its symbols kept per commit: a player's crash log names only cbp.dll+offset, and without the
+    # PDB of that exact build it reads as nothing (2026-10-06: Engine 1.2.7 had to be rebuilt to read a crash)
+    symbols = BUILD / 'release' / 'symbols'
+    symbols.mkdir(parents=True, exist_ok=True)
+    for ext in ('.dll', '.pdb'):
+        shutil.copy2(FORK_DLL.with_suffix(ext), symbols / f'cbp-{commit}{ext}')
+    return commit
 
 
 BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', 'mask', 'split_genitals',
