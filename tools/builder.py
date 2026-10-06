@@ -243,6 +243,19 @@ def main():
         theirs = 'F4SE/Plugins/ocbp.ini' if game.find('F4SE/Plugins/ocbp.ini') is not None else None
         on_3bbb, why3 = tbbb.choose(game, args.body, theirs)
         print(f'   body: {why3}')
+        # the body in the game is 3BBB (its stamp: a prebuilt body, as the Ivy collection ships, or an earlier build),
+        # but 3BBB's BodySlide files are not here, so this run would fall back to CBBE and write a CBBE physics preset
+        # over the 3BBB body: nailed, floating breasts (an Ivy player, 2026-10-06). Asked for by name, CBBE still builds.
+        stamp_rel = 'F4SE/Plugins/Anatomy/build.ini'
+        if args.body == 'auto' and not on_3bbb and game.find(stamp_rel) is not None and \
+                game.find(tbbb.SHAPEDATA) is None and \
+                'body=3bbb' in game.read(stamp_rel).decode('utf-8', 'replace').replace(' ', '').lower():
+            raise SystemExit(
+                'your Anatomy body is 3BBB (F4SE/Plugins/Anatomy/build.ini says so: a prebuilt body, as collections '
+                'like Ivy ship, or an earlier build), but 3BBB\'s BodySlide files are not installed here, so this run '
+                'would make a CBBE body whose physics preset does not fit it. With a prebuilt body you need neither '
+                'this builder nor BodySlide: nothing was changed. To build on 3BBB, install "3BBB Physics (CBBE - TWB)" '
+                '(Nexus 48978, its CBBE file); to switch to CBBE on purpose, run with --body cbbe.')
         if on_3bbb:
             # A-57: 3BBB's weights, and its bones from the skeleton women load (Skeletal Adjustments' 3BBB skeleton)
             women = work / 'female_skeleton.nif'
