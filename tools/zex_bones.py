@@ -329,7 +329,13 @@ def main():
     print(f'1. ZeX skeleton world transforms vs the file\'s {checked} bone nodes: worst translation {worst_t:.4f}, '
           f'rotation {worst_r:.5f}')
     if worst_t > 0.01 or worst_r > 1e-3:
-        raise SystemExit('the skeleton does not reproduce the file\'s bone nodes: convention wrong')
+        # said for the player (an Ivy player read the old "convention wrong" as a bug, 2026-10-06): this is a
+        # load-order finding, not a fault of the builder
+        raise SystemExit('the skeleton.nif your game loads (its "input" line above names where it comes from) puts '
+                         f'the bones elsewhere than CBBE\'s body expects (off by up to {worst_t:.2f} units): another '
+                         'mod\'s skeleton.nif wins in your load order. Anatomy needs the vanilla skeleton or one made '
+                         'for CBBE (Skeletal Adjustments for CBBE, ZeX); with a prebuilt body (Ivy) do not run the '
+                         'builder at all.')
     # our bones (A-21): the fork creates them at run time under the skeleton's own Pelvis_skin, from
     # physics_config.bone_table (identity rotation, the local offset). Their bind world transforms are
     # therefore the bound Pelvis_skin composed with that offset: computed here from the SAME table, so
