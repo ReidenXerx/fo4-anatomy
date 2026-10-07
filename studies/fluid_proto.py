@@ -136,7 +136,7 @@ def plugin():
         elif st == 'MODT':
             continue                                                    # the texture hash list is optional
         efsh += esl_dist.field(st, d)
-    esl_dist.write_plugin(dest, ['Fallout4.esm'], [('MSTT', 0x800, body), ('MSTT', 0x801, ctrl), ('EFSH', 0x802, efsh)])
+    esl_dist.write_plugin(dest, ['Fallout4.esm'], [('MSTT', 0x01000800, body), ('MSTT', 0x01000801, ctrl), ('EFSH', 0x01000802, efsh)])
     return dest
 
 
@@ -243,6 +243,16 @@ Function ControlNear() global
     else
         Debug.Notification("Fluid test CONTROL: no AnatVulva on " + a.GetDisplayName())
     endif
+EndFunction
+
+Function Diag() global
+    ; what the game holds for our three records (None = not loaded)
+    Form a = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
+    Form b = Game.GetFormFromFile(0x801, "AnatomyFluidTest.esp")
+    Form c = Game.GetFormFromFile(0x802, "AnatomyFluidTest.esp")
+    string msg = "Fluid diag: 800=" + a + " 801=" + b + " 802=" + c + " asShader=" + (c as EffectShader)
+    Debug.Notification(msg)
+    Debug.MessageBox(msg)
 EndFunction
 
 Function ShaderNear() global
