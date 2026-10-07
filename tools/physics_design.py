@@ -104,6 +104,60 @@ for _k in range(len(CANAL_RINGS)):
 # every node of ours at rest (the fork creates each under PARENT): the physics bones and the canal's
 NODES = {**REST, **CANAL_BONES}
 
+# Servitron (Nexus 32801; the owner's poll 2026-10-08: "its own, made to work"). Its rubber abdomens (GITS Rubber,
+# Wetsuit Rubber: the same rings and canals) carry its own openings: a vaginal and an anal ring, each with a canal,
+# all on Pelvis and the thighs. Its Pelvis_skin is bound exactly where CBBE's is (measured: skin-space origin
+# (0, 0.882, -51.932) both), so these are in our skin space. Measured by studies/servitron_path.py (2026-10-08) on its
+# BodySlide files at zero sliders, then moved by what Servitron's own "Servitron" preset does to them (the shape every
+# player builds and sees; measured on the LAB's build, studies: the openings' mean move): SRV_*_SHIFT. Everything
+# below is where the BUILT body has it; tools/servitron.py rigs the zero-slider files at (these - the shift).
+SRV_VAGINA_SHIFT = (0.0, -0.98, -0.07)                # the vaginal ring and canal under the preset
+SRV_ANUS_SHIFT = (0.0, -0.95, -0.24)                  # the anal ring
+SRV_VAGINA_CENTRE, SRV_VAGINA_AXIS = (0.0, 0.031, -56.075), unit((0.0, 0.039, 0.999))
+SRV_ANUS_CENTRE, SRV_ANUS_AXIS = (0.0, -3.611, -55.787), unit((0.0, -0.024, 1.0))
+# inside her: up its own canal (4.2 deep, then moved deeper by tools/servitron.py) and on along VAGINA_PATH's deep
+# points; every Servitron shell is 3.8+ away past the canal (6.4 at the widest, zero sliders)
+SRV_VAGINA_PATH = tuple(tuple(round(a + b, 3) for a, b in zip(p, SRV_VAGINA_SHIFT)) for p in (
+    (0.0, 1.011, -56.005), (0.0, 1.178, -51.765), (0.0, 0.68, -45.44), (0.0, 1.39, -42.54), (0.0, 2.08, -39.62)))
+SRV_ANUS_PATH = tuple(tuple(round(a + b, 3) for a, b in zip(p, SRV_ANUS_SHIFT)) for p in (
+    (0.0, -2.661, -55.547), (0.0, -2.742, -52.174), (0.0, -3.0, -48.5), (0.0, -3.2, -45.5)))
+# four ring bones in each opening's plane, like our anus (front toward the belly), inside its ring (1.47 / 1.37)
+SRV_RING_RADIUS = 1.2
+
+
+def _ring_bones(prefix, centre, axis):
+    side = (1.0, 0.0, 0.0)
+    front = unit((axis[1] * side[2] - axis[2] * side[1], axis[2] * side[0] - axis[0] * side[2],
+                  axis[0] * side[1] - axis[1] * side[0]))        # x cross axis: toward +y, the belly
+    out = {}
+    for tag, d in (('F', front), ('B', tuple(-v for v in front)), ('L', (-1.0, 0.0, 0.0)), ('R', (1.0, 0.0, 0.0))):
+        out[f'{prefix}_{tag}'] = _along(centre, d, SRV_RING_RADIUS)
+    return out
+
+
+SRV_REST = {**_ring_bones('AnatSrvVag', SRV_VAGINA_CENTRE, SRV_VAGINA_AXIS),
+            **_ring_bones('AnatSrvAnus', SRV_ANUS_CENTRE, SRV_ANUS_AXIS)}
+SRV_STRETCH_BONES = {b: b + '_Stretch' for b in SRV_REST}
+# its canal's wrap rings (Canal.cpp picks them by race, [Canal] prefixServitron): measured on the moved canal by
+# tools/servitron.py (measure_rings), the same 6 rings x CANAL_SPOKES as ours
+SRV_CANAL_PREFIX = 'AnatSrvCanal_'
+SRV_CANAL_RINGS = (((0.0, -0.256, -54.605), (0.0, -0.121, 0.969)),    # 1.5, 4.0, 6.5, 9.0, 10.8, 11.7 along it
+                   ((0.0, 0.176, -52.133), (0.0, 0.095, 0.978)),       # (built body: measured + SRV_VAGINA_SHIFT)
+                   ((0.0, 0.029, -49.685), (0.0, 0.074, 0.997)),
+                   ((0.0, -0.168, -47.194), (0.0, -0.079, 0.997)),
+                   ((0.0, -0.358, -44.923), (0.0, 0.086, 0.996)),
+                   ((0.0, -0.07, -44.428), (0.0, 0.212, 0.923)))
+SRV_CANAL_BONES = {}
+for _k, (_c, _ax) in enumerate(SRV_CANAL_RINGS):
+    _ax = unit(_ax)
+    _up = unit((0.0, _ax[2], -_ax[1]))                  # x cross axis, toward the belly
+    for _j in range(CANAL_SPOKES):
+        _a = 2 * math.pi * _j / CANAL_SPOKES
+        SRV_CANAL_BONES[f'{SRV_CANAL_PREFIX}{_k + 1}_{_j}'] = tuple(
+            _c[i] + CANAL_BONE_RADIUS * (math.cos(_a) * (1.0, 0.0, 0.0)[i] + math.sin(_a) * _up[i]) for i in range(3))
+# every node of ours the fork creates, Servitron's too; NODES (our women's body binds these) leaves Servitron's out
+NODES_ALL = {**NODES, **SRV_REST, **SRV_CANAL_BONES}
+
 # "x,y,z,r" per sphere (offsets 0: each bone is its sphere's centre). AnatVulva has none: it only sways.
 # The inner lips' spheres 1.2 -> 1.7 (2026-09-26, tools/tube_check.py): A-31's thinner shaft (colliders 2.0 -> 1.7)
 # pushed them 1.65 where the owner's approved look (A-15) had 2.17, and fit_check's "through" rose 27% -> 42%. The
@@ -114,6 +168,8 @@ AFFECTED = {'AnatLip_L': [(0.0, 0.0, 0.0, 1.7)], 'AnatLip_R': [(0.0, 0.0, 0.0, 1
             'AnatLipOuter_L': [(0.0, 0.0, 0.0, 0.8)], 'AnatLipOuter_R': [(0.0, 0.0, 0.0, 0.8)],
             'AnatAnus_F': [(0.0, 0.0, 0.0, 0.3)], 'AnatAnus_B': [(0.0, 0.0, 0.0, 0.6)],
             'AnatAnus_L': [(0.0, 0.0, 0.0, 0.6)], 'AnatAnus_R': [(0.0, 0.0, 0.0, 0.6)]}
+# Servitron's rings (2026-10-08): the anus's own sphere size, all four alike (its rings are round and already open)
+AFFECTED.update({b: [(0.0, 0.0, 0.0, 0.6)] for b in SRV_REST})
 COLLIDERS = {'Penis_01': [(0.0, 0.0, 0.0, 2.0)], 'Penis_02': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_03': [(0.0, 0.0, 0.0, 2.0)], 'Penis_04': [(0.0, 0.0, 0.0, 2.0)],
              'Penis_05': [(0.0, 0.0, 0.0, 1.8)],
@@ -143,7 +199,11 @@ PENIS_SPACING = 3.0
 # max starts at 1.5, not 2.5: at 2.5 a fist opens the entrance to a median 3.0 but stretches its worst
 # edges x27; the owner's look tunes it (the keys are in ocbp.ini, no rebuild).
 STRETCH = {'Labia': dict(group=1, knee=2.4, gain=3.0, max=1.5, axis=VAGINA_AXIS),
-           'Anus': dict(group=2, knee=0.65, gain=2.0, max=1.5, axis=ANUS_AXIS)}
+           'Anus': dict(group=2, knee=0.65, gain=2.0, max=1.5, axis=ANUS_AXIS),
+           # Servitron's rings (2026-10-08): already open about as wide as a shaft (1.47 / 1.37), so a penis barely
+           # pushes them; the stretch is for something bigger, as for her anus
+           'SrvVagina': dict(group=3, knee=0.65, gain=2.0, max=1.5, axis=SRV_VAGINA_AXIS),
+           'SrvAnus': dict(group=4, knee=0.65, gain=2.0, max=1.5, axis=SRV_ANUS_AXIS)}
 # (Anus knee 1.8 -> 0.65, the owner's look 2026-09-24: "a little more hole opening". A penis pushes the ring
 # across by ~1.1, under 1.8, so the stretch never opened for one. fit_check, stretch now simulated: as drawn
 # 71% -> 47% of the entrance still inside the shaft, worst edge stretch 12.95 under Nahka's own slider's 14.77.)
@@ -168,7 +228,10 @@ MEN_ANUS_AIM = dict(anusM='-4.21342,-3.16488,0.00024', anusInM='0.91659,0.39982,
 # showed everyday idle props on AnimObjectR1 (mugs, clipboards, up to 37 units long); an actor's own
 # colliders act on its own bones, so without this a woman drinking would push her own breasts.
 PROPS = dict(nodes='AnimObjectR1,AnimObjectR2,AnimObjectR3,AnimObjectL1,AnimObjectL2,AnimObjectL3',
-             radius=1.6, spacing=1.5, maxLength=40.0, minBound=1.0, targets=','.join(AFFECTED))
+             radius=1.6, spacing=1.5, maxLength=40.0, minBound=1.0,
+             # our women's bones, then Servitron's rings on a line of their own (Engine 1.2.14 reads targets2; one line
+             # with all of them is past the fork's 200-byte INI line)
+             targets=','.join(b for b in AFFECTED if b not in SRV_REST), targets2=','.join(SRV_REST))
 
 # The mouth (A-20, the fo4-ocbpc fork's [Mouth]). FO4 heads have no mouth bones; the fork writes the
 # face's merged expression weights (Jaw Open, both lip funnels, Upper Lip Up) over the animation's
@@ -313,7 +376,7 @@ SHAPE = dict(enabled=1, shaft=0.85, headMin=1.2, headMax=1.25)
 # radius +0.3 over that: the wall moves by its bones' moves, so a narrow stretch of Nahka's tube (radius 0.35) ends
 # short of a wide one (0.75); studies/canal_wrap_sim.py, wall points inside the shaft at full depth: 61 of 145 at 1.68,
 # 8 at 2.0 (worst 0.32 in, loosest 0.75 off), 1 at 2.15 (but 0.88 off: baggy)
-CANAL = dict(enabled=1, rings=len(CANAL_RINGS), spokes=CANAL_SPOKES, prefix='AnatCanal_',
+CANAL = dict(enabled=1, rings=len(CANAL_RINGS), spokes=CANAL_SPOKES, prefix='AnatCanal_', prefixServitron=SRV_CANAL_PREFIX,
              radius=round(SHAFT_RADIUS / math.cos(math.pi / CANAL_SPOKES) + 0.3, 2), lead=1.5, rate=10.0, reach=5.0)
 # The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
 # by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the

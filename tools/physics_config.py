@@ -38,6 +38,8 @@ ATTACH = [('AnatVulva', 'Vulva'),
           ('AnatLipOuter_L', 'LabiaOuter'), ('AnatLipOuter_R', 'LabiaOuter'),
           ('AnatLip_L', 'Labia'), ('AnatLip_R', 'Labia'),
           ('AnatAnus_F', 'Anus'), ('AnatAnus_B', 'Anus'), ('AnatAnus_L', 'Anus'), ('AnatAnus_R', 'Anus')]
+# Servitron's own rings (2026-10-08): a section per opening, so each is its own stretch group
+ATTACH += [(b, 'SrvVagina' if b.startswith('AnatSrvVag_') else 'SrvAnus') for b in pd.SRV_REST]
 
 # Tuned with tools/ocbpc_sim.py, a port of OCBPC's own update (decision A-9). What the source says,
 # and what follows from it:
@@ -68,6 +70,8 @@ SECTIONS = {
     'Labia': dict(SPRING, **WIDE),
     'Vulva': dict(SPRING, **QUIET),
     'Anus': dict(SPRING, **WIDE),
+    'SrvVagina': dict(SPRING, **WIDE),
+    'SrvAnus': dict(SPRING, **WIDE),
 }
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
@@ -188,11 +192,11 @@ def bone_table(pelvis_world):
     whose Pelvis_skin matches the body's (every CBBE body assumes that). A stretch child sits on its bone."""
     pr, pt, ps = pelvis_world
     rows = []
-    for name, skin in pd.NODES.items():
+    for name, skin in pd.NODES_ALL.items():
         w = [skin[i] - pd.SKIN_OFFSET[i] for i in range(3)]
         local = [v / ps for v in zb.apply(zb.transpose(pr), [w[i] - pt[i] for i in range(3)])]
         rows.append((name, PARENT, local))
-    for bone, child in pd.STRETCH_BONES.items():
+    for bone, child in {**pd.STRETCH_BONES, **pd.SRV_STRETCH_BONES}.items():
         rows.append((child, bone, [0.0, 0.0, 0.0]))
     return rows
 
@@ -231,7 +235,11 @@ def aim_keys(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None):
 
     keys = dict(AIM, chain='|'.join(AIM_CHAIN), vagina=fmt(point(pd.VAGINA_CENTRE)), vaginaIn=fmt(axis(pd.VAGINA_AXIS)),
                 vaginaPath=path(pd.VAGINA_PATH), anus=fmt(point(pd.ANUS_CENTRE)), anusIn=fmt(axis(pd.ANUS_AXIS)),
-                anusPath=path(pd.ANUS_PATH), **pd.MEN_ANUS_AIM)
+                anusPath=path(pd.ANUS_PATH), **pd.MEN_ANUS_AIM,
+                # Servitron's own openings (2026-10-08): the fork aims there on a Servitron in our rubber abdomen
+                vaginaS=fmt(point(pd.SRV_VAGINA_CENTRE)), vaginaInS=fmt(axis(pd.SRV_VAGINA_AXIS)),
+                vaginaPathS=path(pd.SRV_VAGINA_PATH), anusS=fmt(point(pd.SRV_ANUS_CENTRE)),
+                anusInS=fmt(axis(pd.SRV_ANUS_AXIS)), anusPathS=path(pd.SRV_ANUS_PATH), servitronBone='AnatSrvVag_F')
     for sex, head, neck, key in (('female', head_f, neck_f, 'F'), ('male', head_m, neck_m, 'M')):
         if head is not None:
             mouth = (MOUTH[f'{sex}X'], MOUTH[f'{sex}Y'], MOUTH[f'{sex}Z'])

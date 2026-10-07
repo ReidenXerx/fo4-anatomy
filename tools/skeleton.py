@@ -67,7 +67,7 @@ def build():
     parent = next(i for i, n in base.nodes.items() if n['name'] == pd.PARENT)
     pr, pt, ps = world[pd.PARENT]
     nodes = []
-    for name, skin in pd.NODES.items():
+    for name, skin in pd.NODES_ALL.items():
         w = [skin[i] - pd.SKIN_OFFSET[i] for i in range(3)]
         local = [v / ps for v in zb.apply(zb.transpose(pr), [w[i] - pt[i] for i in range(3)])]
         nodes.append(dict(name=name, t=tuple(local), r=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)))
@@ -76,7 +76,7 @@ def build():
     # each opening bone's stretch child (A-17), sitting on it: the fo4-ocbpc fork moves it out only
     # when something bigger than a penis is in the opening
     identity = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
-    for bone, child in pd.STRETCH_BONES.items():
+    for bone, child in {**pd.STRETCH_BONES, **pd.SRV_STRETCH_BONES}.items():
         cur = nif.Nif(OUT)
         at = next(i for i, n in cur.nodes.items() if n['name'] == bone)
         OUT.write_bytes(cur.with_nodes(at, [dict(name=child, t=(0.0, 0.0, 0.0), r=identity)]))
@@ -93,7 +93,7 @@ def build():
     if new_kids[:len(old_kids)] != old_kids or len(new_kids) != len(old_kids) + len(nodes):
         problems.append(f'{pd.PARENT} children not the old list plus ours')
     by_name = {n['name']: i for i, n in out.nodes.items()}
-    for bone, child in pd.STRETCH_BONES.items():
+    for bone, child in {**pd.STRETCH_BONES, **pd.SRV_STRETCH_BONES}.items():
         if by_name.get(child) not in out.nodes.get(by_name.get(bone), {}).get('kids', []):
             problems.append(f'{child} is not a child of {bone}')
     if out.strings[:len(base.strings)] != base.strings:
@@ -105,7 +105,7 @@ def build():
     if drift > 0:
         problems.append(f'an original node moved ({drift})')
     worst = 0.0
-    for name, skin in pd.NODES.items():
+    for name, skin in pd.NODES_ALL.items():
         r, t, s = new_world[name]
         at = [t[i] + pd.SKIN_OFFSET[i] for i in range(3)]
         worst = max(worst, math.dist(at, skin))
@@ -114,7 +114,7 @@ def build():
             problems.append(f'{name} does not turn with {pd.PARENT} ({rot})')
     if worst > 1e-4:
         problems.append(f'a new bone is {worst} from its design position')
-    for bone, child in pd.STRETCH_BONES.items():
+    for bone, child in {**pd.STRETCH_BONES, **pd.SRV_STRETCH_BONES}.items():
         gap = max(math.dist(new_world[bone][1], new_world[child][1]),
                   max(abs(a - b) for a, b in zip(zb.flat(new_world[bone][0]), zb.flat(new_world[child][0]))))
         if gap > 1e-6:
@@ -122,7 +122,7 @@ def build():
     keyed = {}
     for h in HKX:
         raw = h.read_bytes() if h.exists() else b''
-        hits = [n for n in list(pd.NODES) + list(pd.STRETCH_BONES.values())
+        hits = [n for n in list(pd.NODES_ALL) + list(pd.STRETCH_BONES.values()) + list(pd.SRV_STRETCH_BONES.values())
                 if re.search(re.escape(n.encode()) + b'\x00', raw)]
         if hits:
             keyed[h.name] = hits
@@ -133,7 +133,7 @@ def build():
     print(f'2. wrote {OUT}: {len(out.offsets)} blocks; changed original blocks {[out.nodes[i]["name"] for i in changed]}; '
           f'original nodes moved {drift}')
     print(f'3. {len(nodes)} bones under {pd.PARENT}: worst distance from design {worst:.2e}')
-    for name, skin in pd.NODES.items():
+    for name, skin in pd.NODES_ALL.items():
         print(f'     {name:15} skin ({skin[0]:6.2f},{skin[1]:6.2f},{skin[2]:7.2f})')
     print(f'4. .hkx files checked {len([h for h in HKX if h.exists()])}/{len(HKX)}; naming our bones: {keyed or "none"}')
     if problems:

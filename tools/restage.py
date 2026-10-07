@@ -99,7 +99,7 @@ def main():
     #    bones are the fork's to add at run time since A-21, so only OTHER missing bones stop play.
     import physics_design as pd
     import skeleton
-    ours = set(pd.NODES) | set(pd.STRETCH_BONES.values())
+    ours = set(pd.NODES_ALL) | set(pd.STRETCH_BONES.values()) | set(pd.SRV_STRETCH_BONES.values())
     missing = skeleton.deployed()
     others = [b for b in missing if b not in ours]
     if others:
