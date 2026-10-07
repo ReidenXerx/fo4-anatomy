@@ -303,6 +303,9 @@ def main():
         import osd as osd_module
         run_stage('6b. the anal canal (A-50)', lambda: print(anal_canal.build(
             ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', ab.OUT / 'ShapeData/Anatomy/Anatomy.osd', osd_module)))
+        import canal_depth
+        run_stage('6b2. the vaginal canal, deeper', lambda: print(canal_depth.build(
+            ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', ab.OUT / 'ShapeData/Anatomy/Anatomy.osd', osd_module)))
         import vaginal_canal
         run_stage('6c. the vaginal canal\'s own UVs (A-54)', lambda: print(vaginal_canal.build(
             ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', ab.OUT / 'ShapeData/Anatomy/Anatomy.osd', osd_module)))
