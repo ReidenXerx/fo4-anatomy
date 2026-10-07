@@ -139,11 +139,33 @@ Function Drip() global
     endif
 EndFunction
 
+Actor Function NearestNPC() global
+    ; the nearest NPC that is not the player (FindClosestActorFromRef returned the player herself, 10-07)
+    Actor player = Game.GetPlayer()
+    Keyword npc = Game.GetFormFromFile(0x013794, "Fallout4.esm") as Keyword
+    ObjectReference[] near = player.FindAllReferencesWithKeyword(npc, 600.0)
+    Actor best = None
+    float bestDist = 100000.0
+    int i = 0
+    while i < near.Length
+        Actor a = near[i] as Actor
+        if a && a != player && !a.IsDead()
+            float d = player.GetDistance(a)
+            if d < bestDist
+                best = a
+                bestDist = d
+            endif
+        endif
+        i += 1
+    endwhile
+    return best
+EndFunction
+
 Function DripNear() global
     ; the actor closest to the player (no console click: BetterConsole crashed showing an NPC's details, 10-07)
-    Actor a = Game.FindClosestActorFromRef(Game.GetPlayer(), 400.0)
+    Actor a = NearestNPC()
     if !a
-        Debug.Notification("Fluid test: nobody within 400 units")
+        Debug.Notification("Fluid test: no NPC within 600 units")
         return
     endif
     Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
@@ -157,9 +179,9 @@ EndFunction
 
 Function ControlNear() global
     ; the vanilla cave drips on the closest actor: does attaching at AnatVulva work at all?
-    Actor a = Game.FindClosestActorFromRef(Game.GetPlayer(), 400.0)
+    Actor a = NearestNPC()
     if !a
-        Debug.Notification("Fluid test: nobody within 400 units")
+        Debug.Notification("Fluid test: no NPC within 600 units")
         return
     endif
     Form ctrl = Game.GetFormFromFile(0x801, "AnatomyFluidTest.esp")
