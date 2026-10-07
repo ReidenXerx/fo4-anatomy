@@ -18,7 +18,7 @@ TITLE = 'Anatomy Bodies (prebuilt)'
 SETUP = [
     'Anatomy.esp: found',
     'CBBE.esp: found',
-    'Anatomy Engine 1.2.4 or later: check this yourself -- the genitals\' physics and the skirt bones run in it; '
+    'Anatomy Engine 1.2.13 or later: check this yourself -- the genitals\' physics and the canal\'s wrap run in it; '
     'Nexus 109434',
     'For the 3BBB body: 3BBB (Nexus 48978) with Skeletal Adjustments for CBBE (Nexus 39006): check this yourself',
     'For the men\'s body: BodyTalk 4 (Nexus 72310): check this yourself -- its skin textures paint the men\'s genitals',

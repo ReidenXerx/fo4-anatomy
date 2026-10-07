@@ -554,9 +554,11 @@ ANATOMY_FOMOD = dict(
          'and inner lips jiggle, react and open around a penis, a hand or a toy, and the openings stretch for '
          'something bigger, through the engine\'s collision physics. Nothing of your skeleton mod is replaced.',
          'anatomy-rig.jpg'),
-        ('A real lining inside', 'The canals',
-         'Inside, the vaginal canal has its own lining: 14 folds, darkening deeper and turning wet near the entrance; '
-         'a closed anal canal sits behind the anus, so you never see through the body.', 'anatomy-lining.jpg'),
+        ('A canal that holds him', 'The canals',
+         'Inside, the vaginal canal runs 12.5 units deep to a rounded end, along the path the penis follows, and its '
+         'walls wrap the shaft: ring by ring they open round it as he goes in and close behind him (with Anatomy '
+         'Engine 1.2.13). Its lining has ridged folds, redder deeper in and wet near the entrance; a closed anal canal '
+         'sits behind the anus, so you never see through the body.', 'anatomy-canal.jpg'),
         ('Men get a real anus', 'Male-male support',
          'BodyTalk 4\'s own anus, opened, with a canal inside and the same physics and stretch as hers. In an AAF '
          'scene the penis aims into it and follows the canal, with the engine\'s sounds and Rapport\'s anal moans. '
@@ -613,6 +615,10 @@ ENGINE_FOMOD = dict(
          'its real size.', 'engine-lips.jpg'),
         ('She looks up into his eyes', 'Glances',
          'With Rapport, eyes meet the partner\'s for 4-7 seconds now and then during a scene.', 'engine-glances.jpg'),
+        ('The canal holds him', 'Canal wrap',
+         'Inside her, the vaginal canal\'s walls open round the shaft ring by ring as he goes in and close behind him, '
+         'so the penis never shows through them. Needs Anatomy 1.2.4 and a body built by AnatomyBuilder 1.2.7 (or '
+         'the prebuilt bodies 1.2.4).', 'anatomy-canal.jpg'),
     ],
     notes=[],
     conflicts=EAP_CONFLICT,
