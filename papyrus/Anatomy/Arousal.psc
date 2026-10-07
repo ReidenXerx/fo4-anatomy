@@ -66,6 +66,9 @@ Actor[] _who
 Float[] _level
 Float[] _shown
 Float _lastTick = -1.0
+Float _lastGameTime = -1.0       ; game days at the last tick: a sleep, wait or fast travel jumps it
+Float Property GAME_JUMP_DAYS = 0.0417 AutoReadOnly   ; one game hour in one tick: time passed she did not live through
+Float Property SETTLE_SECONDS = 3600.0 AutoReadOnly   ; such a jump settles her to what is around her now
 
 String[] _morphs
 Float[] _gains
@@ -88,6 +91,7 @@ Event Actor.OnPlayerLoadGame(Actor akSender)
 	Setup()                                  ; plugins may have come or gone since the save
 	CheckSetup()
 	_lastTick = -1.0                         ; the real-time clock restarts with the game
+	_lastGameTime = -1.0                     ; a loaded save is not a sleep: game time jumps there too
 	StartTimer(TICK_SECONDS, TICK)
 EndEvent
 
@@ -274,6 +278,14 @@ Function Tick()
 	If dt > MAX_STEP_SECONDS
 		dt = MAX_STEP_SECONDS
 	EndIf
+	; a sleep, wait or fast travel: game time jumped while the real clock barely moved (the owner's polish list:
+	; arousal used to carry through an eight-hour sleep and fade over the next minute). The hours passed count in
+	; full, so every woman settles to what arouses her NOW (a scene, being naked, a companion) or to nothing.
+	Float gameNow = Utility.GetCurrentGameTime()
+	If _lastGameTime >= 0.0 && gameNow - _lastGameTime > GAME_JUMP_DAYS
+		dt = SETTLE_SECONDS
+	EndIf
+	_lastGameTime = gameNow
 
 	Actor[] people = People()
 	Actor[] busy = BusyAmong(people)
