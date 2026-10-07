@@ -41,78 +41,93 @@ OUT_S = 'Textures/Anatomy/Servitron/RubberBoobs_s.dds'
 RUBBER = (24, 24, 28)        # the abdomen's rubber reads near-black with a cool cast
 SPREAD = 0.55                # how much of the source's shading survives (0 flat, 1 all)
 RUBBER_SPEC = (127, 64)      # the abdomen's own: flat_r127-g064_s
-# the design, in units on the body from the nipple's centre
-CAP, GROOVE, PLATE, BEVEL = 0.42, 0.50, 1.15, 1.27
-RIVETS, RIVET_AT, RIVET_R = 8, 0.85, 0.09
-RELIEF = 2.2                 # normal strength (height units -> slope)
+# the design (the owner's second look, 2026-10-08: "areola should be more elegant", "lets make areola + nipple also
+# latex but slightly different material kind of latex"): a softly raised satin-latex areola in a deep plum graphite,
+# less glossy than the body's rubber so it reads by its sheen, one fine seam at its rim (the only robotic line), and a
+# glossy latex dome on the nipple. Sizes are fractions of the areola's radius as Servitron's own texture paints it.
+AREOLA_TINT = (58, 36, 50)       # plum graphite
+NIPPLE_TINT = (72, 44, 62)
+SATIN = (110, 80)                # areola: softer sheen than the body (127, 64 spec but more spread)
+GLOSS = (235, 210)               # nipple: glossy latex
+NIPPLE = 0.30                    # nipple dome radius / areola radius
+SEAM = (0.93, 0.98)              # the seam's band / areola radius
+RELIEF = 2.2                     # normal strength (height units -> slope)
+AREOLAE = []                     # what the last build drew: (uv centre, radius on the body)
 
 
-def nipples():
-    """[(uv centre, 2x2 matrix uv offset -> surface offset in units)] for each breast"""
+def nipples(lum):
+    """[(uv centre, 2x2 matrix uv offset -> surface offset in units, areola radius in units)] per breast: the centre
+    and size of the areola Servitron's own texture paints (its dark disc near the breast's tip), the surface scale from
+    the breast mesh around it"""
     n = nif.Nif(BREAST_MESH)
     s = n.shape('Boobs')
     pos = s.positions()
+    L = np.asarray(lum, np.float32)
+    size = L.shape[0]
     out = []
     for side in (-1, 1):
         vs = [i for i, p in enumerate(pos) if p[0] * side > 0.5]
         tip = max(vs, key=lambda i: pos[i][1])
-        near = [i for i in vs if math.dist(pos[i], pos[tip]) < 1.6 and i != tip]
-        c, uv0 = pos[tip], s.uv(tip)
-        # the surface there: x across, z up (the breast faces +y); least squares uv -> (x, z)
-        A = np.array([[s.uv(i)[0] - uv0[0], s.uv(i)[1] - uv0[1]] for i in near])
-        B = np.array([[pos[i][0] - c[0], pos[i][2] - c[2]] for i in near])
+        guess = s.uv(tip)
+        # the painted areola: the darkest disc within 0.04 uv of the breast's tip
+        r = int(0.04 * size)
+        cx, cy = int(guess[0] * size), int(guess[1] * size)
+        win = L[cy - r:cy + r, cx - r:cx + r]
+        thr = win.min() + 0.5 * (np.median(win) - win.min())
+        ys, xs = np.nonzero(win < thr)
+        uv0 = ((cx - r + xs.mean() + 0.5) / size, (cy - r + ys.mean() + 0.5) / size)
+        area_uv = len(xs) / size ** 2
+        # the surface scale there: least squares uv -> (x, z) from the vertices around the painted centre
+        cen = min(vs, key=lambda i: math.dist(s.uv(i), uv0))
+        near = [i for i in vs if math.dist(pos[i], pos[cen]) < 1.8 and i != cen]
+        A = np.array([[s.uv(i)[0] - s.uv(cen)[0], s.uv(i)[1] - s.uv(cen)[1]] for i in near])
+        B = np.array([[pos[i][0] - pos[cen][0], pos[i][2] - pos[cen][2]] for i in near])
         M, *_ = np.linalg.lstsq(A, B, rcond=None)
-        out.append((uv0, M.T))
+        M = M.T
+        radius = math.sqrt(area_uv * abs(np.linalg.det(M)) / math.pi)   # the disc's area, on the body
+        out.append((uv0, M, radius))
     return out
 
 
-def design(size):
-    """per texel: (height, colour rgb, spec, gloss, mask) arrays over the whole map, the design drawn at each nipple"""
+def design(size, lum):
+    """per texel: (height, colour rgb, spec, gloss, mask) arrays over the whole map, the design drawn at each areola"""
     h = np.zeros((size, size), np.float32)
     col = np.zeros((size, size, 3), np.float32)
     spec = np.zeros((size, size, 2), np.float32)
     mask = np.zeros((size, size), np.float32)
-    for uv0, M in nipples():
-        # a texel window around the nipple, big enough for the bevel
+    AREOLAE.clear()
+    for uv0, M, R in nipples(lum):
+        AREOLAE.append((tuple(round(x, 4) for x in uv0), round(R, 2)))
         inv = np.linalg.inv(M)
-        reach = np.abs(inv).sum(axis=1) * BEVEL * 1.3
+        reach = np.abs(inv).sum(axis=1) * R * 1.4
         u0, u1 = int((uv0[0] - reach[0]) * size), int((uv0[0] + reach[0]) * size) + 2
         v0, v1 = int((uv0[1] - reach[1]) * size), int((uv0[1] + reach[1]) * size) + 2
         us, vs = np.meshgrid((np.arange(u0, u1) + 0.5) / size - uv0[0], (np.arange(v0, v1) + 0.5) / size - uv0[1])
         x = M[0, 0] * us + M[0, 1] * vs
         z = M[1, 0] * us + M[1, 1] * vs
-        d = np.hypot(x, z)
-        a = np.arctan2(z, x)
-        hh = np.zeros_like(d)
-        cc = np.zeros(d.shape + (3,))
-        ss = np.zeros(d.shape + (2,))
-        mm = np.zeros_like(d)
-        brushed = 1.0 + 0.06 * np.sin(a * 90.0) + 0.04 * np.sin(d * 140.0)
-        cap = d < CAP
-        hh[cap] = 0.35 * np.sqrt(np.clip(1 - (d[cap] / CAP) ** 2, 0, 1)) + 0.06
-        cc[cap] = np.array([178, 181, 188])[None, :] * (0.92 + 0.08 * (1 - d[cap] / CAP))[:, None]
-        ss[cap] = (255, 230)
-        groove = (d >= CAP) & (d < GROOVE)
-        hh[groove] = -0.06
-        cc[groove] = (38, 38, 42)
-        ss[groove] = (60, 40)
-        plate = (d >= GROOVE) & (d < PLATE)
-        hh[plate] = 0.06
-        cc[plate] = np.array([138, 140, 146])[None, :] * brushed[plate][:, None]
-        ss[plate] = (205, 175)
-        for k in range(RIVETS):
-            ang = 2 * math.pi * k / RIVETS
-            rd = np.hypot(x - RIVET_AT * math.cos(ang), z - RIVET_AT * math.sin(ang))
-            r = rd < RIVET_R
-            hh[r] = 0.06 + 0.07 * np.sqrt(np.clip(1 - (rd[r] / RIVET_R) ** 2, 0, 1))
-            cc[r] = (196, 198, 204)
-            ss[r] = (245, 215)
-        bevel = (d >= PLATE) & (d < BEVEL)
-        t = (d[bevel] - PLATE) / (BEVEL - PLATE)
-        hh[bevel] = 0.06 * (1 - t)
-        cc[bevel] = np.array([96, 97, 102])[None, :] * (1 - 0.3 * t)[:, None]
-        ss[bevel] = (170, 140)
-        mm[d < BEVEL] = 1.0
+        t = np.hypot(x, z) / R                                  # 0 at the centre, 1 at the areola's rim
+        hh = np.zeros_like(t)
+        cc = np.zeros(t.shape + (3,))
+        ss = np.zeros(t.shape + (2,))
+        mm = np.zeros_like(t)
+        ar = t < 1.0
+        hh[ar] = 0.04 * np.clip((1.0 - t[ar]) / 0.12, 0, 1)        # a soft rise over its last eighth
+        cc[ar] = AREOLA_TINT
+        ss[ar] = SATIN
+        nip = t < NIPPLE
+        hh[nip] = 0.04 + 0.26 * np.sqrt(np.clip(1 - (t[nip] / NIPPLE) ** 2, 0, 1))
+        shade = 0.85 + 0.15 * (1 - t[nip] / NIPPLE)
+        cc[nip] = np.array(NIPPLE_TINT)[None, :] * shade[:, None]
+        ss[nip] = GLOSS
+        seam = (t >= SEAM[0]) & (t < SEAM[1])
+        hh[seam] -= 0.03
+        cc[seam] = np.array(AREOLA_TINT) * 0.55
+        # the rim blends into the body's rubber over a short band, so the disc has no hard edge in colour
+        mm[ar] = 1.0
+        edge = (t >= 1.0) & (t < 1.08)
+        mm[edge] = 1.0 - (t[edge] - 1.0) / 0.08
+        cc[edge] = AREOLA_TINT
+        ss[edge] = SATIN
         sl = (slice(v0, v1), slice(u0, u1))
         h[sl] = np.where(mm > 0, hh, h[sl])
         col[sl] = np.where(mm[..., None] > 0, cc, col[sl])
@@ -138,8 +153,8 @@ def maps(src_dds):
     mean = sum(i * n for i, n in enumerate(lum.histogram())) / max(1, lum.width * lum.height)
     lut = np.array([max(0.0, min(2.5, 1.0 + SPREAD * (v - mean) / max(1.0, mean))) for v in range(256)], np.float32)
     base = lut[np.asarray(lum)][..., None] * np.array(RUBBER, np.float32)[None, None, :]
-    h, col, spec, mask = design(size)
-    rgb = np.where(mask[..., None] > 0, col, base)
+    h, col, spec, mask = design(size, lum)
+    rgb = mask[..., None] * col + (1 - mask[..., None]) * base          # the rim blends into the rubber
     d_img = Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), 'RGB')
     d_img.putalpha(rgba.getchannel('A'))
     # normals from the height field: one texel is about 1/size of the uv span; on the body ~ |M| units
@@ -150,7 +165,7 @@ def maps(src_dds):
     ln = np.sqrt(nx * nx + ny * ny + nz * nz)
     n_rgb = np.stack([(nx / ln + 1) * 127.5, (ny / ln + 1) * 127.5, (nz / ln + 1) * 127.5], axis=-1)
     n_img = Image.fromarray(np.clip(n_rgb, 0, 255).astype(np.uint8), 'RGB')
-    s_rg = np.where(mask[..., None] > 0, spec, np.array(RUBBER_SPEC, np.float32)[None, None, :])
+    s_rg = mask[..., None] * spec + (1 - mask[..., None]) * np.array(RUBBER_SPEC, np.float32)[None, None, :]
     s_img = Image.fromarray(np.clip(np.concatenate([s_rg, np.zeros_like(s_rg[..., :1])], axis=-1), 0, 255).astype(np.uint8), 'RGB')
     return (gt.reencoded(mips(d_img), 'DXT5'), gt.reencoded(mips(n_img), 'BC5'), gt.reencoded(mips(s_img), 'BC5'), size)
 
@@ -178,7 +193,7 @@ def main():
         (out / rel).parent.mkdir(parents=True, exist_ok=True)
         (out / rel).write_bytes(data)
     print(f'{OUT_MAT} ({len(mat)} bytes, from {SRC_MAT}); maps {size}x{size}: _d DXT5 {len(d)}, _n BC5 {len(n_)}, '
-          f'_s BC5 {len(s)} bytes; areolae at {[tuple(round(x, 4) for x in uv) for uv, _ in nipples()]}')
+          f'_s BC5 {len(s)} bytes; areolae {AREOLAE}')
 
 
 if __name__ == '__main__':
