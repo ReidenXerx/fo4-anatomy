@@ -93,7 +93,19 @@ def mesh():
         raise SystemExit(f'expected 2 effect shaders with the blood gradient, found {len(replace)}')
     dest = OUT / 'Meshes/Anatomy/Fluid/DripTest.nif'
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(f.with_blocks(replace))
+    out = bytearray(f.with_blocks(replace))
+    tmp = pathlib.Path(tempfile.mkdtemp()) / 'mid.nif'
+    tmp.write_bytes(out)
+    g = nif.Nif(tmp)
+    for i, k in enumerate(g.types):                   # the owner, 10-07: "put more of it there"
+        o, s = g.offsets[i]
+        if k == 'NiFloatInterpolator':                # the emitters' birth rates (drops per second)
+            v = struct.unpack_from('<f', out, o)[0]
+            struct.pack_into('<f', out, o, v * 2.0)
+        elif k == 'NiPSysMeshEmitter':                # the drops' radius and its variation
+            r, rv = struct.unpack_from('<ff', out, o + 13 + 40)
+            struct.pack_into('<ff', out, o + 13 + 40, r * 1.5, rv * 1.5)
+    dest.write_bytes(bytes(out))
     nif.Nif(dest)                                           # it must read back
     return dest
 
@@ -161,6 +173,29 @@ Actor Function NearestNPC() global
     return best
 EndFunction
 
+Function Report(string what, Actor a, ObjectReference r) global
+    ; where the placed effect really is, and whether the game drew it: tells "not attached" from "not rendered"
+    float dz = r.GetPositionZ() - a.GetPositionZ()
+    string msg = "Fluid test " + what + " on " + a.GetDisplayName() + ": " + (r.GetDistance(a) as int) + " units from her, " + (dz as int) + " up"
+    msg += ", enabled " + r.IsEnabled() + ", 3D " + r.Is3DLoaded()
+    Debug.Notification(msg)
+    Debug.Trace("[AnatomyFluidTest] " + msg, 0)
+EndFunction
+
+Function ControlHere() global
+    ; the vanilla cave drips placed at her feet, NOT attached: does such an effect show at all?
+    Actor a = NearestNPC()
+    if !a
+        Debug.Notification("Fluid test: no NPC within 600 units")
+        return
+    endif
+    ObjectReference r = a.PlaceAtMe(Game.GetFormFromFile(0x801, "AnatomyFluidTest.esp"), 1, false, false, false)
+    if r
+        r.MoveTo(a, 0.0, 0.0, 120.0, true)
+        Report("CONTROL HERE", a, r)
+    endif
+EndFunction
+
 Function DripNear() global
     ; the actor closest to the player (no console click: BetterConsole crashed showing an NPC's details, 10-07)
     Actor a = NearestNPC()
@@ -171,7 +206,7 @@ Function DripNear() global
     Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
     ObjectReference r = a.PlaceAtNode("AnatVulva", drip, 1, false, false, false, true)
     if r
-        Debug.Notification("Fluid test: drips at AnatVulva of " + a.GetDisplayName())
+        Report("drips", a, r)
     else
         Debug.Notification("Fluid test: no AnatVulva on " + a.GetDisplayName() + " (a woman with the Anatomy body, undressed?)")
     endif
@@ -187,7 +222,7 @@ Function ControlNear() global
     Form ctrl = Game.GetFormFromFile(0x801, "AnatomyFluidTest.esp")
     ObjectReference r = a.PlaceAtNode("AnatVulva", ctrl, 1, false, false, false, true)
     if r
-        Debug.Notification("Fluid test CONTROL: vanilla drips at AnatVulva of " + a.GetDisplayName())
+        Report("CONTROL", a, r)
     else
         Debug.Notification("Fluid test CONTROL: no AnatVulva on " + a.GetDisplayName())
     endif
@@ -224,6 +259,7 @@ def script():
     src.write_text(SCRIPT, encoding='ascii')
     out = OUT / 'Scripts'
     out.mkdir(parents=True, exist_ok=True)
+    (out / 'AnatomyFluidTest.pex').unlink(missing_ok=True)   # a stale .pex must not pass for a fresh one
     base = r'D:\F4CustomMods\PapyrusBase\Source\Base'
     f4se = r'D:\Vortex\fallout4\mods\Fallout 4 Script Extender 42147 0.7.9 2026-08-18T14-42Z 2hTc9ppIs\Data\Scripts\Source'
     r = subprocess.run([r'D:\GOGGames\Fallout 4 GOTY\Papyrus Compiler\PapyrusCompiler.exe', str(src),
