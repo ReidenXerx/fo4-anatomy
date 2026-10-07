@@ -37,6 +37,55 @@ def _across_pixel(s, t, kind, base, wet):
     raise ValueError(f'mucosa.paint: unknown kind {kind!r}')
 
 
+def _hash_noise(x, y):
+    """Smooth value noise in -1..1, deterministic (no random state): every build paints the same canal."""
+    def h(i, j):
+        n = (i * 374761393 + j * 668265263) & 0xFFFFFFFF
+        n = ((n ^ (n >> 13)) * 1274126177) & 0xFFFFFFFF
+        return ((n ^ (n >> 16)) & 0xFFFF) / 32767.5 - 1.0
+    xi, yi = math.floor(x), math.floor(y)
+    fx, fy = x - xi, y - yi
+    sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    a = h(xi, yi) + (h(xi + 1, yi) - h(xi, yi)) * sx
+    b = h(xi, yi + 1) + (h(xi + 1, yi + 1) - h(xi, yi + 1)) * sx
+    return a + (b - a) * sy
+
+
+RUGAE_DEEP = (0.62, 0.36, 0.40)   # what the base colour becomes at the far end: redder and darker, not just darker
+
+
+def _rugae_pixel(s, t, kind, base, wet):
+    """folds='rugae' (the owner's 'richer look', 2026-10-07): the vaginal canal's folds, sharper and organic.
+    Narrow crests over broad valleys (a sharpened cosine), their spacing and line slightly irregular, fine noise
+    between them; the colour deepens to RUGAE_DEEP x base with depth, crests lighter and valleys darker; the
+    normal follows the ridge's real slope (about twice the 'across' amplitude); crests a little glossier. As
+    'across', the entrance row is exactly base and everything fades in over ENTRANCE (no line at the vulva)."""
+    tc = max(0.0, min(1.0, t))
+    ramp = min(1.0, tc / ENTRANCE)
+    phase = (2 * math.pi * (RUGAE * tc + 0.35 * math.sin(2 * math.pi * 1.7 * tc))
+             + 0.7 * math.sin(2 * math.pi * s) + 0.25 * math.sin(2 * math.pi * 3 * s + 1.3))
+    c = 0.5 + 0.5 * math.cos(phase)
+    crest = c ** 3                                       # narrow crests, broad valleys
+    dcrest = -1.5 * c * c * math.sin(phase)              # its slope along the depth (per radian of phase)
+    grain = _hash_noise(s * 40.0, tc * 90.0) * 0.6 + _hash_noise(s * 110.0, tc * 240.0) * 0.4
+    if kind == 'colour':
+        deep = tuple(1.0 + (RUGAE_DEEP[k] - 1.0) * tc for k in range(3))
+        light = 1.0 + ramp * (0.24 * (crest - 0.35) + 0.035 * grain)
+        return tuple(max(0, min(255, int(round(base[k] * deep[k] * light)))) for k in range(3)) + (255,)
+    if kind == 'normal':
+        ny = max(-1.0, min(1.0, ramp * (0.62 * dcrest + 0.08 * grain)))
+        nx = max(-1.0, min(1.0, ramp * 0.06 * _hash_noise(s * 60.0 + 7.0, tc * 150.0)))
+        nz = math.sqrt(max(0.0, 1.0 - nx * nx - ny * ny))
+        return (int(round(nx * 127.5 + 127.5)), int(round(ny * 127.5 + 127.5)),
+                max(0, min(255, int(round(nz * 127.5 + 127.5)))), 255)
+    if kind == 'specular':
+        w = wet or base
+        gloss = 1.0 + ramp * 0.12 * (crest - 0.35)
+        return (max(0, min(255, int(round((base[0] + (w[0] - base[0]) * ramp) * gloss)))),
+                max(0, min(255, int(round((base[1] + (w[1] - base[1]) * ramp) * gloss)))), 0, 255)
+    raise ValueError(f'mucosa.paint: unknown kind {kind!r}')
+
+
 def _pattern_pixel(u, v, kind, base, u0, v0, u1, v1, folds='along', wet=None):
     """(r, g, b, a) 0-255 for one UV sample, per the kind's formula."""
     du, dv = u1 - u0, v1 - v0
@@ -44,6 +93,8 @@ def _pattern_pixel(u, v, kind, base, u0, v0, u1, v1, folds='along', wet=None):
     t = (v - v0) / dv if dv else 0.0
     if folds == 'across':
         return _across_pixel(s, t, kind, base, wet)
+    if folds == 'rugae':
+        return _rugae_pixel(s, t, kind, base, wet)
     if folds != 'along':
         raise ValueError(f'mucosa.paint: unknown folds {folds!r}')
     tc = max(0.0, min(1.0, t))                          # depth gradient only makes sense inside the rect

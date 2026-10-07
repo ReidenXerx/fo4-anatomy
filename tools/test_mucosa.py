@@ -105,6 +105,22 @@ def across():
     check(f'across: gentle wave around the canal ({len(around)} values)', 1 < len(around) < len(down))
 
 
+def rugae():
+    """folds='rugae' (2026-10-07): the same entrance guarantee as 'across' (no line at the vulva), real ridges down the
+    canal, the colour redder deeper in (red falls least), and the same input always painting the same texel."""
+    base, wet, R = (99, 46, 49), (72, 140), (0.0, 0.0, 1.0, 1.0)
+    px = lambda s, t, kind, b: mucosa._pattern_pixel(s, t, kind, b, *R, folds='rugae', wet=wet)
+    check('rugae: entrance row colour is base', all(px(s / 10, 0.0, 'colour', base)[:3] == base for s in range(11)))
+    check('rugae: entrance row normal is flat', all(px(s / 10, 0.0, 'normal', base)[:3] == (128, 128, 255)
+                                                    for s in range(11)))
+    check('rugae: entrance row specular is base', px(0.5, 0.0, 'specular', (51, 23))[:2] == (51, 23))
+    down = {px(0.3, t / 400, 'normal', base)[1] for t in range(80, 400)}
+    check(f'rugae: ridges down the canal ({len(down)} normal values)', len(down) > 40)
+    far = px(0.5, 0.98, 'colour', (200, 200, 200))
+    check(f'rugae: deeper is redder ({far[:3]})', far[0] > far[1] and far[0] > far[2] and far[0] < 200)
+    check('rugae: deterministic', px(0.37, 0.61, 'normal', base) == px(0.37, 0.61, 'normal', base))
+
+
 def main():
     for path, kind, base in REAL_FILES:
         data = open(path, 'rb').read()
@@ -114,6 +130,7 @@ def main():
     synth_bytes = gt.uncompressed(levels)
     verify('synthetic uncompressed 32-bit BGRA', synth_bytes, 'colour', (150, 70, 70))
     across()
+    rugae()
 
     print()
     if FAILS:

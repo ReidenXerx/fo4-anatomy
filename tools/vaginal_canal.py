@@ -259,7 +259,7 @@ def paint_maps(tex_dir, tile, ring_in_tile=False):
         px = [img.getpixel((min(W - 1, max(0, int(u * W))), min(H - 1, max(0, int(v * H))))) for u, v in ruv]
         mean = tuple(int(round(sum(q[k] for q in px) / len(px))) for k in range(3))
         base = mean if kind == 'colour' else (mean[0], mean[1], 0) if kind == 'specular' else (0, 0, 0)
-        out = mucosa.paint(data, rect, kind, base, folds='across', wet=WET)
+        out = mucosa.paint(data, rect, kind, base, folds='rugae', wet=WET)   # 2026-10-07: the richer rugae
         if len(out) != len(data):
             raise ValueError(f'{name}: the painted map changed size')
         path.write_bytes(out)
