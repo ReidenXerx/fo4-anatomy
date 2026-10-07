@@ -1,0 +1,8 @@
+<raceData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aaf.xsd">
+	<!-- fo4-anatomy (2026-10-08): Servitron (Nexus 32801) is a robot race on a woman's CBBE body and the human skeleton
+	     (Servitron Physics Fix, Nexus 93993). Anatomy's arousal script gives each Servitron AAF_GenderOverride_Female;
+	     the Anatomy Engine aims at its own openings. Loaded only when Servitron.esm is. -->
+	<defaults source="Servitron.esm" skeleton="Human" maleSWF="AAF_ActorIcon_M.swf" femaleSWF="AAF_ActorIcon_F.swf" loadPriority="0"/>
+
+	<race id="ServitronRace" form="F99" skeleton="Human"/>
+</raceData>

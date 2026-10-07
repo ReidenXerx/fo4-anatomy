@@ -80,6 +80,12 @@ ActorValue _desire
 GlobalVariable _ivyAroused
 ActorBase _ivy
 Keyword _refit                   ; Silhouette's refit marker keyword, None without Silhouette
+; Servitron (Nexus 32801, 2026-10-08): a woman's body on a robot race the game flags male. AAF casts by sex, so each
+; Servitron near the player gets AAF's AAF_GenderOverride_Female and takes a woman's place in scenes (its own openings:
+; the engine's [Aim] vaginaS/anusS). None without Servitron or AAF.
+Keyword _robot                   ; ActorTypeRobot: Servitrons are robots, not ActorTypeNPC
+Race _servitron
+Keyword _aafFemale
 
 Event OnInit()
 	Setup()
@@ -169,6 +175,13 @@ Function Setup()
 			_busy = api.AAF_ActorBusy
 		EndIf
 	EndIf
+	_servitron = None
+	_aafFemale = None
+	If _busy != None && Game.IsPluginInstalled("Servitron.esm")
+		_robot = Game.GetFormFromFile(0x0002CB73, "Fallout4.esm") as Keyword      ; ActorTypeRobot
+		_servitron = Game.GetFormFromFile(0x00000F99, "Servitron.esm") as Race   ; ServitronRace
+		_aafFemale = Game.GetFormFromFile(0x000121BC, "AAF.esm") as Keyword      ; AAF_GenderOverride_Female
+	EndIf
 	_desire = None
 	If Game.IsPluginInstalled("Overture.esp")
 		_desire = Game.GetFormFromFile(0x00000851, "Overture.esp") as ActorValue
@@ -247,6 +260,7 @@ Function Tick()
 		Return
 	EndIf
 	LoadSettings()
+	MarkServitrons()
 	If !bEnabled                                 ; switched off: nothing of ours stays on anyone
 		Int w = _who.Length - 1
 		While w >= 0
@@ -336,6 +350,23 @@ Function Tick()
 EndFunction
 
 ; the player and everyone alive and loaded around them
+; every Servitron near the player is a woman to AAF (see _aafFemale); a keyword added once stays on that reference
+Function MarkServitrons()
+	If _servitron == None || _aafFemale == None || _robot == None
+		Return
+	EndIf
+	ObjectReference[] near = Game.GetPlayer().FindAllReferencesWithKeyword(_robot, SCAN_RADIUS)
+	Int i = 0
+	While near != None && i < near.Length
+		Actor a = near[i] as Actor
+		If a != None && a.GetRace() == _servitron && !a.HasKeyword(_aafFemale)
+			a.AddKeyword(_aafFemale)
+			Debug.Trace("Anatomy: " + a + " is a Servitron: AAF casts it as a woman", 0)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
 Actor[] Function People()
 	Actor player = Game.GetPlayer()
 	Actor[] people = new Actor[0]
