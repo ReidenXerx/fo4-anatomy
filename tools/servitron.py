@@ -526,13 +526,16 @@ SET_NAMES = ('Servitron Abdomen GITS Rubber', 'Servitron Abdomen Wetsuit Rubber'
 BS_SRC = pathlib.Path(r'D:\F4Output\servitron\x\bs\Data\tools\BodySlide')    # Servitron's own BodySlide files
 
 
-def bodyslide(rig_shapedata, target, preset='Servitron'):
+def bodyslide(rig_shapedata, target, preset='Servitron', sets=SET_NAMES):
     """the two rigged rubber abdomens built by the LAB's BodySlide at `preset` (with their .tri) into target; Servitron's
     set, preset and the rest of its ShapeData go in beside them for the run, and the LAB is put back after"""
     import garments
     import prebuilt_bodies as pb
     lab = pb.LAB
-    swap = ['SliderSets/Servitron.osp', 'SliderPresets/Servitron.xml', 'ShapeData/Servitron', 'SliderGroups/AnatSrvBuild.xml']
+    swap = ['SliderSets/Servitron.osp', 'SliderPresets/Servitron.xml', 'ShapeData/Servitron', 'SliderGroups/AnatSrvBuild.xml',
+            'SliderSets/Servitron Bunny.osp', 'SliderSets/Servitron French Maid.osp',
+            'ShapeData/Servitron Bunny', 'ShapeData/Servitron French Maid']   # the outfits' own projects (the owner saw
+                                                                              # their sets fail without them, 10-08)
     backup = target.parent / f'lab_backup_{target.name}'
     shutil.rmtree(backup, ignore_errors=True)
     for rel in swap:
@@ -540,20 +543,24 @@ def bodyslide(rig_shapedata, target, preset='Servitron'):
             (backup / rel).parent.mkdir(parents=True, exist_ok=True)
             (shutil.copytree if (lab / rel).is_dir() else shutil.copy2)(lab / rel, backup / rel)
     try:
-        for rel in swap[:2]:
+        for rel in swap[:2] + swap[4:]:
             (lab / rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(BS_SRC / rel, lab / rel)
+            if (BS_SRC / rel).is_dir():
+                shutil.rmtree(lab / rel, ignore_errors=True)
+                shutil.copytree(BS_SRC / rel, lab / rel)
+            else:
+                shutil.copy2(BS_SRC / rel, lab / rel)
         shutil.rmtree(lab / swap[2], ignore_errors=True)
         shutil.copytree(BS_SRC / swap[2], lab / swap[2])
         for f in rig_shapedata.iterdir():
             shutil.copy2(f, lab / swap[2] / f.name)
         (lab / swap[3]).write_text('<?xml version="1.0" encoding="UTF-8"?>\n<SliderGroups>\n    <Group name="AnatSrvBuild">\n'
-                                   + ''.join(f'        <Member name="{s}"/>\n' for s in SET_NAMES)
+                                   + ''.join(f'        <Member name="{s}"/>\n' for s in sets)
                                    + '    </Group>\n</SliderGroups>\n', encoding='utf-8')
         shutil.rmtree(target, ignore_errors=True)
         rr, answered = garments.run_bodyslide([str(lab / 'BodySlide.exe'), '--groupbuild', 'AnatSrvBuild', '--targetdir',
                                                str(target), '--preset', preset, '--trimorphs'], lab, 1800)
-        return f'BodySlide {SET_NAMES} at "{preset}": exit {rr.returncode} {answered or ""}'
+        return f'BodySlide {len(sets)} sets at "{preset}": exit {rr.returncode} {answered or ""}'
     finally:
         for rel in swap:
             p = lab / rel
