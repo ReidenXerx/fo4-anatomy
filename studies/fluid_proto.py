@@ -112,8 +112,17 @@ SCRIPT = '''Scriptname AnatomyFluidTest
 {Fluids prototype (fo4-anatomy studies/fluid_proto.py): the recoloured blood drips at the player's vulva bone.
 Console: cgf "AnatomyFluidTest.Drip" / cgf "AnatomyFluidTest.Stop"}
 
+Actor Function Target() global
+    ; the actor clicked in the console, else the player
+    Actor a = Game.GetCurrentConsoleRef() as Actor
+    if !a
+        a = Game.GetPlayer()
+    endif
+    return a
+EndFunction
+
 Function Drip() global
-    Actor player = Game.GetPlayer()
+    Actor player = Target()
     Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
     if !drip
         Debug.Notification("AnatomyFluidTest.esp is not loaded")
@@ -121,9 +130,9 @@ Function Drip() global
     endif
     ObjectReference r = player.PlaceAtNode("AnatVulva", drip, 1, false, false, false, true)
     if r
-        Debug.Notification("Fluid test: drips at AnatVulva")
+        Debug.Notification("Fluid test: drips at AnatVulva of " + player.GetDisplayName())
     else
-        Debug.Notification("Fluid test: could not place at AnatVulva (is the Anatomy body on?)")
+        Debug.Notification("Fluid test: no AnatVulva on " + player.GetDisplayName() + " (a woman with the Anatomy body, undressed?)")
     endif
 EndFunction
 
@@ -131,7 +140,7 @@ Function Stop() global
     Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
     int n = 0
     while n < 8
-        ObjectReference r = Game.FindClosestReferenceOfTypeFromRef(drip, Game.GetPlayer(), 1000.0)
+        ObjectReference r = Game.FindClosestReferenceOfTypeFromRef(drip, Target(), 1000.0)
         if !r
             n = 8
         else
