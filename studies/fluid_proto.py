@@ -119,7 +119,24 @@ def plugin():
     # 0x801: a CONTROL, the vanilla cave drips (clearly visible): shows whether attaching at the bone works at all
     ctrl = (esl_dist.field('EDID', b'AnatFluidDripControl\0') + esl_dist.field('OBND', struct.pack('<6h', -8, -8, -16, 8, 8, 2))
             + esl_dist.field('MODL', b'Effects\\FXDripsLots.nif\0') + esl_dist.field('DATA', b'\0'))
-    esl_dist.write_plugin(dest, ['Fallout4.esm'], [('MSTT', 0x800, body), ('MSTT', 0x801, ctrl)])
+    # 0x802: an EFFECT SHADER, our copy of the vanilla BloodSplatterHeavyParticles (Fallout4.esm 002301C5). The drip
+    # nif is a SHADER-PARTICLE model: the game draws it only as an effect shader played on an actor (it emits from
+    # her body's surface), never as a placed object - why the MSTT test drew nothing (10-07). Gradient and model ours.
+    import json
+    src = json.loads((OUT.parent / 'efsh_bloodsplatterheavy.json').read_text())
+    efsh = b''
+    for st, hx in src['subs']:
+        d = bytes.fromhex(hx)
+        if st == 'EDID':
+            d = b'AnatFluidShader\0'
+        elif st == 'NAM8':
+            d = GRAD_NEW.split('\\', 1)[1].encode('latin1') + b'\0'      # relative to Textures
+        elif st == 'MODL':
+            d = model
+        elif st == 'MODT':
+            continue                                                    # the texture hash list is optional
+        efsh += esl_dist.field(st, d)
+    esl_dist.write_plugin(dest, ['Fallout4.esm'], [('MSTT', 0x800, body), ('MSTT', 0x801, ctrl), ('EFSH', 0x802, efsh)])
     return dest
 
 
@@ -226,6 +243,30 @@ Function ControlNear() global
     else
         Debug.Notification("Fluid test CONTROL: no AnatVulva on " + a.GetDisplayName())
     endif
+EndFunction
+
+Function ShaderNear() global
+    ; our cream drips as an EFFECT SHADER on the nearest NPC for 20 s (emitted from her body's surface)
+    Actor a = NearestNPC()
+    EffectShader fx = Game.GetFormFromFile(0x802, "AnatomyFluidTest.esp") as EffectShader
+    if !a || !fx
+        Debug.Notification("Fluid test: no NPC near, or no shader (restart the game after an update)")
+        return
+    endif
+    fx.Play(a, 20.0)
+    Debug.Notification("Fluid test SHADER: cream drips on " + a.GetDisplayName() + " for 20 s")
+EndFunction
+
+Function ShaderVanillaNear() global
+    ; the game's own red blood drips (BloodSplatterHeavyParticles), the control for the shader route
+    Actor a = NearestNPC()
+    EffectShader fx = Game.GetFormFromFile(0x2301C5, "Fallout4.esm") as EffectShader
+    if !a || !fx
+        Debug.Notification("Fluid test: no NPC near")
+        return
+    endif
+    fx.Play(a, 20.0)
+    Debug.Notification("Fluid test SHADER CONTROL: red blood drips on " + a.GetDisplayName() + " for 20 s")
 EndFunction
 
 Function Stop() global
