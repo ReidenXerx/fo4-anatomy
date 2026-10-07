@@ -29,6 +29,11 @@ FRONT = 0.15
 # (shrunk by one cell, so no hole opens at its edge) and less than BEHIND behind the breasts goes too.
 BEHIND = 2.0
 CELL = 2.0                 # cells per unit
+PUSH, FADE = 3.0, 3        # the suit under the breasts: this far behind their surface, fading out over these cells
+CAPS = ('Torso2_UpperBodyCaps', 'Torso3_Assaultron')
+# the caps' central chest plate, from a front render of Torso 2 GITS Boobs (built at the "Servitron" preset): between
+# the breasts, z -27.6 .. -20.7, |x| < 3.4; the box is a little wider and keeps clear of the collar (z > -17.4)
+PLATE_X, PLATE_Z, PLATE_Y = 4.5, (-29.0, -19.0), -2.0
 
 
 def front_surface(positions):
@@ -57,6 +62,12 @@ def with_triangles(n, s, tris):
 
 
 def trim(src, dst):
+    """the owner's call after the third photo (10-08: "completely get rid of armour of it on chest, then we can dont mind
+    about silhuette tits"): cutting the suit away opened holes (a front render: the suit is the chest's only wall, the
+    caps a frame with a central plate), so the suit is PUSHED back wherever the breasts cover it -- at least PUSH behind
+    their surface, fading out over FADE cells past their outline, so it stays one smooth wall and no breast shape
+    Silhouette makes can meet it -- and the caps' central chest plate (the rusted piece between the breasts, with its
+    molded breasts and studs) is removed. The collar and the shoulders stay. Vertices keep their numbering."""
     shutil.copyfile(src, dst)
     n = nif.Nif(dst)
     shapes = {s.name: s for s in n.shapes()}
@@ -64,26 +75,43 @@ def trim(src, dst):
     if b is None:
         return f'{pathlib.Path(src).name}: no breasts, left as it is'
     surface = front_surface(b.positions())
-    inner = {k for k in surface if all((k[0] + a, k[1] + c) in surface for a in (-1, 0, 1) for c in (-1, 0, 1))}
     lines = []
     for name in [k for k in SUITS if k in shapes]:
-        s = nif.Nif(dst).shape(name)
+        s = n.shape(name)
+        moved = 0
+        for i, p in enumerate(s.positions()):
+            k = (round(p[0] * CELL), round(p[2] * CELL))
+            # the nearest breast cell within FADE cells, and how far out of the outline this vertex is
+            near = None
+            for r in range(FADE + 1):
+                ring = [(k[0] + a, k[1] + c) for a in range(-r, r + 1) for c in range(-r, r + 1)
+                        if max(abs(a), abs(c)) == r and (k[0] + a, k[1] + c) in surface]
+                if ring:
+                    near = (r, max(surface[q] for q in ring))
+                    break
+            if near is None or p[1] < -1.0:                 # the back of the torso stays where it is
+                continue
+            r, front = near
+            w = 1.0 - r / (FADE + 1)
+            y = min(p[1], front - PUSH)
+            if y < p[1]:
+                s.set_position(i, (p[0], p[1] + (y - p[1]) * w, p[2]))
+                moved += 1
+        lines.append(f'{name}: {moved} of {s.count} vertices pushed behind the breasts')
+    n.save(dst)
+    for name in [k for k in CAPS if k in shapes]:
+        n = nif.Nif(dst)
+        s = n.shape(name)
         pos, tris = s.positions(), s.triangles()
 
-        def ahead(i):
-            k = (round(pos[i][0] * CELL), round(pos[i][2] * CELL))
-            return k in surface and pos[i][1] > surface[k] - FRONT
-        def hidden(i):
-            k = (round(pos[i][0] * CELL), round(pos[i][2] * CELL))
-            return k in inner and pos[i][1] > surface[k] - BEHIND
-        keep = [t for t in tris if not any(ahead(i) for i in t) and not all(hidden(i) for i in t)]
-        n = nif.Nif(dst)
-        pathlib.Path(dst).write_bytes(with_triangles(n, n.shape(name), keep))
-        back = nif.Nif(dst).shape(name)
-        if back.count != s.count or len(back.triangles()) != len(keep):
-            raise ValueError(f'{name}: the trimmed shape does not read back')
-        lines.append(f'{name} {len(tris) - len(keep)} of {len(tris)} triangles off')
-    return f'{pathlib.Path(src).name}: ' + ('; '.join(lines) or 'no suit over the breasts')
+        def plate(t):
+            c = [sum(pos[i][j] for i in t) / 3 for j in range(3)]
+            return abs(c[0]) < PLATE_X and PLATE_Z[0] < c[2] < PLATE_Z[1] and c[1] > PLATE_Y
+        keep = [t for t in tris if not plate(t)]
+        if len(keep) < len(tris):
+            pathlib.Path(dst).write_bytes(with_triangles(n, s, keep))
+        lines.append(f'{name}: the chest plate off ({len(tris) - len(keep)} of {len(tris)} triangles)')
+    return f'{pathlib.Path(src).name}: ' + '; '.join(lines)
 
 
 def main():
