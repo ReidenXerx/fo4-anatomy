@@ -136,11 +136,27 @@ Function Drip() global
     endif
 EndFunction
 
+Function DripNear() global
+    ; the actor closest to the player (no console click: BetterConsole crashed showing an NPC's details, 10-07)
+    Actor a = Game.FindClosestActorFromRef(Game.GetPlayer(), 400.0)
+    if !a
+        Debug.Notification("Fluid test: nobody within 400 units")
+        return
+    endif
+    Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
+    ObjectReference r = a.PlaceAtNode("AnatVulva", drip, 1, false, false, false, true)
+    if r
+        Debug.Notification("Fluid test: drips at AnatVulva of " + a.GetDisplayName())
+    else
+        Debug.Notification("Fluid test: no AnatVulva on " + a.GetDisplayName() + " (a woman with the Anatomy body, undressed?)")
+    endif
+EndFunction
+
 Function Stop() global
     Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
     int n = 0
     while n < 8
-        ObjectReference r = Game.FindClosestReferenceOfTypeFromRef(drip, Target(), 1000.0)
+        ObjectReference r = Game.FindClosestReferenceOfTypeFromRef(drip, Game.GetPlayer(), 2000.0)
         if !r
             n = 8
         else
