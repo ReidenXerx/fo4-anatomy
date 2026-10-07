@@ -104,7 +104,10 @@ def plugin():
     body = (esl_dist.field('EDID', b'AnatFluidDripTest\0') + esl_dist.field('OBND', struct.pack('<6h', -8, -8, -16, 8, 8, 2))
             + esl_dist.field('MODL', model) + esl_dist.field('DATA', b'\0'))
     dest = OUT / PLUGIN
-    esl_dist.write_plugin(dest, ['Fallout4.esm'], [('MSTT', 0x800, body)])
+    # 0x801: a CONTROL, the vanilla cave drips (clearly visible): shows whether attaching at the bone works at all
+    ctrl = (esl_dist.field('EDID', b'AnatFluidDripControl\0') + esl_dist.field('OBND', struct.pack('<6h', -8, -8, -16, 8, 8, 2))
+            + esl_dist.field('MODL', b'Effects\\FXDripsLots.nif\0') + esl_dist.field('DATA', b'\0'))
+    esl_dist.write_plugin(dest, ['Fallout4.esm'], [('MSTT', 0x800, body), ('MSTT', 0x801, ctrl)])
     return dest
 
 
@@ -152,13 +155,37 @@ Function DripNear() global
     endif
 EndFunction
 
+Function ControlNear() global
+    ; the vanilla cave drips on the closest actor: does attaching at AnatVulva work at all?
+    Actor a = Game.FindClosestActorFromRef(Game.GetPlayer(), 400.0)
+    if !a
+        Debug.Notification("Fluid test: nobody within 400 units")
+        return
+    endif
+    Form ctrl = Game.GetFormFromFile(0x801, "AnatomyFluidTest.esp")
+    ObjectReference r = a.PlaceAtNode("AnatVulva", ctrl, 1, false, false, false, true)
+    if r
+        Debug.Notification("Fluid test CONTROL: vanilla drips at AnatVulva of " + a.GetDisplayName())
+    else
+        Debug.Notification("Fluid test CONTROL: no AnatVulva on " + a.GetDisplayName())
+    endif
+EndFunction
+
 Function Stop() global
-    Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
     int n = 0
-    while n < 8
+    Form drip = Game.GetFormFromFile(0x800, "AnatomyFluidTest.esp")
+    Form ctrl = Game.GetFormFromFile(0x801, "AnatomyFluidTest.esp")
+    while n < 16
+        if n == 8
+            drip = ctrl
+        endif
         ObjectReference r = Game.FindClosestReferenceOfTypeFromRef(drip, Game.GetPlayer(), 2000.0)
         if !r
-            n = 8
+            if n < 8
+                n = 8
+            else
+                n = 16
+            endif
         else
             r.Disable(false)
             r.Delete()
