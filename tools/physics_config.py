@@ -72,7 +72,7 @@ SECTIONS = {
 # The spheres (her bones and the partner's penis bones) are the physical design the weights are
 # fitted to, so they live in ONE place, physics_design.py, with the reasons.
 from physics_design import (AFFECTED, AIM, AIM_CHAIN, COLLIDERS, CREATURE_COLLIDERS, EYES, FACE, MOUTH,  # noqa: E402
-                            MOUTH_CHAINS, PARENT, PROPS, SHAPE, STRETCH, TUBE)
+                            CANAL, MOUTH_CHAINS, PARENT, PROPS, SHAPE, STRETCH, TUBE)
 
 
 def sections(text):
@@ -188,7 +188,7 @@ def bone_table(pelvis_world):
     whose Pelvis_skin matches the body's (every CBBE body assumes that). A stretch child sits on its bone."""
     pr, pt, ps = pelvis_world
     rows = []
-    for name, skin in pd.REST.items():
+    for name, skin in pd.NODES.items():
         w = [skin[i] - pd.SKIN_OFFSET[i] for i in range(3)]
         local = [v / ps for v in zb.apply(zb.transpose(pr), [w[i] - pt[i] for i in range(3)])]
         rows.append((name, PARENT, local))
@@ -288,6 +288,8 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
               '[Aim]'] + [f'{k}={v}' for k, v in aim_keys(pelvis_world, head_f, head_m, neck_f, neck_m).items()]
     lines += ['', '; every man\'s penis: the shaft this thin, the head this big (one size per man) (A-31)',
               '[Shape]'] + [f'{k}={v}' for k, v in SHAPE.items()]
+    lines += ['', '; the canal wraps the shaft inside her (2026-10-07): ring bones <prefix><ring>_<spoke> placed around it',
+              '[Canal]'] + [f'{k}={v}' for k, v in CANAL.items()]
     lines += ['', '; our nodes, created at run time under the skeleton the actor loaded: name=parent,x,y,z',
               '[Bones]'] + [f'{n}={p},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, p, l in bone_table(pelvis_world)]
     lines += [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in skirt_rest.SKIRT_BONES.items()]
@@ -333,9 +335,14 @@ def main():
     for sec, keys in stretch_keys(women_world[PARENT]).items():
         SECTIONS[sec] = dict(SECTIONS[sec], **keys)
     OUT.mkdir(parents=True, exist_ok=True)
-    ini, dead = ocbp(source('ocbp.ini'), (women, men))
-    (OUT / 'ocbp.ini').write_text(ini, encoding='utf-8')
-    (OUT / 'OCBPCollisionConfig.txt').write_text(collisions(source('OCBPCollisionConfig.txt')), encoding='utf-8')
+    # the merged dev files (a player's preset with ours) need that preset installed; Anatomy's own files below do not
+    dead = []
+    try:
+        ini, dead = ocbp(source('ocbp.ini'), (women, men))
+        (OUT / 'ocbp.ini').write_text(ini, encoding='utf-8')
+        (OUT / 'OCBPCollisionConfig.txt').write_text(collisions(source('OCBPCollisionConfig.txt')), encoding='utf-8')
+    except SystemExit as e:
+        print(f'merged dev files skipped: {e}')
     creatures = {}
     for race in set(CREATURE_COLLIDERS.values()):
         creatures[race] = set(zb.skeleton_world(zb.ab.DEFAULT_DATA / f'Meshes/Actors/{race}/CharacterAssets/skeleton.nif'))

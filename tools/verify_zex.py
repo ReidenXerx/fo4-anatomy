@@ -79,7 +79,7 @@ def main():
     bones, xf = after_nif.skin(a)
     origin = {n: nif.bone_origin(xf[i]) for i, n in enumerate(bones)}
     # the openings' bones are carried through their stretch children (A-17), which sit on them
-    at = {n: p for n, p in pd.REST.items() if n not in pd.STRETCH_BONES}
+    at = {n: p for n, p in pd.NODES.items() if n not in pd.STRETCH_BONES}
     at.update({child: pd.REST[bone] for bone, child in pd.STRETCH_BONES.items()})
     import zex_bones as zbm
     want = list(at) + (['LBreast_skin', 'RBreast_skin'] if zbm.MOVE_BREASTS else [])
@@ -164,6 +164,8 @@ def main():
     print('5. genital weights:')
     for n in want:
         ws = per.get(n, [])
+        if not ws and n in pd.CANAL_BONES:
+            continue                         # the canal's wrap rings: weighted on the genitals' own shape (stage 6b3)
         if not ws:
             print(f'   {n:16} NO vertex')
             problems.append(f'{n} carries no weight')
@@ -181,7 +183,7 @@ def main():
     if problems:
         print('\nFAIL - ' + '\n       '.join(problems))
         sys.exit(1)
-    print(f'\nPASS - geometry and sliders unchanged, {len(pd.REST)} genital bones of our own bound where the design '
+    print(f'\nPASS - geometry and sliders unchanged, {len(pd.NODES)} genital bones of our own bound where the design '
           f'puts them and present in the women\'s skeleton, CBBE skin untouched outside the mask but for the hip fold\'s pelvis/thigh split (A-30).')
 
 

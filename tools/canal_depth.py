@@ -314,3 +314,91 @@ def build(nif_path, osd_path=None, osd_module=None):
     return (f'canal depth: the tip past {CUT} cut ({len(drop)} triangles, a loop of {N}, radius {r0:.2f}), '
             f'{len(records)} vertices / {len(faces)} triangles added along VAGINA_PATH, now {END:.1f} deep with a '
             f'rounded end, {gap:.1f} from the skin at its nearest; slider data on {moved} vertices')
+
+
+WRAP_FROM, WRAP_FULL = 1.0, 2.0    # depth along VAGINA_AXIS: no wrap weight at the entrance (the lips' own), full past here
+
+
+def wrap_weights(nif_path):
+    """The canal's wall onto the wrap rings (physics_design.CANAL_BONES, the owner's 'walls wrap the penis'), in place:
+    each canal vertex to the two rings around its place and the two spokes around its angle (bilinear, 4 weights),
+    fading in from WRAP_FROM to WRAP_FULL deep so the entrance keeps the lips' weights; each ring bone's bounding
+    sphere refitted to what it now carries. A report line."""
+    n = nif.Nif(nif_path)
+    s = n.shape(SHAPE)
+    bones, xf = n.skin(s)
+    slot = {b: k for k, b in enumerate(bones)}
+    missing = [b for b in pd.CANAL_BONES if b not in slot]
+    if missing:
+        raise ValueError(f'canal wrap: {len(missing)} ring bones are not in the genitals\' skin (stage 3 adds them)')
+    pos, tris = s.positions(), s.triangles()
+    tube = _tube(pos, tris)
+    rings = [pd.canal_frame(k) for k in range(len(pd.CANAL_RINGS))]
+    K, S = len(rings), pd.CANAL_SPOKES
+
+    def place(p):
+        """(ring position as a float 0..K-1, spoke position as a float 0..S)"""
+        best = None
+        for k in range(K - 1):
+            a, b = rings[k][0], rings[k + 1][0]
+            ab = _sub(b, a)
+            f = _dot(_sub(p, a), ab) / _dot(ab, ab)
+            q = min(1.0, max(0.0, f))
+            d = math.dist(p, _add(a, _mul(ab, q)))
+            if best is None or d < best[0]:
+                best = (d, k + (f if k == 0 or k == K - 2 else q))
+        r = min(K - 1.0, max(0.0, best[1]))
+        k0 = min(K - 2, int(r))
+        f = r - k0
+        c = _add(_mul(rings[k0][0], 1 - f), _mul(rings[k0 + 1][0], f))
+        side = rings[k0][1]
+        up = _unit(_add(_mul(rings[k0][2], 1 - f), _mul(rings[k0 + 1][2], f)))
+        d = _sub(p, c)
+        a = math.atan2(_dot(d, up), _dot(d, side)) % (2 * math.pi)
+        return r, a / (2 * math.pi) * S
+
+    carried = collections.defaultdict(list)
+    count = 0
+    for i in sorted(tube):
+        depth = depth_of(pos[i])
+        fade = min(1.0, max(0.0, (depth - WRAP_FROM) / (WRAP_FULL - WRAP_FROM)))
+        if fade <= 0.0:
+            continue
+        r, sp = place(pos[i])
+        k0 = min(K - 2, int(r))
+        f = r - k0
+        j0 = int(sp) % S
+        g = sp - int(sp)
+        wrap = {}
+        for k, wk in ((k0, 1 - f), (k0 + 1, f)):
+            for j, wj in ((j0, 1 - g), ((j0 + 1) % S, g)):
+                if wk * wj > 0:
+                    b = pd.canal_bone(k, j)
+                    wrap[b] = wrap.get(b, 0.0) + fade * wk * wj
+        own = [(bones[sl], w * (1 - fade)) for sl, w in s.skin_weights(i)]
+        pairs = sorted(list(wrap.items()) + own, key=lambda t: -t[1])[:4]
+        s.set_skin_weights(i, [(slot[b], w) for b, w in pairs])
+        count += 1
+        for sl, _ in s.skin_weights(i):
+            if bones[sl] in pd.CANAL_BONES:
+                carried[bones[sl]].append(i)
+    # each ring bone's bounding sphere (bone space) around the vertices it carries; the skin data's per-bone record
+    # is sphere 4f, rotation 9f, translation 3f, scale f after a count
+    o, _ = n.offsets[s.skin]
+    c = nif.Cursor(n.b, o)
+    c.take('i')
+    data = c.take('i')
+    do, _ = n.offsets[data]
+    for b, vs in carried.items():
+        rot, t, sc = xf[slot[b]]
+        bp = [tuple(sum(rot[3 * r + k] * pos[v][k] for k in range(3)) * sc + t[r] for r in range(3)) for v in vs]
+        ctr = tuple(sum(p[k] for p in bp) / len(bp) for k in range(3))
+        rad = max(math.dist(ctr, p) for p in bp)
+        struct.pack_into('<4f', n.b, do + 4 + slot[b] * 68, *ctr, rad)
+    n.save(nif_path)
+    back = nif.Nif(nif_path).shape(SHAPE)
+    if [back.skin_weights(i) for i in tube] != [s.skin_weights(i) for i in tube]:
+        raise ValueError('canal wrap: the weights do not read back')
+    used = sum(1 for b in pd.CANAL_BONES if carried.get(b))
+    return (f'canal wrap: {count} canal vertices onto {used} of {len(pd.CANAL_BONES)} ring bones '
+            f'({K} rings x {S} spokes), fading in from {WRAP_FROM} to {WRAP_FULL} deep')

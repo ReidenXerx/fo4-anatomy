@@ -66,6 +66,44 @@ REST = {
     'AnatAnus_L': _along(ANUS_CENTRE, (1.0, 0.0, 0.0), -1.0), 'AnatAnus_R': _along(ANUS_CENTRE, (1.0, 0.0, 0.0), 1.0),
 }
 
+# The canal's wrap (the owner's 'walls wrap the penis', 2026-10-07): rings of CANAL_SPOKES bones on the vaginal canal's
+# wall, NOT physics bones (no spring section: the fork's [Canal] places them on the shaft that is inside her each frame,
+# and puts them back when it leaves). Ring centres and axes measured on the built canal (studies/canal_rings.py on
+# the lab body after canal_depth, 2026-10-07) at 2.0, 4.5, 7.0, 9.5, 11.5 and 12.4 down its wall (the last in the rounded
+# end, so it opens around the tip; without it the end stayed shut on the tip, studies/canal_wrap_sim.py); x on the midline.
+CANAL_RINGS = (((0.0, 1.879, -53.064), (0.0, 0.111, 0.994)),
+               ((0.0, 1.953, -50.269), (0.0, -0.251, 0.966)),
+               ((0.0, 1.038, -47.923), (0.0, -0.38, 0.922)),
+               ((0.0, 0.852, -45.449), (0.0, 0.178, 0.984)),
+               ((0.0, 1.251, -43.451), (0.0, 0.177, 0.984)),
+               ((0.0, 1.373, -42.708), (0.0, 0.216, 0.976)))
+CANAL_SPOKES = 8
+CANAL_BONE_RADIUS = 0.6      # the canal's measured wall radius (0.55-0.73): the bones sit ON the wall
+
+
+def canal_frame(k):
+    """ring k's centre and its (side, up) across the axis: side is the body's x, up turns toward the belly"""
+    c, ax = CANAL_RINGS[k]
+    ax = unit(ax)
+    side = (1.0, 0.0, 0.0)
+    up = unit((ax[1] * side[2] - ax[2] * side[1], ax[2] * side[0] - ax[0] * side[2], ax[0] * side[1] - ax[1] * side[0]))
+    return c, side, up
+
+
+def canal_bone(k, j):
+    return f'AnatCanal_{k + 1}_{j}'
+
+
+CANAL_BONES = {}
+for _k in range(len(CANAL_RINGS)):
+    _c, _side, _up = canal_frame(_k)
+    for _j in range(CANAL_SPOKES):
+        _a = 2 * math.pi * _j / CANAL_SPOKES
+        CANAL_BONES[canal_bone(_k, _j)] = tuple(_c[i] + CANAL_BONE_RADIUS * (math.cos(_a) * _side[i] + math.sin(_a) * _up[i])
+                                               for i in range(3))
+# every node of ours at rest (the fork creates each under PARENT): the physics bones and the canal's
+NODES = {**REST, **CANAL_BONES}
+
 # "x,y,z,r" per sphere (offsets 0: each bone is its sphere's centre). AnatVulva has none: it only sways.
 # The inner lips' spheres 1.2 -> 1.7 (2026-09-26, tools/tube_check.py): A-31's thinner shaft (colliders 2.0 -> 1.7)
 # pushed them 1.65 where the owner's approved look (A-15) had 2.17, and fit_check's "through" rose 27% -> 42%. The
@@ -268,6 +306,15 @@ AIM = dict(enabled=1, requireScene=1, captureAngle=35, keepAngle=45, captureMiss
 # owner's poll (2026-09-25): "Narrow the range". At x1.25 the right corner is ~0.05-0.1 short (the mouth opens
 # less to the right), practically flush; x1.2 is flush.
 SHAPE = dict(enabled=1, shaft=0.85, headMin=1.2, headMax=1.25)
+# The canal's wrap (2026-10-07): while a shaft is in her vagina, each ring whose place the tip has reached moves its
+# spokes onto a circle of `radius` around the shaft there (SHAFT_RADIUS out from its axis BETWEEN two spokes: a spoke
+# sits at radius, the wall between two at radius x cos(180/spokes)), easing in over `lead` units of the tip's travel
+# around the ring's place, at `rate` (1/s); a shaft further than `reach` from a ring's centre leaves that ring alone.
+# radius +0.3 over that: the wall moves by its bones' moves, so a narrow stretch of Nahka's tube (radius 0.35) ends
+# short of a wide one (0.75); studies/canal_wrap_sim.py, wall points inside the shaft at full depth: 61 of 145 at 1.68,
+# 8 at 2.0 (worst 0.32 in, loosest 0.75 off), 1 at 2.15 (but 0.88 off: baggy)
+CANAL = dict(enabled=1, rings=len(CANAL_RINGS), spokes=CANAL_SPOKES, prefix='AnatCanal_',
+             radius=round(SHAFT_RADIUS / math.cos(math.pi / CANAL_SPOKES) + 0.3, 2), lead=1.5, rate=10.0, reach=5.0)
 # The paths inside her (skin space), from tools/canal.py: the middle of her body along the midline, height
 # by height, measured on the installed body. Flesh around them (to the nearest vertex): 0.17 just inside the
 # vagina (the lips open there anyway), 1.46 four units in, then 2.5 to 5.9 -- past the shaft's 1.55 from

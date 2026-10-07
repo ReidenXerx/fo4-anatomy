@@ -345,7 +345,7 @@ def main():
     ours = {pd.PARENT: world[pd.PARENT]}
     for name, parent, local in physics_config.bone_table(world[pd.PARENT]):
         ours[name] = compose(ours[parent], (identity, list(local), 1.0))
-    off_design = max(math.dist([ours[b][1][i] + pd.SKIN_OFFSET[i] for i in range(3)], pd.REST[b]) for b in pd.REST)
+    off_design = max(math.dist([ours[b][1][i] + pd.SKIN_OFFSET[i] for i in range(3)], pd.NODES[b]) for b in pd.NODES)
     print(f'   our {len(ours) - 1} bones at the fork\'s run-time offsets under the bound {pd.PARENT}: '
           f'worst distance from the design {off_design:.1e}')
     if off_design > 1e-4:
@@ -447,7 +447,7 @@ def main():
     print(f'   breast weights moved off the Havok cloth bones: {dict(moved) if MOVE_BREASTS else "not moved (the player's physics does not drive LBreast_skin/RBreast_skin)"}')
 
     # ---- 4. the bones, with bone-space bounding spheres of what they now carry
-    new_names = ([b for b in pd.REST if b not in pd.STRETCH_BONES] + list(pd.STRETCH_BONES.values())
+    new_names = ([b for b in pd.NODES if b not in pd.STRETCH_BONES] + list(pd.STRETCH_BONES.values())
                  + list(move.values()))
     defs = []
     for name in new_names:

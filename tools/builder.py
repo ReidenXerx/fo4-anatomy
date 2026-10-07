@@ -306,6 +306,8 @@ def main():
         import canal_depth
         run_stage('6b2. the vaginal canal, deeper', lambda: print(canal_depth.build(
             ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', ab.OUT / 'ShapeData/Anatomy/Anatomy.osd', osd_module)))
+        run_stage('6b3. the vaginal canal wraps the shaft', lambda: print(canal_depth.wrap_weights(
+            ab.OUT / 'ShapeData/Anatomy/Anatomy.nif')))
         import vaginal_canal
         run_stage('6c. the vaginal canal\'s own UVs (A-54)', lambda: print(vaginal_canal.build(
             ab.OUT / 'ShapeData/Anatomy/Anatomy.nif', ab.OUT / 'ShapeData/Anatomy/Anatomy.osd', osd_module)))

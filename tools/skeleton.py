@@ -67,7 +67,7 @@ def build():
     parent = next(i for i, n in base.nodes.items() if n['name'] == pd.PARENT)
     pr, pt, ps = world[pd.PARENT]
     nodes = []
-    for name, skin in pd.REST.items():
+    for name, skin in pd.NODES.items():
         w = [skin[i] - pd.SKIN_OFFSET[i] for i in range(3)]
         local = [v / ps for v in zb.apply(zb.transpose(pr), [w[i] - pt[i] for i in range(3)])]
         nodes.append(dict(name=name, t=tuple(local), r=(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)))
@@ -105,7 +105,7 @@ def build():
     if drift > 0:
         problems.append(f'an original node moved ({drift})')
     worst = 0.0
-    for name, skin in pd.REST.items():
+    for name, skin in pd.NODES.items():
         r, t, s = new_world[name]
         at = [t[i] + pd.SKIN_OFFSET[i] for i in range(3)]
         worst = max(worst, math.dist(at, skin))
@@ -122,7 +122,7 @@ def build():
     keyed = {}
     for h in HKX:
         raw = h.read_bytes() if h.exists() else b''
-        hits = [n for n in list(pd.REST) + list(pd.STRETCH_BONES.values())
+        hits = [n for n in list(pd.NODES) + list(pd.STRETCH_BONES.values())
                 if re.search(re.escape(n.encode()) + b'\x00', raw)]
         if hits:
             keyed[h.name] = hits
@@ -133,7 +133,7 @@ def build():
     print(f'2. wrote {OUT}: {len(out.offsets)} blocks; changed original blocks {[out.nodes[i]["name"] for i in changed]}; '
           f'original nodes moved {drift}')
     print(f'3. {len(nodes)} bones under {pd.PARENT}: worst distance from design {worst:.2e}')
-    for name, skin in pd.REST.items():
+    for name, skin in pd.NODES.items():
         print(f'     {name:15} skin ({skin[0]:6.2f},{skin[1]:6.2f},{skin[2]:7.2f})')
     print(f'4. .hkx files checked {len([h for h in HKX if h.exists()])}/{len(HKX)}; naming our bones: {keyed or "none"}')
     if problems:
