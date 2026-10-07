@@ -162,8 +162,8 @@ WHAT IT ADDS
   bones, stretch groups, props and toys as colliders, one-tube penis collision, the contact-driven
   mouth with lips fitted to what is in it, penis aim into the right opening (a man's too), per-man
   shape, partner glances, sex sounds played from each stroke's depth and speed (the packs' own body
-  sounds muted in scenes), skirt bones that keep the legs inside coats and dresses, and a health
-  check after every load (Anatomy_Health.txt). A man left out only by a preset's femaleOnly is still
+  sounds muted in scenes), and a health check after every load and in your first scene
+  (Anatomy_Health.txt). A man left out only by a preset's femaleOnly is still
   simulated for Anatomy's bones. The full list and every setting: {FORK_URL}
 
 LICENCES
@@ -519,6 +519,16 @@ def rebuild_files():
 CARDS = ROOT.parent / 'nexus-tools/studio/anatomy/out'
 EXTRA_CARDS = pathlib.Path(r'D:\F4Output\cards\anatomy\fomod')
 
+# an incompatible mod the installer can SEE: a warning step shown only when one of its own plugins is active (the
+# owner, 2026-10-07; a player's Extended AAF Patch kept the genitals closed in every scene; Engine 1.2.11's health
+# check names it too). (plugins it ships, step name, option, text)
+EAP_CONFLICT = [
+    (('EAP Moans.esp', 'AAF_DR_creature_EAP_patch.esp'), 'Warning: Extended AAF Patch is active',
+     'EAP is incompatible',
+     'The Extended AAF Patch (EAP, LoversLab) is incompatible with Anatomy: with it, AAF scenes keep the genitals '
+     'closed and the penis stretches along her. Use UAP (Ultimate AAF Patch) instead, then install Anatomy.'),
+]
+
 ANATOMY_FOMOD = dict(
     hard=['CBBE.esp'],
     setup=['CBBE.esp: found',
@@ -576,6 +586,7 @@ ANATOMY_FOMOD = dict(
          'Rapport gives the moans, the faces and the glances. Without it the engine still plays the body sounds, '
          'and every pack\'s own voices stay as they are.'),
     ],
+    conflicts=EAP_CONFLICT,
 )
 
 ENGINE_FOMOD = dict(
@@ -602,12 +613,9 @@ ENGINE_FOMOD = dict(
          'its real size.', 'engine-lips.jpg'),
         ('She looks up into his eyes', 'Glances',
          'With Rapport, eyes meet the partner\'s for 4-7 seconds now and then during a scene.', 'engine-glances.jpg'),
-        ('Skirt physics: legs stay inside', 'Skirt physics',
-         'Coats, dresses and skirts converted by Anatomy Tailor with "Skirt physics" move out of the way of the legs: '
-         'the engine hangs a ring of 60 bones at the hips and pushes them with the thighs and calves every frame.',
-         'skirt-physics.jpg'),
     ],
     notes=[],
+    conflicts=EAP_CONFLICT,
 )
 
 
@@ -653,6 +661,11 @@ def fomod_std(version, title, spec, stage):
     for plugin, name, option, desc in spec['notes']:
         vis = (f'\n      <visible><dependencies operator="Or"><fileDependency file="{escape(plugin)}" state="Missing"/>'
                f'<fileDependency file="{escape(plugin)}" state="Inactive"/></dependencies></visible>')
+        x += step(name, 'Read this', option, desc, None, vis)
+    for plugins, name, option, desc in spec.get('conflicts', []):       # shown only when one of them is ACTIVE
+        vis = ('\n      <visible><dependencies operator="Or">'
+               + ''.join(f'<fileDependency file="{escape(p)}" state="Active"/>' for p in plugins)
+               + '</dependencies></visible>')
         x += step(name, 'Read this', option, desc, None, vis)
     x += '  </installSteps>\n</config>\n'
     return info, x
