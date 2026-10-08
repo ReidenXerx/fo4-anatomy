@@ -58,7 +58,7 @@ def radius(s, length):
 
 
 GROOVE_W, GROOVE_D = 0.28, 0.12
-BALL_R = 1.25
+BALL_R = 1.4
 STEP = 0.25                                   # along the shaft
 
 
@@ -129,9 +129,11 @@ def penis_mesh(pts, balls):
         for j in range(SIDES):
             tris.append((ra[j], rb[j], rb[j + 1]))
             tris.append((ra[j], rb[j + 1], ra[j + 1]))
-    # the balls: two spheres side by side, hung from the balls bones
+    # the balls: two spheres side by side, tucked under the shaft's root against the crotch. The skeleton's balls
+    # bones sit ~2.5 units in front of the body: built there they floated under the shaft (the owner's photo, 10-08).
+    # So they hang from the root, held mostly by the pelvis, the balls bones adding a little sway
     top, bottom = balls
-    centre = (top + bottom) / 2 + np.array([0.0, -0.4, 0.0])
+    centre = pts[0] + np.array([0.0, -0.3, -3.05])
     for sx in (-1.0, 1.0):
         bc = centre + np.array([sx * 1.05, 0.0, 0.0])
         base = len(verts)
@@ -144,7 +146,7 @@ def penis_mesh(pts, balls):
                 p = bc + nrm * BALL_R * np.array([0.9, 1.0, 1.15])
                 t = min(1.0, max(0.0, (top[2] - p[2]) / max(1e-6, top[2] - bottom[2])))
                 verts.append((p, nrm, (0.5 + 0.5 * j / n_lon * 0.5, 0.5 + 0.5 * i / n_lat * 0.5),
-                              [(BALLS[0], 1.0 - t), (BALLS[1], t)]))
+                              [('Pelvis_skin', 0.65), (BALLS[0], 0.35 * (1.0 - t)), (BALLS[1], 0.35 * t)]))
         for i in range(n_lat):
             for j in range(n_lon):
                 a, b = base + i * (n_lon + 1) + j, base + (i + 1) * (n_lon + 1) + j
