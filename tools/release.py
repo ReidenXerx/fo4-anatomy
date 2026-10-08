@@ -438,6 +438,8 @@ def files(version):
             BUILD / 'overlays/F4SE/Plugins/F4EE/Overlays/Anatomy.esp/overlays.json',
         'Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem': BUILD / 'overlays/Materials/Overlays/Anatomy/AnatomyGlansFlush.bgem',
         'Textures/Overlays/Anatomy/GlansFlush.dds': BUILD / 'overlays/Textures/Overlays/Anatomy/GlansFlush.dds',
+        # the men's body's morphs as LooksMenu sliders (tools/male_sliders.py, 2026-10-08): BodyTalk ships no sliders.json
+        'F4SE/Plugins/F4EE/Sliders/Anatomy.esp/sliders.json': BUILD / 'sliders/F4SE/Plugins/F4EE/Sliders/Anatomy.esp/sliders.json',
         # A-67: every clip an SNDR in Anatomy.esp names (tools/make_sounds.py); the 2026-10-01 microscope found the
         # Nexus archive would have shipped the 9 sounds with none of their 37 clips
         **{f'Sound/FX/Anatomy/{c}.wav': BUILD / f'sound/Sound/FX/Anatomy/{c}.wav'
