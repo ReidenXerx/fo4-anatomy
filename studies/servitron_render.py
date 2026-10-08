@@ -32,6 +32,9 @@ FLAT = {'Boobs': (0.15, 0.15, 0.18), 'Torso2_GITS_Open': (0.2, 0.45, 0.9), 'Tors
 # close-ups of the seam where the breasts meet the torso (--seam): the outer side, from below, and between them
 SEAM_VIEWS = {'seam outer': ((-34.0, 24.0, 90.0), (-7.0, 4.0, 91.0)), 'seam below': ((-10.0, 30.0, 76.0), (-5.0, 5.0, 88.0)),
               'seam between': ((6.0, 28.0, 97.0), (0.0, 4.0, 90.0))}
+# close-ups of the crotch (--crotch): the male abdomen's penis from the front, the side and below (2026-10-08)
+CROTCH_VIEWS = {'crotch front': ((0.0, 40.0, 66.0), (0.0, 6.0, 64.0)), 'crotch side': ((-38.0, 14.0, 68.0), (0.0, 8.0, 64.0)),
+                'crotch below': ((-6.0, 22.0, 46.0), (0.0, 4.0, 62.0))}
 
 
 def template(name):
@@ -112,6 +115,7 @@ def main():
     ap.add_argument('--size', type=int, default=640)
     ap.add_argument('--flat', action='store_true', help='each shape in a flat colour, no textures')
     ap.add_argument('--seam', action='store_true', help='close-ups of the seam under the breasts instead')
+    ap.add_argument('--crotch', action='store_true', help='close-ups of the crotch instead')
     a = ap.parse_args()
     pv.W, pv.H = a.size, int(a.size * 1.15)
     game = Overlay(gamedata.Game(DATA), a.over)
@@ -132,7 +136,9 @@ def main():
         morphs = {}
         if vals and game.find(rel[:-4] + '.tri') is not None:
             morphs = tri_morphs(game.read(rel[:-4] + '.tri'))
-        for part in pv.load_parts(p, game):
+        # a shape that draws nothing (the male abdomen's emptied canal) has no triangles for the renderer
+        n_ = pv.nif.Nif(p) if hasattr(pv, 'nif') else None
+        for part in [pv.Part(n_, s, game) for s in n_.shapes() if n_.skin(s)[0] and s.triangle_count] if n_ else pv.load_parts(p, game):
             for m, v in vals.items():
                 for i, d in morphs.get(part.name, {}).get(m, {}).items():
                     if i < len(part.pos):
@@ -146,7 +152,7 @@ def main():
             vao, tex = r.upload(part)
             drawn.append((part, vao, tex, None, colour, (1, 1, 1)))
     frames = []
-    for label, (eye, target) in (SEAM_VIEWS if a.seam else VIEWS).items():
+    for label, (eye, target) in (SEAM_VIEWS if a.seam else CROTCH_VIEWS if a.crotch else VIEWS).items():
         eye = np.array(eye)
         vp = pv.perspective(34 if label != 'body' else 30, pv.W / pv.H, 5, 1000) @ pv.look_at(eye, target)
         d2 = [(p, vao, tex, p.matrices(bind, bind, 'Pelvis_skin', default_place), base, tint)

@@ -86,6 +86,12 @@ Keyword _refit                   ; Silhouette's refit marker keyword, None witho
 Keyword _robot                   ; ActorTypeRobot: Servitrons are robots, not ActorTypeNPC
 Race _servitron
 Keyword _aafFemale
+; the owner's poll, 2026-10-08: the ABDOMEN decides. Servitron's Rubber abdomens (our rigged openings) make a woman,
+; Anatomy's male Rubber abdomens (AnatomyServitron.esp) a man; any other abdomen is kept out of AAF's scenes
+Keyword _aafMale                 ; AAF_GenderOverride_Male
+Keyword _aafBlocked              ; AAF_ActorBlocked
+ObjectMod[] _womanParts          ; Servitron_Abdomen_GITS_Rubber, _Wetsuit_Rubber
+ObjectMod[] _manParts            ; AnatSrv_Abdomen_GITS_Rubber_Male, _Wetsuit_Rubber_Male (None without our plugin)
 
 Event OnInit()
 	Setup()
@@ -177,10 +183,22 @@ Function Setup()
 	EndIf
 	_servitron = None
 	_aafFemale = None
+	_aafMale = None
+	_aafBlocked = None
 	If _busy != None && Game.IsPluginInstalled("Servitron.esm")
 		_robot = Game.GetFormFromFile(0x0002CB73, "Fallout4.esm") as Keyword      ; ActorTypeRobot
 		_servitron = Game.GetFormFromFile(0x00000F99, "Servitron.esm") as Race   ; ServitronRace
 		_aafFemale = Game.GetFormFromFile(0x000121BC, "AAF.esm") as Keyword      ; AAF_GenderOverride_Female
+		_aafMale = Game.GetFormFromFile(0x000121BB, "AAF.esm") as Keyword        ; AAF_GenderOverride_Male
+		_aafBlocked = Game.GetFormFromFile(0x00022BB0, "AAF.esm") as Keyword     ; AAF_ActorBlocked
+		_womanParts = new ObjectMod[0]
+		_womanParts.Add(Game.GetFormFromFile(0x00000B89, "Servitron.esm") as ObjectMod, 1)
+		_womanParts.Add(Game.GetFormFromFile(0x00000B8C, "Servitron.esm") as ObjectMod, 1)
+		_manParts = new ObjectMod[0]
+		If Game.IsPluginInstalled("AnatomyServitron.esp")
+			_manParts.Add(Game.GetFormFromFile(0x00000800, "AnatomyServitron.esp") as ObjectMod, 1)
+			_manParts.Add(Game.GetFormFromFile(0x00000802, "AnatomyServitron.esp") as ObjectMod, 1)
+		EndIf
 	EndIf
 	_desire = None
 	If Game.IsPluginInstalled("Overture.esp")
@@ -350,21 +368,52 @@ Function Tick()
 EndFunction
 
 ; the player and everyone alive and loaded around them
-; every Servitron near the player is a woman to AAF (see _aafFemale); a keyword added once stays on that reference
+; every Servitron near the player gets AAF's role from the abdomen it wears (F4SE GetAllMods: the robot's installed
+; parts): a woman's Rubber abdomen -> AAF_GenderOverride_Female, our male one -> AAF_GenderOverride_Male, anything else
+; (a closed suit, no abdomen) -> AAF_ActorBlocked, so nobody is put in a scene with nothing there. Rewritten each tick,
+; so a part changed at the Robot Workbench changes the role
 Function MarkServitrons()
-	If _servitron == None || _aafFemale == None || _robot == None
+	If _servitron == None || _aafFemale == None || _aafMale == None || _aafBlocked == None || _robot == None
 		Return
 	EndIf
 	ObjectReference[] near = Game.GetPlayer().FindAllReferencesWithKeyword(_robot, SCAN_RADIUS)
 	Int i = 0
 	While near != None && i < near.Length
 		Actor a = near[i] as Actor
-		If a != None && a.GetRace() == _servitron && !a.HasKeyword(_aafFemale)
-			a.AddKeyword(_aafFemale)
-			Debug.Trace("Anatomy: " + a + " is a Servitron: AAF casts it as a woman", 0)
+		If a != None && a.GetRace() == _servitron
+			Int role = ServitronRole(a)                ; 1 woman, 2 man, 0 neither
+			Keyword want = _aafBlocked
+			If role == 1
+				want = _aafFemale
+			ElseIf role == 2
+				want = _aafMale
+			EndIf
+			If !a.HasKeyword(want)
+				a.RemoveKeyword(_aafFemale)
+				a.RemoveKeyword(_aafMale)
+				a.RemoveKeyword(_aafBlocked)
+				a.AddKeyword(want)
+				Debug.Trace("Anatomy: " + a + " is a Servitron, its abdomen makes it " + role + " (1 woman, 2 man, 0 out of AAF)", 0)
+			EndIf
 		EndIf
 		i += 1
 	EndWhile
+EndFunction
+
+Int Function ServitronRole(Actor a)
+	ObjectMod[] parts = a.GetAllMods()
+	Int i = 0
+	While parts != None && i < parts.Length
+		If parts[i] != None
+			If _womanParts.Find(parts[i]) >= 0
+				Return 1
+			ElseIf _manParts.Find(parts[i]) >= 0
+				Return 2
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	Return 0
 EndFunction
 
 Actor[] Function People()
