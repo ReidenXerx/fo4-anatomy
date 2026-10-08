@@ -112,6 +112,18 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
   and 3BBB; strap-ons/toys that collide properly (LL strap-on mods are awkward or broken, the ZeX strap-on fork needs
   outdated files). His idea: our own toy/strap-on fork on Nexus, or ask the strap-on author for one. The owner's
   answer: toys already work when the object is tagged correctly. Later ideas: OCum-like and inflation-like systems.
+- **Clothes for Servitrons** (the owner, 2026-10-08: "make it universally being able wear 3bbb, even a male servitron
+  with dick"; put on the roadmap the same day). Servitron's whole robot, head and limbs included, is ONE skin item in
+  body slot 33 with its parts as mods on it, so any normal outfit (slot 33) replaces the robot entirely. Lending
+  ServitronRace HumanRace's armour race is built in the engine but OFF ([Servitron] humanClothes=0, fo4-ocbpc 7d95cd6):
+  on, full outfits would erase the robot; accessory slots (hats, glasses, jewellery) would layer. The working route is
+  per-outfit Servitron versions like its own Bunny and French Maid: slots other than 33, no human body pieces,
+  ServitronRace addons, weighted to her 3BBB body (the Tailor pipeline can do the weighting). Pick a short list of
+  favourite 3BBB outfits first; a male Servitron wears them too (his penis under the clothes needs a look).
+  Also pending for Anatomy Servitron 1.0.1: the 3BBB Bunny and French Maid projects (D:\F4Output\servitron\outfits3bbb,
+  built and in the owner's game 10-08).
+- **Servitron spawn helper**: `cgf "Anatomy:DebugSpawn.Servitron"` can land the robot dead (Resurrect in the script did
+  not help; console `resurrect 1` does). Workbench-built Servitrons are fine.
 - **Polish**: arousal cools down across a game-time jump (sleep/wait: today it ticks on real time and carries
   through a long sleep, fading over the next minute; Arousal.psc Tick); the wrist line; the small colour bias of the repainted genital patch on DXT1 skins; more pre-built
   presets if asked.
