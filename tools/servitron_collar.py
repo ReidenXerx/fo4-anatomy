@@ -135,6 +135,48 @@ def rims(s):
     return loops
 
 
+RELAX = (0.6, 0.45, 0.3, 0.15)      # per row in from the rim: how far a vertex eases toward its neighbours' mean
+RELAX_ITER = 12
+
+
+def straighten(s, pos, rim_targets):
+    """the rim vertices (every split copy) onto their smoothed places, and the rows behind them eased (Laplacian, the
+    rim held) so the old teeth leave no fold; returns (positions, indices moved)"""
+    key = {}
+    wid = [key.setdefault(tuple(round(x, 3) for x in p), len(key)) for p in pos]
+    groups = collections.defaultdict(list)
+    for i, w in enumerate(wid):
+        groups[w].append(i)
+    adj = collections.defaultdict(set)
+    for t in s.triangles():
+        a, b, c = (wid[i] for i in t)
+        adj[a] |= {b, c}
+        adj[b] |= {a, c}
+        adj[c] |= {a, b}
+    W = {w: pos[g[0]].copy() for w, g in groups.items()}
+    depth = {}
+    for i, p in rim_targets:
+        W[wid[i]] = np.array(p, np.float64)
+        depth[wid[i]] = 0
+    frontier = list(depth)
+    for d in range(1, len(RELAX) + 1):
+        nxt = []
+        for w in frontier:
+            for q in adj[w]:
+                if q not in depth:
+                    depth[q] = d
+                    nxt.append(q)
+        frontier = nxt
+    for _ in range(RELAX_ITER):
+        W.update({w: W[w] + RELAX[d - 1] * (np.mean([W[q] for q in adj[w]], axis=0) - W[w])
+                  for w, d in depth.items() if d})
+    out = pos.copy()
+    moved = [i for w in depth for i in groups[w]]
+    for i in moved:
+        out[i] = W[wid[i]]
+    return out, moved
+
+
 def suit_front(suit):
     """per (x, z) cell the suit's frontmost y, from its drawn triangles' vertices"""
     pos = suit.positions()
@@ -176,6 +218,7 @@ def build(src, dst, tri=None, osd=None):
     base = s.count
     new_recs, new_from, faces = [], [], []          # new_from: (rim vertex, s, suit vertex) per new vertex
     fillets = []                                     # per breast: (centre, smoothed rim, outward, reach, far depth)
+    rim_targets = []                                 # (rim vertex, its place on the smoothed line)
     for li, loop in enumerate(loops):
         u0, u1, v0, v1 = STRIPS[li]
         P = pos[loop]
@@ -186,11 +229,15 @@ def build(src, dst, tri=None, osd=None):
                    for j in range(N))
         if area < 0:
             loop, P = loop[::-1], P[::-1]
-        arc = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(np.vstack([P, P[:1]]), axis=0), axis=1))])
-        total = arc[-1]
         Ps = P.copy()
         for _ in range(SMOOTH_PASSES):
             Ps = np.mean([np.roll(Ps, sh, axis=0) for sh in range(-SMOOTH_HALF, SMOOTH_HALF + 1)], axis=0)
+        # the breast's own edge moves onto the smoothed line too (the owner's photo, 10-08: the edge "like stairs" - the
+        # mesh's teeth stood out over the collar's start), so the collar starts where the breast ends
+        rim_targets += list(zip(loop, Ps))
+        P = Ps
+        arc = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(np.vstack([P, P[:1]]), axis=0), axis=1))])
+        total = arc[-1]
         # the suit's torn edge around this breast, as (angle, distance out) in the front view
         bang = np.arctan2(border[:, 2] - c[2], border[:, 0] - c[0])
         brad = np.hypot(border[:, 0] - c[0], border[:, 2] - c[2])
@@ -252,6 +299,7 @@ def build(src, dst, tri=None, osd=None):
             for j in range(N):
                 faces.append((base + ra[j], base + rb[j], base + rb[j + 1]))
                 faces.append((base + ra[j], base + rb[j + 1], base + ra[j + 1]))
+    pos, moved = straighten(s, pos, rim_targets)
     allpos = np.vstack([pos, np.array([struct.unpack_from('<3e', bytes(r), 0) for r in new_recs], np.float64)])
     # winding: every collar face looks away from its breast's middle (outward and forward)
     centres = [pos[L].mean(axis=0) for L in loops]
@@ -294,7 +342,10 @@ def build(src, dst, tri=None, osd=None):
         struct.pack_into('<e', rec, 6, float(bt[0]))
         rec[15], rec[19] = f2b(bt[1]), f2b(bt[2])
     tris = s.triangles() + faces
-    vdata = bytes(n.b[s.data_at:s.data_at + s.count * s.stride]) + b''.join(bytes(r) for r in new_recs)
+    old = bytearray(n.b[s.data_at:s.data_at + s.count * s.stride])
+    for i in moved:
+        struct.pack_into('<3e', old, i * s.stride, *pos[i])
+    vdata = bytes(old) + b''.join(bytes(r) for r in new_recs)
     tri_bytes = b''.join(struct.pack('<3H', *t) for t in tris)
     o, size = n.offsets[s.index]
     cur = nif.Cursor(n.b, o)
