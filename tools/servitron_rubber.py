@@ -142,6 +142,13 @@ GASKET = dict(bead=(0.10, 0.50), groove=(0.50, 0.62), bead_tint=(44, 44, 50), gr
               flange_tint=(32, 32, 37), bead_spec=(210, 185), groove_spec=(40, 30), flange_spec=(125, 95))
 
 
+SUIT = None                    # the suit's maps (main loads them): d, s arrays, size, dens (uv per unit)
+SUIT_ARC, SUIT_OUT = 34.0, 1.8 # units round a rim and out across the socket's fabric part
+SUIT_D = r'textures\servitron\gits_overalls_d.dds'
+SUIT_S = r'textures\servitron\gits_overalls_s.dds'
+SUIT_DENS = 0.0085             # the suit's uv per unit (Torso2_GITS_Open, measured 10-08)
+
+
 def gasket(size, h, col, spec, mask):
     import servitron_collar as sc
     ring_s = [p[0] for p in sc.PROFILE]
@@ -172,6 +179,19 @@ def gasket(size, h, col, spec, mask):
         cc[flange] = GASKET['flange_tint']
         ss[flange] = GASKET['flange_spec']
         hh[flange] = 0.008 * np.sin(u[flange] * 2 * np.pi * 900)      # fine ribs round the socket
+        if SUIT is not None:
+            # the owner's poll, 2026-10-08: past the metal bead the socket is the SUIT's own fabric (its colour, dull
+            # shine and weave), so the suit runs up to the border and the rubber breast starts exactly there. Sampled
+            # from the suit's textures at its own weave scale: round the rim ~SUIT_ARC units, out from it ~SUIT_OUT
+            sd, sspec, ssize, dens = SUIT['d'], SUIT['s'], SUIT['size'], SUIT['dens']
+            xw = (u - u0) / (u1 - u0) * SUIT_ARC
+            yw = np.clip(s - g1, 0, None) * SUIT_OUT
+            px = (np.floor(xw * dens * ssize).astype(int)) % ssize
+            py = (np.floor(yw * dens * ssize).astype(int)) % ssize
+            cc[flange] = sd[py[flange], px[flange], :3]
+            ss[flange] = sspec[py[flange], px[flange], :2]
+            lum = sd[py, px, :3].mean(axis=-1)
+            hh[flange] = 0.004 * (lum[flange] - lum[flange].mean()) / 40.0
         sl = (slice(y0, y1), slice(x0, x1))
         h[sl], col[sl], spec[sl], mask[sl] = hh, cc, ss, 1.0
 
@@ -225,6 +245,13 @@ def main():
     out = pathlib.Path(sys.argv[1])
     main_ba2 = gamedata.Ba2(ARCHIVES / 'Servitron - Main.ba2')
     tex_ba2 = gamedata.Ba2(ARCHIVES / 'Servitron - Textures.ba2')
+    global SUIT
+    sdi = np.asarray(Image.open(io.BytesIO(tex_ba2.read(SUIT_D))).convert('RGBA'), np.float32)
+    try:
+        ssi = np.asarray(Image.open(io.BytesIO(tex_ba2.read(SUIT_S))).convert('RGB'), np.float32)
+    except Exception:                                   # a format PIL cannot read: the fabric's dull shine
+        ssi = np.full(sdi.shape[:2] + (3,), 40.0, np.float32)
+    SUIT = dict(d=sdi, s=ssi, size=sdi.shape[0], dens=SUIT_DENS)
     d, n_, s, size = maps(tex_ba2.read(SRC_TEX))
     mat = main_ba2.read(SRC_MAT)
     mat = swap_string(mat, 'Servitron/GITS_plastic_d.dds', OUT_D[len('Textures/'):])

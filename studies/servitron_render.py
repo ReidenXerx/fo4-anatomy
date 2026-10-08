@@ -31,7 +31,8 @@ FLAT = {'Boobs': (0.15, 0.15, 0.18), 'Torso2_GITS_Open': (0.2, 0.45, 0.9), 'Tors
         'Abdomen_GITS_Rubber': (0.3, 0.8, 0.3)}
 # close-ups of the seam where the breasts meet the torso (--seam): the outer side, from below, and between them
 SEAM_VIEWS = {'seam outer': ((-34.0, 24.0, 90.0), (-7.0, 4.0, 91.0)), 'seam below': ((-10.0, 30.0, 76.0), (-5.0, 5.0, 88.0)),
-              'seam between': ((6.0, 28.0, 97.0), (0.0, 4.0, 90.0))}
+              'seam between': ((6.0, 28.0, 97.0), (0.0, 4.0, 90.0)),
+              'seam above': ((-8.0, 26.0, 106.0), (-5.0, 5.0, 96.0))}
 # close-ups of the crotch (--crotch): the male abdomen's penis from the front, the side and below (2026-10-08)
 CROTCH_VIEWS = {'crotch front': ((0.0, 40.0, 66.0), (0.0, 6.0, 64.0)), 'crotch side': ((-38.0, 14.0, 68.0), (0.0, 8.0, 64.0)),
                 'crotch below': ((-6.0, 22.0, 46.0), (0.0, 4.0, 62.0)),
