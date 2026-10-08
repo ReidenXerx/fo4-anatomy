@@ -340,6 +340,19 @@ def ring_pairs(p, o):
     return out
 
 
+RING_LIP, RING_EDGE, RING_EDGE_SHARE = 1.05, 1.85, 0.25     # radial: fully ours inside the lip, 25% at the outer edge
+
+
+def ring_share(p, o):
+    """how much of a ring vertex our ring bones carry: 1 at the lip, RING_EDGE_SHARE at its outer edge, smoothly"""
+    d = sub(p, o['centre'])
+    along = dot(d, o['axis'])
+    r = math.sqrt(max(0.0, dot(d, d) - along * along))
+    t = min(1.0, max(0.0, (r - RING_LIP) / (RING_EDGE - RING_LIP)))
+    t = t * t * (3 - 2 * t)
+    return 1.0 - (1.0 - RING_EDGE_SHARE) * t
+
+
 def arc_of(p, line):
     """how far along the canal's centreline (its entrance first) a point lies"""
     q = min(line, key=lambda x: math.dist(x[1], p))
@@ -422,7 +435,10 @@ def build(src, dst, osd=None, measure=False):
     # weights
     for nm, o in OPENINGS.items():
         ring = n.shape(shell + o['ring'])
-        weigh(n, ring, {i: ring_pairs(p, o) for i, p in enumerate(ring.positions())})
+        # the ring's own lip opens on our bones; its outer edge, where the shell meets it, keeps most of its own weights
+        # (pelvis, thighs, butt): fully on ours it stayed with the pelvis while the shell around it spread with the
+        # thighs, and the shell tore into flaps beside it in a scene (the owner's photos, 2026-10-08)
+        weigh(n, ring, {i: [(b, x * ring_share(p, o)) for b, x in ring_pairs(p, o)] for i, p in enumerate(ring.positions())})
         canal = n.shape(shell + o['canal'])
         line = lines_by[nm]
         want = {}

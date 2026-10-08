@@ -34,7 +34,8 @@ SEAM_VIEWS = {'seam outer': ((-34.0, 24.0, 90.0), (-7.0, 4.0, 91.0)), 'seam belo
               'seam between': ((6.0, 28.0, 97.0), (0.0, 4.0, 90.0))}
 # close-ups of the crotch (--crotch): the male abdomen's penis from the front, the side and below (2026-10-08)
 CROTCH_VIEWS = {'crotch front': ((0.0, 40.0, 66.0), (0.0, 6.0, 64.0)), 'crotch side': ((-38.0, 14.0, 68.0), (0.0, 8.0, 64.0)),
-                'crotch below': ((-6.0, 22.0, 46.0), (0.0, 4.0, 62.0))}
+                'crotch below': ((-6.0, 22.0, 46.0), (0.0, 4.0, 62.0)),
+                'anus below': ((0.0, -14.0, 50.0), (0.0, -3.0, 64.0))}
 
 
 def template(name):
