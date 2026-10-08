@@ -1,0 +1,10 @@
+<actorTypeData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="common.xsd">
+	<!-- fo4-anatomy (2026-10-08): AAF's actor scan finds actors by keyword AND race. ServitronRace carries ActorTypeRobot,
+	     but AAF's own Robot group lists only the vanilla robots, so the wizard never offered a Servitron (the owner's
+	     photo). This group adds it; the race itself is in Anatomy_raceData_Servitron.xml. -->
+	<defaults source="Fallout4.esm"/>
+
+	<group id="Servitron">
+		<actorType form="2CB73" id="ActorTypeRobot" raceList="ServitronRace"/>
+	</group>
+</actorTypeData>
