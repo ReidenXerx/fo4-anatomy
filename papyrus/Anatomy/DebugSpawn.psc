@@ -45,6 +45,15 @@ Function Servitron(Int aiWetsuit) global
 		EndIf
 		i += 1
 	EndWhile
+	; it landed dead (the owner, 10-08: "why this our command spawn them dead?"): the Test Dummy is only ever a workbench
+	; preview, and swapping a robot's parts on a live actor can drop its health to nothing. Bring it back whole.
+	Bool wasDead = s.IsDead()
+	If wasDead
+		s.Resurrect()
+	EndIf
+	s.ResetHealthAndLimbs()
+	s.SetUnconscious(False)
+	Debug.Trace("Anatomy:DebugSpawn " + s + ": dead after the parts " + wasDead + ", now " + s.IsDead(), 0)
 	If Game.IsPluginInstalled("AAF.esm")
 		Keyword female = Game.GetFormFromFile(0x000121BC, "AAF.esm") as Keyword          ; AAF_GenderOverride_Female
 		If female != None && !s.HasKeyword(female)
