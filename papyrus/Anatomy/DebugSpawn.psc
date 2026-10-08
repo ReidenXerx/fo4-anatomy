@@ -24,6 +24,7 @@ Function Servitron(Int aiWetsuit) global
 	parts.Add(0x00000BB4, 1)          ; Eyes - Mk1
 	parts.Add(0x00000BB1, 1)          ; Ears - Servitron
 	parts.Add(0x0000108A, 1)          ; Torso - Mk2 with breasts
+	parts.Add(0x00001095, 1)          ; Torso Front Armor - none (the Test Dummy wears the Assaultron plate over the breasts)
 	parts.Add(0x00000B9E, 1)          ; Arm Left - Servitron
 	parts.Add(0x00000BA0, 1)          ; Arm Right - Servitron
 	parts.Add(0x00000BB9, 1)          ; Hand Left

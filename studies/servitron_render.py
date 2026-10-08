@@ -107,6 +107,7 @@ def main():
     ap.add_argument('--over', nargs='*', default=[], help='Data-relative trees laid over the game (checked first)')
     ap.add_argument('--template')
     ap.add_argument('--abdomen', default='Abdomen GITS Rubber')
+    ap.add_argument('--extra', nargs='*', default=[], help='more Meshes/Servitron parts drawn too')
     ap.add_argument('--size', type=int, default=640)
     ap.add_argument('--flat', action='store_true', help='each shape in a flat colour, no textures')
     ap.add_argument('--seam', action='store_true', help='close-ups of the seam under the breasts instead')
@@ -123,7 +124,7 @@ def main():
     r = pv.Renderer()
     drawn = []
     default_place = None
-    for name in PARTS + [a.abdomen]:
+    for name in PARTS + [a.abdomen] + a.extra:
         rel = f'Meshes/Servitron/{name}.nif'
         p = work / f'{name}.nif'
         p.write_bytes(game.read(rel))
