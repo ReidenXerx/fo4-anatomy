@@ -92,6 +92,7 @@ Keyword _aafMale                 ; AAF_GenderOverride_Male
 Keyword _aafBlocked              ; AAF_ActorBlocked
 ObjectMod[] _womanParts          ; Servitron_Abdomen_GITS_Rubber, _Wetsuit_Rubber
 ObjectMod[] _manParts            ; AnatSrv_Abdomen_GITS_Rubber_Male, _Wetsuit_Rubber_Male (None without our plugin)
+Actor[] _srvNear                 ; the Servitrons MarkServitrons saw this tick: robots, so People() never has them
 
 Event OnInit()
 	Setup()
@@ -377,10 +378,14 @@ Function MarkServitrons()
 		Return
 	EndIf
 	ObjectReference[] near = Game.GetPlayer().FindAllReferencesWithKeyword(_robot, SCAN_RADIUS)
+	_srvNear = new Actor[0]
 	Int i = 0
 	While near != None && i < near.Length
 		Actor a = near[i] as Actor
 		If a != None && a.GetRace() == _servitron
+			If !a.IsDead() && a.Is3DLoaded()
+				_srvNear.Add(a, 1)
+			EndIf
 			Int role = ServitronRole(a)                ; 1 woman, 2 man, 0 neither
 			Keyword want = _aafBlocked
 			If role == 1
@@ -444,6 +449,15 @@ Actor[] Function BusyAmong(Actor[] people)
 				busy.Add(people[i], 1)
 			EndIf
 			i += 1
+		EndWhile
+		; Servitrons are robots, never in People(): without them here the aim never heard a Servitron was in a scene
+		; and never turned a shaft onto her rings (the owner's photo, 2026-10-08: the penis went straight through)
+		Int k = 0
+		While _srvNear != None && k < _srvNear.Length
+			If _srvNear[k] != None && _srvNear[k].HasKeyword(_busy) && busy.Find(_srvNear[k]) < 0
+				busy.Add(_srvNear[k], 1)
+			EndIf
+			k += 1
 		EndWhile
 	EndIf
 	Return busy
