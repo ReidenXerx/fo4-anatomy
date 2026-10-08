@@ -136,6 +136,46 @@ def design(size, lum):
     return h, col, spec, mask
 
 
+# the socket collar's gasket (tools/servitron_collar.py: its rings map down these strips, rim first): rubber at the rim,
+# a satin bead with a glossy crest, a dark groove, a satin graphite flange with very fine ribs onto the suit
+GASKET = dict(bead=(0.10, 0.50), groove=(0.50, 0.62), bead_tint=(44, 44, 50), groove_tint=(14, 14, 16),
+              flange_tint=(32, 32, 37), bead_spec=(210, 185), groove_spec=(40, 30), flange_spec=(125, 95))
+
+
+def gasket(size, h, col, spec, mask):
+    import servitron_collar as sc
+    ring_s = [p[0] for p in sc.PROFILE]
+    for u0, u1, v0, v1 in sc.STRIPS:
+        x0, x1 = int(u0 * size), int(u1 * size) + 1
+        y0, y1 = int(v0 * size), int(v1 * size) + 1
+        f = (np.arange(y0, y1) + 0.5) / size
+        f = np.clip((f - v0) / (v1 - v0), 0, 1) * (len(ring_s) - 1)
+        s = np.interp(f, np.arange(len(ring_s)), ring_s)[:, None] * np.ones((1, x1 - x0))
+        u = ((np.arange(x0, x1) + 0.5) / size)[None, :] * np.ones((y1 - y0, 1))
+        hh = np.zeros_like(s)
+        cc = np.zeros(s.shape + (3,))
+        ss = np.zeros(s.shape + (2,))
+        cc[:] = RUBBER
+        ss[:] = RUBBER_SPEC
+        b0, b1 = GASKET['bead']
+        bead = (s >= b0) & (s < b1)
+        crest = np.sin(np.pi * (s - b0) / (b1 - b0))
+        cc[bead] = np.array(GASKET['bead_tint'])[None, :] * (0.85 + 0.35 * crest[bead])[:, None]
+        ss[bead] = GASKET['bead_spec']
+        hh[bead] = 0.05 * crest[bead]
+        g0, g1 = GASKET['groove']
+        groove = (s >= g0) & (s < g1)
+        cc[groove] = GASKET['groove_tint']
+        ss[groove] = GASKET['groove_spec']
+        hh[groove] = -0.03
+        flange = s >= g1
+        cc[flange] = GASKET['flange_tint']
+        ss[flange] = GASKET['flange_spec']
+        hh[flange] = 0.008 * np.sin(u[flange] * 2 * np.pi * 900)      # fine ribs round the socket
+        sl = (slice(y0, y1), slice(x0, x1))
+        h[sl], col[sl], spec[sl], mask[sl] = hh, cc, ss, 1.0
+
+
 def mips(img):
     levels = [img]
     while min(levels[-1].size) > 1:
@@ -154,6 +194,7 @@ def maps(src_dds):
     lut = np.array([max(0.0, min(2.5, 1.0 + SPREAD * (v - mean) / max(1.0, mean))) for v in range(256)], np.float32)
     base = lut[np.asarray(lum)][..., None] * np.array(RUBBER, np.float32)[None, None, :]
     h, col, spec, mask = design(size, lum)
+    gasket(size, h, col, spec, mask)
     rgb = mask[..., None] * col + (1 - mask[..., None]) * base          # the rim blends into the rubber
     d_img = Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), 'RGB')
     d_img.putalpha(rgba.getchannel('A'))

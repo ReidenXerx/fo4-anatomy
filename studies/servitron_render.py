@@ -27,6 +27,11 @@ PARTS = ['Head', 'Head Eyes 1', 'Head Ears', 'Torso 2 GITS Boobs', 'Arm Left', '
 TEMPLATES = DATA / 'F4SE/Plugins/F4EE/BodyGen/Loose/Silhouette_templates.ini'
 VIEWS = {'front': ((0.0, 62.0, 92.0), (0.0, 0.0, 90.0)), 'three-quarter': ((-40.0, 50.0, 96.0), (0.0, 0.0, 90.0)),
          'body': ((0.0, 150.0, 80.0), (0.0, 0.0, 75.0))}
+FLAT = {'Boobs': (0.15, 0.15, 0.18), 'Torso2_GITS_Open': (0.2, 0.45, 0.9), 'Torso2_UpperBodyCaps': (0.9, 0.55, 0.2),
+        'Abdomen_GITS_Rubber': (0.3, 0.8, 0.3)}
+# close-ups of the seam where the breasts meet the torso (--seam): the outer side, from below, and between them
+SEAM_VIEWS = {'seam outer': ((-34.0, 24.0, 90.0), (-7.0, 4.0, 91.0)), 'seam below': ((-10.0, 30.0, 76.0), (-5.0, 5.0, 88.0)),
+              'seam between': ((6.0, 28.0, 97.0), (0.0, 4.0, 90.0))}
 
 
 def template(name):
@@ -65,15 +70,49 @@ def tri_morphs(raw):
     return out
 
 
+class Overlay:
+    """the game's files with Data-relative trees laid over them (a build not deployed yet), checked first"""
+
+    def __init__(self, game, roots):
+        self.game, self.roots = game, [pathlib.Path(r) for r in roots]
+
+    def _local(self, rel):
+        rel = rel.replace('\\', '/')
+        for r in self.roots:
+            p = r / rel
+            if p.exists():
+                return p
+            # Windows paths are case-blind, but a tree may spell a folder differently: walk it case-blind
+            cur = r
+            for part in rel.split('/'):
+                hit = next((q for q in cur.iterdir() if q.name.lower() == part.lower()), None) if cur.is_dir() else None
+                if hit is None:
+                    break
+                cur = hit
+            else:
+                return cur
+        return None
+
+    def read(self, rel):
+        p = self._local(rel)
+        return p.read_bytes() if p else self.game.read(rel)
+
+    def find(self, rel):
+        return self._local(rel) or self.game.find(rel)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('out')
+    ap.add_argument('--over', nargs='*', default=[], help='Data-relative trees laid over the game (checked first)')
     ap.add_argument('--template')
     ap.add_argument('--abdomen', default='Abdomen GITS Rubber')
     ap.add_argument('--size', type=int, default=640)
+    ap.add_argument('--flat', action='store_true', help='each shape in a flat colour, no textures')
+    ap.add_argument('--seam', action='store_true', help='close-ups of the seam under the breasts instead')
     a = ap.parse_args()
     pv.W, pv.H = a.size, int(a.size * 1.15)
-    game = gamedata.Game(DATA)
+    game = Overlay(gamedata.Game(DATA), a.over)
     work = pathlib.Path(r'D:\F4Output\servitron\render')
     work.mkdir(parents=True, exist_ok=True)
     sk_path = work / 'skeleton.nif'
@@ -98,10 +137,14 @@ def main():
                         part.pos[i] += v * np.array(d, np.float32)
             place = part.placement(bind)
             default_place = default_place if default_place is not None else place
+            colour = (0.45, 0.45, 0.5)
+            if a.flat:                                   # each shape its own flat colour: who is where
+                part.image = None
+                colour = FLAT.get(part.name, (0.6, 0.6, 0.6))
             vao, tex = r.upload(part)
-            drawn.append((part, vao, tex, None, (0.45, 0.45, 0.5), (1, 1, 1)))
+            drawn.append((part, vao, tex, None, colour, (1, 1, 1)))
     frames = []
-    for label, (eye, target) in VIEWS.items():
+    for label, (eye, target) in (SEAM_VIEWS if a.seam else VIEWS).items():
         eye = np.array(eye)
         vp = pv.perspective(34 if label != 'body' else 30, pv.W / pv.H, 5, 1000) @ pv.look_at(eye, target)
         d2 = [(p, vao, tex, p.matrices(bind, bind, 'Pelvis_skin', default_place), base, tint)

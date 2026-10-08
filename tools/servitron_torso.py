@@ -29,7 +29,9 @@ FRONT = 0.15
 # (shrunk by one cell, so no hole opens at its edge) and less than BEHIND behind the breasts goes too.
 BEHIND = 2.0
 CELL = 2.0                 # cells per unit
-PUSH, FADE = 3.0, 3        # the suit under the breasts: this far behind their surface, fading out over these cells
+PUSH, FADE = 3.0, 3        # the suit under the breasts: this far behind their surface (FADE: the first, stepped push)
+SMOOTH_ITER = 40           # relaxation passes of the push over the suit's surface (no spikes at its edge)
+DECAY = 0.88               # each pass keeps this much of the neighbours' push: it fades out a few rings from the breasts
 CAPS = ('Torso2_UpperBodyCaps', 'Torso3_Assaultron')
 # the caps' central chest plate, from a front render of Torso 2 GITS Boobs (built at the "Servitron" preset): between
 # the breasts, z -27.6 .. -20.7, |x| < 3.4; the box is a little wider and keeps clear of the collar (z > -17.4)
@@ -78,26 +80,44 @@ def trim(src, dst):
     lines = []
     for name in [k for k in SUITS if k in shapes]:
         s = n.shape(name)
-        moved = 0
-        for i, p in enumerate(s.positions()):
+        pos = s.positions()
+        # one value per welded position (the suit is split at seams: twins must move together)
+        key = {}
+        wid = [key.setdefault(tuple(round(x, 3) for x in p), len(key)) for p in pos]
+        wpos = [None] * len(key)
+        for i, p in enumerate(pos):
+            wpos[wid[i]] = p
+        nbr = collections.defaultdict(set)
+        for t in s.triangles():
+            for a in t:
+                nbr[wid[a]].update(wid[b] for b in t if wid[b] != wid[a])
+        # how far back each position MUST go: under the breasts, PUSH behind their surface (none elsewhere)
+        need = [0.0] * len(wpos)
+        for w, p in enumerate(wpos):
+            if p[1] <= -1.0:                              # the back of the torso stays where it is
+                continue
             k = (round(p[0] * CELL), round(p[2] * CELL))
-            # the nearest breast cell within FADE cells, and how far out of the outline this vertex is
-            near = None
+            # under the breasts fully; the suit's torn opening edge just outside their outline too, tapering over FADE
+            # cells (the third render: its flaps stood out under the breasts and in the cleavage)
             for r in range(FADE + 1):
                 ring = [(k[0] + a, k[1] + c) for a in range(-r, r + 1) for c in range(-r, r + 1)
                         if max(abs(a), abs(c)) == r and (k[0] + a, k[1] + c) in surface]
                 if ring:
-                    near = (r, max(surface[q] for q in ring))
+                    front = max(surface[q] for q in ring)
+                    need[w] = min(0.0, (front - PUSH) - p[1]) * (1.0 - r / (FADE + 1))
                     break
-            if near is None or p[1] < -1.0:                 # the back of the torso stays where it is
-                continue
-            r, front = near
-            w = 1.0 - r / (FADE + 1)
-            y = min(p[1], front - PUSH)
-            if y < p[1]:
-                s.set_position(i, (p[0], p[1] + (y - p[1]) * w, p[2]))
+        # the second photo's spikes (10-08): a push that steps from vertex to vertex tears the suit. So the push is a
+        # smooth field: relaxed over the suit's own surface, never less than what a position must move
+        dy = list(need)
+        for _ in range(SMOOTH_ITER):
+            dy = [min(need[w], DECAY * sum(dy[q] for q in nbr[w]) / len(nbr[w]) if nbr[w] else dy[w]) for w in range(len(dy))]
+        moved = 0
+        for i, p in enumerate(pos):
+            d = dy[wid[i]]
+            if d < -1e-4:
+                s.set_position(i, (p[0], p[1] + d, p[2]))
                 moved += 1
-        lines.append(f'{name}: {moved} of {s.count} vertices pushed behind the breasts')
+        lines.append(f'{name}: {moved} of {s.count} vertices pushed behind the breasts (smoothed)')
     n.save(dst)
     for name in [k for k in CAPS if k in shapes]:
         n = nif.Nif(dst)
