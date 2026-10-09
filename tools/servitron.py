@@ -48,7 +48,14 @@ OPENINGS = {
 STEP = 1.0                 # bridge ring spacing along the path
 JOIN = 2.5                 # the bridge leaves the cut along the canal's own direction and meets the path this much deeper
 RING_FADE = 1.5            # a canal's first units (and the shell within this of its ring) follow the ring bones, fading
-SHELL_REACH = 1.0
+# The suit round each ring: fully on the ring bones out to SHELL_FULL (past the ring's outer edge, 1.85 / 1.70), then
+# fading to its own weights over SHELL_REACH more. The ring itself moves whole (RING_EDGE_SHARE 1), so the SUIT takes the
+# stretch, not the ring (the owner, 2026-10-09: opened, the rings "look ugly like stretched texture" - with the edge at
+# 25% the lip passed it at full open and 185 of the vaginal ring's 576 triangles folded over; studies/servitron_ring_open.py).
+# The 10-08 tear (a whole ring on our bones, the suit beside it back on the thighs within 1 unit) cannot come back: the
+# suit under and beside the ring is on the same bones as the ring
+SHELL_FULL, SHELL_REACH = 2.0, 2.5
+PERINEUM_BLEND = 0.4       # between the two rings: the suit hands over from one ring's bones to the other's over this
 WRAP_FROM, WRAP_FULL = 1.0, 2.0
 RING_ANGLES = {'R': 0.0, 'F': 90.0, 'L': 180.0, 'B': 270.0}    # around each opening: +x, belly, -x, back
 
@@ -340,7 +347,7 @@ def ring_pairs(p, o):
     return out
 
 
-RING_LIP, RING_EDGE, RING_EDGE_SHARE = 1.05, 1.85, 0.25     # radial: fully ours inside the lip, 25% at the outer edge
+RING_LIP, RING_EDGE, RING_EDGE_SHARE = 1.05, 1.85, 1.0      # radial: the whole ring on ours (was 25% at the edge: SHELL_FULL)
 
 
 def ring_share(p, o):
@@ -450,16 +457,33 @@ def build(src, dst, osd=None, measure=False):
             if w:
                 want[i] = w
         weigh(n, canal, want)
-        sh = n.shape(shell)
-        want = {}
-        for i, p in enumerate(sh.positions()):
+    # the suit: both openings in ONE pass (they lie 3.6 apart, so their reaches overlap on the perineum, and a second
+    # weigh would shrink the first one's share there)
+    # weigh would shrink the first one's share there). Where both reach (the perineum: the rings' edges lie 0.09 apart),
+    # the suit follows the NEARER ring, blended over PERINEUM_BLEND across the midline: split evenly, the strip beside a
+    # ring that opens alone moved half as far as its edge (0.8 apart, studies/servitron_ring_open.py)
+    sh = n.shape(shell)
+    want = {}
+    for i, p in enumerate(sh.positions()):
+        shares = []
+        for nm, o in OPENINGS.items():
             d = sub(p, o['centre'])
             along = dot(d, o['axis'])
             across = math.sqrt(max(0.0, dot(d, d) - along * along))
-            gap = math.hypot(along, across - 1.45)
+            gap = math.hypot(along, max(0.0, across - SHELL_FULL))
+            t = 0.0
             if gap < SHELL_REACH:
-                want[i] = [(b, x * (1.0 - gap / SHELL_REACH)) for b, x in ring_pairs(p, o)]
-        weigh(n, sh, want)
+                t = 1.0 - gap / SHELL_REACH
+                t = t * t * (3 - 2 * t)
+            shares.append((t, math.hypot(along, across), o))
+        if not any(t for t, _, _ in shares):
+            continue
+        (tv, dv, ov), (ta, da, oa) = shares
+        s = min(1.0, max(0.0, 0.5 + (dv - da) / (2 * PERINEUM_BLEND)))      # 0 nearer the vagina, 1 nearer the anus
+        s = s * s * (3 - 2 * s)
+        want[i] = ([(b, x * tv * (1 - s)) for b, x in ring_pairs(p, ov)] +
+                   [(b, x * ta * s) for b, x in ring_pairs(p, oa)])
+    weigh(n, sh, want)
     used = {}
     for name in targets:
         used.update({k: used.get(k, 0) + v for k, v in refit_spheres(n, n.shape(name), set(new_bones)).items()})
