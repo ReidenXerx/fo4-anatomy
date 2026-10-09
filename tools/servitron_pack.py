@@ -56,7 +56,8 @@ def stage(dst):
         put(f, sd / f.name)
     put(SRV / 'male/SliderSets/AnatomyServitronMale.osp', cbbe / 'Tools/BodySlide/SliderSets/AnatomyServitronMale.osp')
     # 3BBB: the Tailor's sets, ours in them, and the skeleton that carries 3BBB's breast and butt bones
-    for src in (SRV / 'torso3bbb', SRV / 'rig3bbb_v2'):
+    # (+ 1.0.1: Servitron's own Bunny and French Maid, weighted to the 3BBB body; the owner's game has worn them since 10-08)
+    for src in (SRV / 'torso3bbb', SRV / 'rig3bbb_v2', SRV / 'outfits3bbb'):
         for d in (src / 'ShapeData').iterdir():
             for f in d.iterdir():
                 if not f.name.startswith('_'):
@@ -93,7 +94,8 @@ def module_config(version):
              'Anatomy Engine 1.2.14 or newer: check this yourself -- aims, opens and wraps; Nexus 109434\n'
              'Anatomy 1.2.5 or newer: check this yourself -- decides each robot\'s sex; Nexus 109435\n'
              'Servitron - BodySlide Files: check this yourself -- the projects ours replace; Nexus 32801\n'
-             'Servitron Physics Fix: check this yourself -- the human skeleton Servitrons animate on; Nexus 93993\n'
+             'Servitron Physics Fix (CBBE option only): check this yourself -- its skeleton has the penis bones; the 3BBB '
+             'option ships that skeleton with 3BBB\'s bones added, so it is not needed there; Nexus 93993\n'
              'BodySlide and Outfit Studio: check this yourself -- build the Servitron sets after installing; Nexus 25\n'
              'Rapport (recommended): keeps her mouth out of scenes, a robot has none; Nexus 109219\n'
              'Install with Vortex or MO2; manual installs are not supported.')
@@ -101,8 +103,8 @@ def module_config(version):
              + feature('Working rubber openings', 'Her own rubber rings and canals',
                        'Servitron\'s Rubber abdomens keep their own vagina and anus, now rigged: the rubber rings stretch '
                        'round whatever enters, the canals wrap the shaft inside, and the Anatomy Engine aims the penis '
-                       'into them in every AAF animation. The ring edges ride with the hips and thighs, so they hold '
-                       'together in any pose.', 'openings.jpg')
+                       'into them in every AAF animation. Each ring opens whole and the suit round it takes the stretch, '
+                       'so the rubber keeps its shape however wide it opens.', 'openings.jpg')
              + feature('Rubber breasts', 'Latex breasts in a machined socket',
                        'The Boobs torsos get rubber breasts: a latex areola with a satin finish and a metal-capped '
                        'nipple, seated in the chest by a polished metal bead, where the suit\'s own fabric takes over. '
@@ -118,11 +120,14 @@ def module_config(version):
             '        <group name="The body your physics preset moves" type="SelectExactlyOne">\n'
             '          <plugins order="Explicit">\n'
             + option('CBBE', 'For a CBBE physics preset (one breast bone a side). Replaces the projects of Servitron\'s '
-                     'own BodySlide sets; build them in BodySlide (the "Servitron" preset fits).', 'breasts.jpg',
+                     'own BodySlide sets; build them in BodySlide (the "Servitron" preset fits). Needs Servitron Physics '
+                     'Fix (Nexus 93993) for the penis bones.', 'breasts.jpg',
                      '              <files><folder source="CBBE" destination="" priority="0"/></files>\n', 'Optional')
             + option('3BBB (Anatomy)', 'For a 3BBB physics preset, Anatomy\'s 3BBB body and Ivy. The "(Anatomy 3BBB)" '
-                     'sets in BodySlide, and Servitron\'s skeleton with 3BBB\'s breast and butt bones added (it '
-                     'replaces Servitron Physics Fix\'s, which it is made from), so the breasts and butt jiggle.',
+                     'sets in BodySlide (build those, not Servitron\'s own torsos: theirs are CBBE and do not jiggle on '
+                     'a 3BBB preset), and Servitron Physics Fix\'s skeleton with 3BBB\'s breast and butt bones added, '
+                     'so the breasts and butt jiggle; Physics Fix itself is not needed with this option. Also 3BBB '
+                     'versions of Servitron\'s Bunny and French Maid outfits.',
                      'breasts.jpg', '              <files><folder source="3BBB" destination="" priority="0"/></files>\n',
                      'Recommended')
             + '          </plugins>\n        </group>\n      </optionalFileGroups>\n    </installStep>\n')

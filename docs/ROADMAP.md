@@ -120,8 +120,8 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
   per-outfit Servitron versions like its own Bunny and French Maid: slots other than 33, no human body pieces,
   ServitronRace addons, weighted to her 3BBB body (the Tailor pipeline can do the weighting). Pick a short list of
   favourite 3BBB outfits first; a male Servitron wears them too (his penis under the clothes needs a look).
-  Also pending for Anatomy Servitron 1.0.1: the 3BBB Bunny and French Maid projects (D:\F4Output\servitron\outfits3bbb,
-  built and in the owner's game 10-08).
+  The 3BBB Bunny and French Maid ship in Anatomy Servitron 1.0.1 (10-09, with the rings that open whole and Servitron
+  Physics Fix needed for the CBBE option only).
 - **Servitron spawn helper**: `cgf "Anatomy:DebugSpawn.Servitron"` can land the robot dead (Resurrect in the script did
   not help; console `resurrect 1` does). Workbench-built Servitrons are fine.
 - **Polish**: arousal cools down across a game-time jump (sleep/wait: today it ticks on real time and carries
