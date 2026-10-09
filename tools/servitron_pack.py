@@ -29,8 +29,8 @@ IMAGES = {  # fomod image -> source (the owner's in-game photos, 2026-10-08, and
     'male.jpg': PHOTOS / 'Screenshot423.png',
     'openings.jpg': pathlib.Path(r'D:\F4Output\capture\servitron-run8\a-pulled-back.png'),
 }
-MARKER = """; Anatomy Servitron is installed. Silhouette reads this file's presence: with it, Silhouette's body shapes keep
-; their breast sliders on Servitrons (their rubber breasts follow them). Nothing in here is read.
+MARKER = """; Anatomy Servitron is installed. Other mods may check this file's presence; nothing in here is read.
+; (Body shapes from BodyGen or Silhouette do not reach Servitrons: LooksMenu does not support their race.)
 """
 
 
@@ -65,6 +65,11 @@ def stage(dst):
         for f in (src / 'SliderSets').iterdir():
             put(f, b3 / 'Tools/BodySlide/SliderSets' / f.name)
     put(SRV / 'out/Meshes/Servitron/skeleton.nif', b3 / 'Meshes/Servitron/skeleton.nif')
+    # BodySlide groups for every set we ship (demonjemiy via Watcher, 10-09: the male abdomens sat in "Unassigned": no
+    # group file named them; the women's 3BBB sets were grouped only by the Tailor's Servitron refit, when installed).
+    # The CBBE option joins Servitron's own groups, the 3BBB option the Tailor's
+    groups(cbbe, ('CBBE', 'Servitron'), 'Anatomy Servitron CBBE.xml')
+    groups(b3, ('Anatomy Refit 3BBB', 'CBBE'), 'Anatomy Servitron 3BBB.xml')
     img = dst / 'fomod/images'
     img.mkdir(parents=True)
     for name, src in IMAGES.items():
@@ -74,6 +79,19 @@ def stage(dst):
     shutil.copy2(img / 'banner.jpg', dst / 'fomod/screenshot.png') if False else None
     Image.open(img / 'banner.jpg').save(dst / 'fomod/screenshot.png')
     return dst
+
+
+def groups(option_dir, names, file_name):
+    """a SliderGroups file putting every slider set of an option's .osp files in each of `names`"""
+    import re
+    bs = option_dir / 'Tools/BodySlide'
+    sets = sorted({m for p in (bs / 'SliderSets').glob('*.osp')
+                   for m in re.findall(r'<SliderSet name="([^"]+)"', p.read_text(encoding='utf-8', errors='replace'))})
+    body = ''.join(f'  <Group name="{g}">\n' + ''.join(f'    <Member name="{s}"/>\n' for s in sets) + '  </Group>\n'
+                   for g in names)
+    (bs / 'SliderGroups').mkdir(parents=True, exist_ok=True)
+    (bs / 'SliderGroups' / file_name).write_text('<?xml version="1.0" encoding="UTF-8"?>\n<SliderGroups>\n' + body +
+                                                 '</SliderGroups>\n', encoding='utf-8')
 
 
 def option(name, desc, image, files='', kind='Required'):
