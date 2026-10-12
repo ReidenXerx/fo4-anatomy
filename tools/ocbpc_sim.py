@@ -48,6 +48,9 @@ def sgn(v):
     return (v > 0) - (v < 0)
 
 
+RELATIVE_TAU = 0.3                   # the engine's followTravel default since 1.2.20 (Thing.cpp)
+
+
 class Bone:
     """One simulated bone. `rest` is its world position at rest; the parent moves it by `carry`."""
 
@@ -64,6 +67,27 @@ class Bone:
         self.vel = [0.0, 0.0, 0.0]
         self.act_off = [0.0, 0.0, 0.0]   # last frame's local offset (internal * linear), kept by the bone
         self.actual = list(rest)         # the bone's world position the game shows
+        # fo4-ocbpc 1.2.20 (sdp_phoenix, 2026-10-12): the spring rides the anchor's low-passed travel (per frame,
+        # over RELATIVE_TAU s), so a steady walk or run no longer holds the bone back by V * damping / stiffness.
+        # 0: the old world-space spring
+        self.tau = RELATIVE_TAU
+        self.anchor_v = [0.0, 0.0, 0.0]
+        self.last_target = None
+
+    def _anchor(self, target, dt):
+        """How far the spring's frame travels this frame: the anchor's velocity low-passed over RELATIVE_TAU s, times
+        the frame. The bone's internal position rides along, so steady travel stretches no spring while a start, a
+        stop or the gait's bob still does. Nothing on the first frame or across a jump past 100 units (a teleport)."""
+        last, self.last_target = self.last_target, list(target)
+        if self.tau <= 0 or last is None:
+            return [0.0, 0.0, 0.0]
+        d = v_sub(target, last)
+        if max(abs(x) for x in d) > 100:
+            self.anchor_v = [0.0, 0.0, 0.0]
+            return self.anchor_v
+        a = 1.0 - math.exp(-dt / 1000.0 / self.tau)
+        self.anchor_v = [self.anchor_v[i] + (d[i] - self.anchor_v[i]) * a for i in range(3)]
+        return list(self.anchor_v)
 
     def _push(self, at, colliders):
         push, hit = [0.0, 0.0, 0.0], False
@@ -89,6 +113,7 @@ class Bone:
             self.vel = v_mul(cv, self.step)
             new = v_add(self.old, cv)
         else:
+            self.old = v_add(self.old, self._anchor(target, dt))
             diff = v_sub(target, self.old)
             diff[2] += self.gcorr
             if max(abs(x) for x in diff) > 100:
@@ -135,6 +160,7 @@ class ContactBone(Bone):
         dt = clamp(int(delta_ms), 8, 64)
         mult = self.tick / dt
         target = v_add(self.rest, carry)
+        self.old = v_add(self.old, self._anchor(target, dt))
         diff = v_sub(target, self.old)
         diff[2] += self.gcorr
         if max(abs(x) for x in diff) > 100:
