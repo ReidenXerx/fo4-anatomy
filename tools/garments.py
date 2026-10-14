@@ -697,7 +697,8 @@ def regen(home, target, preset):
     for a in answered:
         print('   watchdog:', a)
     text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
-    ok = 'All group build sets processed successfully!' in text
+    # newer BodySlide says "All command-line build sets ...": the old check read every clean build as failed (10-15)
+    ok = any(f'All {w} build sets processed successfully!' in text for w in ('group', 'command-line'))
     errors = [line for line in text.splitlines() if '[1]' in line or 'rror' in line or 'ailed' in line]
     members = {name for name, gs in groups(home).items() if GROUP in gs}
     wrote = {norm(p.relative_to(target).as_posix()) for p in target.rglob('*.nif') if p.stat().st_mtime >= started}
