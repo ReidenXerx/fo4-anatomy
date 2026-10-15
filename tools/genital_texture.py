@@ -507,8 +507,8 @@ def verify_island(src, out, mask):
     if img.size != (src.w, src.h):
         return 1
     own = src.top()
-    # BC5 carries red and green only (Pillow decodes blue as 0): a BC7 specular with any blue failed here on a
-    # texel the game never reads that way (rijan_m via Watcher, 10-15); the normal map's blue is rebuilt from both
+    # BC5 carries red and green only (Pillow decodes blue as 0), so blue is not compared; the normal map's blue is
+    # rebuilt from both. (rijan_m's specular, 10-15, had no blue: it failed on red, see below)
     channels = 2 if bytes(out[84:88]) == b'BC5U' else 3
     step = max(1, src.w // 256)
     errs = []
@@ -521,7 +521,8 @@ def verify_island(src, out, mask):
     # a broken copy is wrong almost everywhere; Pillow's BC5 encoder alone misses by up to 51 on a noisy block, and
     # 1.2.9 still failed rijan_m's specular on ONE texel over 48 of 65536. Measured on noise and on smooth maps: a
     # sound copy keeps the share over 48 at 0 (smooth) and its mean at 1; a sixteenth wrong, a shift, swapped
-    # channels or a black copy go over 1% or a mean of 16 (scratchpad bc5_stats_probe.py, 10-15)
+    # channels or a black copy go over 1% or a mean of 16 (scratchpad bc5_stats_probe.py, 10-15). His real file:
+    # red off by 51 at one texel, mean 2.66, 0.017% over 48 (D:\F4Output\fixtures\rijan_m)
     over = sum(e > 48 for e in errs) / max(1, len(errs))
     mean = sum(errs) / max(1, len(errs))
     print(f'   re-encoded copy against the skin outside the patch: mean error {mean:.2f}, '
