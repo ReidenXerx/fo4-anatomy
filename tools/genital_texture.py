@@ -507,13 +507,17 @@ def verify_island(src, out, mask):
     if img.size != (src.w, src.h):
         return 1
     own = src.top()
+    # BC5 carries red and green only (Pillow decodes blue as 0): a BC7 specular with any blue failed here on a
+    # texel the game never reads that way (rijan_m via Watcher, 10-15); the normal map's blue is rebuilt from both
+    channels = 2 if bytes(out[84:88]) == b'BC5U' else 3
     step = max(1, src.w // 256)
     worst = 0
     mp = mask.load()
     for y in range(0, src.h, step):
         for x in range(0, src.w, step):
             if not mp[x, y]:
-                worst = max(worst, max(abs(a - b) for a, b in zip(own.getpixel((x, y)), img.getpixel((x, y)))))
+                pairs = zip(own.getpixel((x, y))[:channels], img.getpixel((x, y))[:channels])
+                worst = max(worst, max(abs(a - b) for a, b in pairs))
     return 0 if worst <= 48 else 1
 
 
