@@ -28,8 +28,10 @@ def textures(data):
     if data[:4] != b'BGSM':
         raise ValueError('not a BGSM file')
     version = struct.unpack_from('<I', data, 4)[0]
-    if version != 2:
-        raise ValueError(f'BGSM version {version}: only version 2 (Fallout 4) is read here')
+    # version 1 has the same head and the same 9 textures (65 of Absolutely Skimpy Attire's read back right, 10-15);
+    # a skin mod shipped one and the builder stopped at stage 6 (zstar via Watcher). What follows them is copied as is
+    if version not in (1, 2):
+        raise ValueError(f'BGSM version {version}: only versions 1 and 2 (Fallout 4) are read here')
     o, out = HEAD, []
     for _ in NAMES:
         (n,) = struct.unpack_from('<I', data, o)
