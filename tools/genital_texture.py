@@ -511,14 +511,22 @@ def verify_island(src, out, mask):
     # texel the game never reads that way (rijan_m via Watcher, 10-15); the normal map's blue is rebuilt from both
     channels = 2 if bytes(out[84:88]) == b'BC5U' else 3
     step = max(1, src.w // 256)
-    worst = 0
+    errs = []
     mp = mask.load()
     for y in range(0, src.h, step):
         for x in range(0, src.w, step):
             if not mp[x, y]:
                 pairs = zip(own.getpixel((x, y))[:channels], img.getpixel((x, y))[:channels])
-                worst = max(worst, max(abs(a - b) for a, b in pairs))
-    return 0 if worst <= 48 else 1
+                errs.append(max(abs(a - b) for a, b in pairs))
+    # a broken copy is wrong almost everywhere; Pillow's BC5 encoder alone misses by up to 51 on a noisy block, and
+    # 1.2.9 still failed rijan_m's specular on ONE texel over 48 of 65536. Measured on noise and on smooth maps: a
+    # sound copy keeps the share over 48 at 0 (smooth) and its mean at 1; a sixteenth wrong, a shift, swapped
+    # channels or a black copy go over 1% or a mean of 16 (scratchpad bc5_stats_probe.py, 10-15)
+    over = sum(e > 48 for e in errs) / max(1, len(errs))
+    mean = sum(errs) / max(1, len(errs))
+    print(f'   re-encoded copy against the skin outside the patch: mean error {mean:.2f}, '
+          f'{100 * over:.3f}% of {len(errs)} sampled texels over 48')
+    return 0 if over <= 0.01 and mean <= 16 else 1
 
 
 def main(data=None):
