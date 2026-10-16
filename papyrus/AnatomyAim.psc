@@ -11,6 +11,10 @@ Function SetBusy(Actor[] akBusy) Global Native
 ; shots from his tip.
 Function Climax(Actor[] akActors) Global Native
 
+; Her mouth's climax fluid, for faces (Rapport): 0 nothing, 1 full (his shaft still in it), 2 running out of her lips
+; (he is out), 3 swallowing (for 1.5 s after she swallows). Cheap: poll it from a face loop.
+Int Function MouthFluid(Actor akActor) Global Native
+
 ; For testing and support: a climax of the man aiHim with aiHer (form ids, decimal), as a CLIMAX stage gives it. Console:
 ;   cgf "AnatomyAim.ClimaxTest" <his form id> <her form id>
 Function ClimaxTest(Int aiHim, Int aiHer) Global
