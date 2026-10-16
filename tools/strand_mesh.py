@@ -18,7 +18,8 @@ Measured 10-16 with the engine's free camera on a held strand: a copy of EyeWet.
 eye material wants the eye shader), and blending (BGSM alpha blend + a NiAlphaProperty) drew nothing either; the
 same strand opaque drew, a pearly thread.
 
-    python tools/strand_mesh.py <body.nif> <Data root>/Meshes/Anatomy/Strand/Strand.nif [--fluid] [--data <FO4 Data>]
+    python tools/strand_mesh.py <body.nif> <Data root>/Meshes/Anatomy/Strand/Strand00.nif [--fluid] [--data <FO4 Data>]
+    python tools/strand_mesh.py vanilla <Data root>/Meshes/Anatomy/Strand/Strand00.nif   # the release set: POOL copies
 
 The render facts this layout rests on (2026-10-16, tests 1-20, fo4-ocbpc Strands.cpp): the engine attaches the root
 under an actor's 3D and attaches each shape again by itself, or nothing draws.
@@ -229,9 +230,12 @@ def build(body_path, out_path, material=None, fluid=False):
     print(f'{out}: {len(blocks)} blocks, {len(recs)} vertices, {len(tris)} triangles, {RINGS} bones, material {mat}')
 
 
-# the release's files, relative to Data (tools/release.py lists them)
-RELEASE_FILES = ('Meshes/Anatomy/Strand/Strand.nif', 'Materials/Anatomy/Strand.bgsm',
-                 'Textures/Anatomy/Strand/Strand_d.dds', 'Textures/Anatomy/Strand/Strand_s.dds')
+# the release's files, relative to Data (tools/release.py lists them). POOL copies of the one mesh: the engine Demands
+# each by its own name and gets its own prototype, so up to POOL strands are up at once (the game's clone is not bound)
+POOL = 8
+RELEASE_MESHES = tuple(f'Meshes/Anatomy/Strand/Strand{i:02}.nif' for i in range(POOL))
+RELEASE_FILES = RELEASE_MESHES + ('Materials/Anatomy/Strand.bgsm', 'Textures/Anatomy/Strand/Strand_d.dds',
+                                  'Textures/Anatomy/Strand/Strand_s.dds')
 VANILLA_BODY = 'Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.nif'
 VANILLA_MESHES = 'Fallout4 - Meshes.ba2'
 
@@ -247,9 +251,12 @@ def release_assets(out_root, game_data):
     src.parent.mkdir(parents=True, exist_ok=True)
     src.write_bytes(ba2.read(VANILLA_BODY))
     try:
-        build(src, out_root / RELEASE_FILES[0], fluid=True)
+        build(src, out_root / RELEASE_MESHES[0], fluid=True)
     finally:
         src.unlink()
+    first = (out_root / RELEASE_MESHES[0]).read_bytes()
+    for m in RELEASE_MESHES[1:]:
+        (out_root / m).write_bytes(first)
     fluid_material(out_root, game_data)
     missing = [f for f in RELEASE_FILES if not (out_root / f).exists()]
     if missing:
@@ -260,12 +267,12 @@ def release_assets(out_root, game_data):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('body', help="a skinned body nif to copy the shader from, or 'vanilla' for the release build")
-    ap.add_argument('out', help='<Data root>/Meshes/Anatomy/Strand/Strand.nif')
+    ap.add_argument('out', help='<Data root>/Meshes/Anatomy/Strand/Strand00.nif')
     ap.add_argument('--material')
     ap.add_argument('--fluid', action='store_true')
     ap.add_argument('--data', help='Fallout 4 Data, for the game\'s own skin material (--fluid) and body (vanilla)')
     a = ap.parse_args()
-    data_root = pathlib.Path(a.out).resolve().parents[3]              # <root>/Meshes/Anatomy/Strand/Strand.nif
+    data_root = pathlib.Path(a.out).resolve().parents[3]              # <root>/Meshes/Anatomy/Strand/Strand00.nif
     if a.body == 'vanilla':
         for p in release_assets(data_root, gamedata.find_data(a.data, tool='strand_mesh.py')):
             print(p)

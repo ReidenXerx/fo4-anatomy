@@ -116,8 +116,9 @@ WHAT IT DOES
     canal sits behind the anus.
   - Sex sounds from the engine: every animation pack's canned body sounds are muted in scenes and our
     own set plays from each stroke's real depth and speed. With Rapport, moans follow.
-  - Fluid strands: when a penis leaves her vagina, anus or mouth in a scene, a thin wet strand may stay
-    between them, sag, thin as they part and break (Anatomy Engine 1.2.26 or later).
+  - Fluid strands: in a scene, every time he pulls back thin wet strands stretch from her lips to his
+    shaft, and one may stay when he pulls out of her vagina, anus or mouth; they sag, thin as they part
+    and snap (Anatomy Engine 1.2.26 or later).
   - Men: the builder opens BodyTalk 4's own anus (Nude and Uncut, "Anatomy Male Body" in BodySlide),
     with a canal, physics, aim and sounds, even under a women-only physics preset.
   - 3BBB: with 3BBB installed, the builder builds on it and keeps its breast bones.
@@ -580,9 +581,10 @@ ANATOMY_FOMOD = dict(
          'slaps, closed-mouth blowjob sounds, licks, fingering. With Rapport, moans follow: pleasure, pain-pleasure for '
          'anal and BDSM, climax. On by default.', 'anatomy-numbers.jpg'),
         ('Fluid strands', 'Fluid strands',
-         'When a penis leaves her vagina, anus or mouth in a scene, a thin wet strand may stay between them: it sags, '
-         'thins as they part and breaks, or is gone when he goes back in. The engine moves it every frame (Anatomy '
-         'Engine 1.2.26); the design follows OStrands by LilRicefield. On by default; ocbp.ini [Strands] tunes it.',
+         'In a scene, every time he pulls back, thin wet strands stretch from her lips to his shaft, and one may stay '
+         'between her and his tip when he pulls out of her vagina, anus or mouth. They sag, thin as they part and snap '
+         'in the middle. The engine moves them every frame (Anatomy Engine 1.2.26); the design and physics follow '
+         'OStrands by LilRicefield. On by default; ocbp.ini [Strands] tunes it.',
          'anatomy-strands.jpg'),
         ('Arousal that rises and fades', 'Arousal',
          'Scenes, nudity, watching others and a companion\'s own arousal raise it; it fades with time. Her nipples '
