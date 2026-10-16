@@ -10,10 +10,13 @@ strings remapped, so the block layout is one the game was built against; the sha
 Default (0), which drops SkinTint's 16-byte tail. Only the nodes, the shape and the skin blocks are written here.
 Winding follows the body's: cross(v1 - v0, v2 - v0) points along the vertex normal.
 
---fluid points the shader at our wet material and adds a NiAlphaProperty (blend: the BGSM's alpha does nothing
-without one), and writes that material beside the mesh's Meshes folder: Materials/Anatomy/Strand.bgsm, a copy of the
-game's EyeWet.BGSM (lit, alpha-blended, glossy, the eye cubemap) with a cream diffuse of ours, depth-tested, not a
-decal, full specular; and Textures/Anatomy/Strand/Strand_d.dds (16x16 uncompressed, the cream).
+--fluid points the shader at our fluid material and writes it beside the mesh's Meshes folder:
+Materials/Anatomy/Strand.bgsm, a copy of the game's own women's skin material (read from Fallout4 - Materials.ba2,
+never a skin mod's loose copy) with a cream diffuse, a flat normal map and a glossy flat smooth/spec map of ours, no
+rim light or subsurface; Textures/Anatomy/Strand/Strand_d.dds and Strand_s.dds (16x16 uncompressed). It is OPAQUE.
+Measured 10-16 with the engine's free camera on a held strand: a copy of EyeWet.BGSM drew nothing on this shape (the
+eye material wants the eye shader), and blending (BGSM alpha blend + a NiAlphaProperty) drew nothing either; the
+same strand opaque drew, a pearly thread.
 
     python tools/strand_mesh.py <body.nif> <Data root>/Meshes/Anatomy/Strand/Strand.nif [--fluid] [--data <FO4 Data>]
 
@@ -46,12 +49,12 @@ SHADER_DEFAULT = 0                                 # shader type (byte 0); the b
 
 FLUID_MATERIAL = 'Materials\\Anatomy\\Strand.bgsm'
 FLUID_DIFFUSE = 'Anatomy/Strand/Strand_d.dds'      # relative to Textures, as BGSM paths are
-FLUID_BASE = 'Materials\\actors\\character\\HumanCommon\\EyeWet.BGSM'
+FLUID_BASE = 'Materials\\actors\\Character\\BaseHumanFemale\\basehumanFemaleskin.bgsm'
+FLUID_ARCHIVE = 'Fallout4 - Materials.ba2'
+FLUID_NORMAL = 'Shared/FlatFlat_n.dds'
+FLUID_SPEC = 'Anatomy/Strand/Strand_s.dds'
 FLUID_COLOUR = (236, 232, 220)                     # a pearly cream
-FLUID_ALPHA = 0.85
-# NiAlphaProperty flags: blend on (bit 0), source SRC_ALPHA (6 << 1), destination INV_SRC_ALPHA (7 << 5), as the
-# BGSM's own blend 6/7
-ALPHA_FLAGS = 1 | 6 << 1 | 7 << 5
+FLUID_GLOSS = (235, 235, 0)                        # smooth/spec map: red specular, green smoothness, both high
 
 
 def ubyte(x):
@@ -119,24 +122,28 @@ def dds_rgba(width, height, rgba):
 
 
 def fluid_material(data_root, game_data):
-    """Materials/Anatomy/Strand.bgsm and its diffuse under data_root, from the game's EyeWet.BGSM."""
-    base = gamedata.Game(game_data).read(FLUID_BASE)
-    if base is None:
-        raise SystemExit(f'{FLUID_BASE} was not found in {game_data}')
-    m = bytearray(bgsm.with_textures(base, {'diffuse': FLUID_DIFFUSE}))
-    struct.pack_into('<f', m, 28, FLUID_ALPHA)
-    m[44] = 1                                     # z-test: the bodies hide it (EyeWet's eyes skip it)
+    """Materials/Anatomy/Strand.bgsm and its diffuse under data_root, from the game's own women's skin material."""
+    archive = pathlib.Path(game_data) / FLUID_ARCHIVE
+    ba2 = gamedata.Ba2(archive)
+    if FLUID_BASE not in ba2:
+        raise SystemExit(f'{FLUID_BASE} was not found in {archive}')
+    m = bytearray(bgsm.with_textures(ba2.read(FLUID_BASE), {'diffuse': FLUID_DIFFUSE, 'normal': FLUID_NORMAL, 'smoothspec': FLUID_SPEC}))
+    m[44] = 1                                     # z-test
     m[47] = 0                                     # not a decal
     _, end = bgsm.textures(bytes(m))
-    assert m[end + 15] == 1, 'EyeWet tail: specular expected on at +15'
-    struct.pack_into('<f', m, end + 28, 1.0)      # specular multiplier (EyeWet's 0.2), smoothness 1 follows
+    assert m[end + 15] == 1, 'skin tail: specular expected on at +15'
+    m[end + 1] = 0                                # no rim light
+    m[end + 10] = 0                               # no subsurface (skin's)
+    struct.pack_into('<ff', m, end + 28, 1.0, 1.0)   # specular multiplier, smoothness
     out = pathlib.Path(data_root) / FLUID_MATERIAL.replace('\\', '/')
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(bytes(m))
     tex = pathlib.Path(data_root) / 'Textures' / FLUID_DIFFUSE
     tex.parent.mkdir(parents=True, exist_ok=True)
     tex.write_bytes(dds_rgba(16, 16, FLUID_COLOUR + (255,)))
-    return out, tex
+    spec = pathlib.Path(data_root) / 'Textures' / FLUID_SPEC
+    spec.write_bytes(dds_rgba(16, 16, FLUID_GLOSS + (255,)))
+    return out, tex, spec
 
 
 def build(body_path, out_path, material=None, fluid=False):
@@ -182,13 +189,12 @@ def build(body_path, out_path, material=None, fluid=False):
     shd = add('BSLightingShaderProperty')
     struct.pack_into('<i', sb, 40, add('BSShaderTextureSet', tset_bytes))
     blocks[shd][1] = bytes(sb)
-    alpha = add('NiAlphaProperty', struct.pack('<iIiHB', -1, 0, -1, ALPHA_FLAGS, 128)) if fluid else -1
 
     recs, tris = geometry()
     data = b''.join(recs) + b''.join(struct.pack('<3H', *tr) for tr in tris)
     length = (RINGS - 1) * SPACING
     blocks[shape][1] = (av(S['StrandShape']) + struct.pack('<4f', length / 2, 0, 0, length / 2 + RADIUS) +
-                        struct.pack('<iii', skin, shd, alpha) + struct.pack('<Q', DESC) +
+                        struct.pack('<iii', skin, shd, -1) + struct.pack('<Q', DESC) +
                         struct.pack('<IHI', len(tris), len(recs), len(data)) + data)
     blocks[skin][1] = struct.pack('<iiI', 0, bonedata, RINGS) + struct.pack(f'<{RINGS}i', *bones) + struct.pack('<I', 0)
     bd = struct.pack('<I', RINGS)
