@@ -85,6 +85,22 @@ inner-thigh crease and over-body garment weights, skipped by the owner (A-56: A-
    OPEN (2026-10-02, fo4-refit studies/skirt_gif.py, the real solver on the preview jump): coats and closed dresses
    keep the thighs covered (hunter longcoat, slinky dress), but a SLIT dress (vtaw wardrobe5 Dress) throws its front
    panel out flat on the landing: the filter should leave slit cloth plain, or the weights follow the slit.
+6. **Fully featured climax fluid, outside and inside, mouth included** (the owner, 2026-10-16, after fluids were
+   unparked and strands shipped). Today (Engine 1.2.28, Anatomy 1.2.8): at an AAF CLIMAX stage, outside = 3-5 pulses
+   of strands from his tip that stick where they land; inside = a few drips from her opening once he is out. Wanted:
+   - OUTSIDE: shots that look like fluid, not only threads: streams that break into drops and land as blobs and
+     smears that stay on her body (and his), run down under gravity, gather and drip off; ground splashes.
+   - INSIDE (vagina, anus, mouth): the fluid FILLS the canal first (our canal has a known volume and ring bones), so
+     a climax inside reads as volume in her; with him still inside it backs up around the shaft at the entrance;
+     once he pulls out it starts to come out: a first gush, then slow seepage and drips over the next seconds to a
+     minute, more when she stands or moves, less when she lies; the mouth: it shows at the lips, she may let it run
+     out or swallow (Rapport's faces).
+   - Volume per climax, an empty/full state per opening that drains over time, all tunable; on by default.
+   How (to settle in ROADMAP-DESIGN.md): OStrands' FluidManager is the reference (its game-free particle solver,
+   src/fluid, GPL-3, LilRicefield: particles that stick, flow on skin, form drops and runs, reservoirs that leak from
+   openings), drawn with our strand and blob meshes; the canal fill from our canal's rings. Done when, in game, a
+   climax outside leaves visible fluid that stays and runs on her body, and a climax inside shows it at the entrance
+   while he is in and flowing out after he pulls out, for vagina, anus and mouth.
 
 ## Later (low priority)
 
