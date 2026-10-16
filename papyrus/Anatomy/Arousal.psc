@@ -129,6 +129,45 @@ Event Silhouette:Bridge.OnActorGenerated(Silhouette:Bridge akSender, Var[] akArg
 	EndIf
 EndEvent
 
+; AAF began a position, or the next stage of one: [1] its actors, [3] its tags. A CLIMAX tag tells the engine
+; (AnatomyAim.Climax), which leaves fluid from each man's shaft: shots outside, drips from her after a climax inside
+Event AAF:AAF_API.OnAnimationStart(AAF:AAF_API akSender, Var[] akArgs)
+	ClimaxIfTagged(akArgs)
+EndEvent
+
+Event AAF:AAF_API.OnAnimationChange(AAF:AAF_API akSender, Var[] akArgs)
+	ClimaxIfTagged(akArgs)
+EndEvent
+
+Function ClimaxIfTagged(Var[] akArgs)
+	If akArgs == None || akArgs.Length < 4
+		Return
+	EndIf
+	Var[] tags = Utility.VarToVarArray(akArgs[3])
+	Bool climax = False
+	Int i = 0
+	While !climax && tags != None && i < tags.Length
+		climax = (tags[i] as String) == "CLIMAX"     ; Papyrus compares strings without case
+		i += 1
+	EndWhile
+	If !climax
+		Return
+	EndIf
+	Var[] who = Utility.VarToVarArray(akArgs[1])
+	Actor[] actors = new Actor[0]
+	Int k = 0
+	While who != None && k < who.Length
+		Actor a = who[k] as Actor
+		If a != None
+			actors.Add(a, 1)
+		EndIf
+		k += 1
+	EndWhile
+	If actors.Length > 0
+		AnatomyAim.Climax(actors)
+	EndIf
+EndFunction
+
 ; What the installer cannot see (nexus-tools docs/FOMOD-STANDARD.md rule 3: a FOMOD sees plugins only), said in game
 ; at every load, only when wrong: F4SE, and the Anatomy Engine loaded and new enough. The engine registers with F4SE
 ; as "OCBPC plugin" (the classic name, which Rapport sends to). F4SE 0.7.x (NG, AE) reports its packed version
@@ -180,6 +219,11 @@ Function Setup()
 		AAF:AAF_API api = Game.GetFormFromFile(0x00000F99, "AAF.esm") as AAF:AAF_API
 		If api != None
 			_busy = api.AAF_ActorBusy
+			; fluid strands' climax (2026-10-16): a stage tagged CLIMAX tells the engine. Plain names, as Silhouette's below:
+			; this build imports F4SE's ScriptObject first, whose CustomEventName parameter makes the compiler check the
+			; name and mangle it itself (a mangled literal is refused). Registering again after a load is harmless
+			RegisterForCustomEvent(api, "OnAnimationStart")
+			RegisterForCustomEvent(api, "OnAnimationChange")
 		EndIf
 	EndIf
 	_servitron = None

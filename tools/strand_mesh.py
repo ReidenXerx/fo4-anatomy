@@ -232,7 +232,7 @@ def build(body_path, out_path, material=None, fluid=False):
 
 # the release's files, relative to Data (tools/release.py lists them). POOL copies of the one mesh: the engine Demands
 # each by its own name and gets its own prototype, so up to POOL strands are up at once (the game's clone is not bound)
-POOL = 8
+POOL = 16
 RELEASE_MESHES = tuple(f'Meshes/Anatomy/Strand/Strand{i:02}.nif' for i in range(POOL))
 RELEASE_FILES = RELEASE_MESHES + ('Materials/Anatomy/Strand.bgsm', 'Textures/Anatomy/Strand/Strand_d.dds',
                                   'Textures/Anatomy/Strand/Strand_s.dds')
