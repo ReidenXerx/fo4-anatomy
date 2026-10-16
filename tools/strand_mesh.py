@@ -21,6 +21,11 @@ same strand opaque drew, a pearly thread.
     python tools/strand_mesh.py <body.nif> <Data root>/Meshes/Anatomy/Strand/Strand00.nif [--fluid] [--data <FO4 Data>]
     python tools/strand_mesh.py vanilla <Data root>/Meshes/Anatomy/Strand/Strand00.nif   # the release set: POOL copies
 
+A blob (--blob, the climax fluid's drops and pools, fo4-ocbpc Fluid.cpp): a unit icosphere subdivided once (42
+vertices), each vertex skinned only to its own bone Blob<k> placed on it. The engine puts every bone on the fluid's
+surface along its direction and turns it to the surface's normal, so the sphere takes the shape of the particles it
+wraps (OStrands' semen_blob.nif, tools/make_fluid.py there, is laid out the same way).
+
 The render facts this layout rests on (2026-10-16, tests 1-20, fo4-ocbpc Strands.cpp): the engine attaches the root
 under an actor's 3D and attaches each shape again by itself, or nothing draws.
 """
@@ -106,6 +111,59 @@ def geometry():
     return recs, tris
 
 
+def icosphere():
+    """A unit icosahedron subdivided once: 42 points, 80 faces wound outward."""
+    t = (1 + 5 ** 0.5) / 2
+
+    def unit(v):
+        n = math.sqrt(sum(c * c for c in v))
+        return tuple(c / n for c in v)
+    pts = [unit(v) for v in ((-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0), (0, -1, t), (0, 1, t), (0, -1, -t),
+                             (0, 1, -t), (t, 0, -1), (t, 0, 1), (-t, 0, -1), (-t, 0, 1))]
+    faces = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6),
+             (7, 1, 8), (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10),
+             (8, 6, 7), (9, 8, 1)]
+    mid = {}
+
+    def half(a, b):
+        k = (min(a, b), max(a, b))
+        if k not in mid:
+            mid[k] = len(pts)
+            pts.append(unit(tuple(pts[a][i] + pts[b][i] for i in range(3))))
+        return mid[k]
+    out = []
+    for a, b, c in faces:
+        ab, bc, ca = half(a, b), half(b, c), half(c, a)
+        out += [(a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca)]
+    wound = []
+    for tri in out:
+        p0, p1, p2 = (pts[i] for i in tri)
+        e1 = [p1[i] - p0[i] for i in range(3)]
+        e2 = [p2[i] - p0[i] for i in range(3)]
+        cr = (e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0])
+        wound.append(tri if sum(cr[i] * (p0[i] + p1[i] + p2[i]) for i in range(3)) > 0 else (tri[0], tri[2], tri[1]))
+    return pts, wound
+
+
+def blob_geometry():
+    """Vertex records and triangles of the blob: vertex k on the unit sphere, weighted 1 to bone k."""
+    pts, tris = icosphere()
+    recs = []
+    for k, (x, y, z) in enumerate(pts):
+        nrm = (x, y, z)
+        tan = (1.0, 0.0, 0.0) if abs(z) > 0.999 else (-y / math.hypot(x, y), x / math.hypot(x, y), 0.0)
+        bit = (nrm[1] * tan[2] - nrm[2] * tan[1], nrm[2] * tan[0] - nrm[0] * tan[2], nrm[0] * tan[1] - nrm[1] * tan[0])
+        u = 0.5 + math.atan2(y, x) / (2 * math.pi)
+        v = math.acos(max(-1.0, min(1.0, z))) / math.pi
+        r = struct.pack('<4e', x, y, z, bit[0]) + struct.pack('<2e', u, v)
+        r += bytes((ubyte(nrm[0]), ubyte(nrm[1]), ubyte(nrm[2]), ubyte(bit[1])))
+        r += bytes((ubyte(tan[0]), ubyte(tan[1]), ubyte(tan[2]), ubyte(bit[2])))
+        r += struct.pack('<4e', 1.0, 0.0, 0.0, 0.0) + bytes((k, 0, 0, 0))
+        assert len(r) == (DESC & 0xF) * 4
+        recs.append(r)
+    return pts, recs, tris
+
+
 def av(name, t=(0.0, 0.0, 0.0), extras=()):
     """NiObjectNET + NiAVObject: name, extra data refs, no controller, flags, transform, no collision."""
     return (struct.pack('<iI', name, len(extras)) + struct.pack(f'<{len(extras)}i', *extras) +
@@ -147,7 +205,7 @@ def fluid_material(data_root, game_data):
     return out, tex, spec
 
 
-def build(body_path, out_path, material=None, fluid=False):
+def build(body_path, out_path, material=None, fluid=False, blob=False):
     body = nif.Nif(body_path)
     shader = next(i for i, t in enumerate(body.types) if t == 'BSLightingShaderProperty')
     so, ss = body.offsets[shader]
@@ -159,7 +217,22 @@ def build(body_path, out_path, material=None, fluid=False):
     mat = FLUID_MATERIAL if fluid else material or body.string(struct.unpack_from('<i', shader_src, 4)[0])
     wet = body.string(struct.unpack_from('<i', shader_src, 60)[0])
 
-    strings = ['StrandRoot'] + [f'Strand{k:02}' for k in range(RINGS)] + ['StrandShape', 'BSX', mat] + ([wet] if wet else [])
+    if blob:
+        pts, recs, tris = blob_geometry()
+        names = [f'Blob{k:02}' for k in range(len(pts))]
+        homes = list(pts)                                             # each bone on its vertex
+        root_name, shape_name = 'BlobRoot', 'BlobShape'
+        shape_bound = (0.0, 0.0, 0.0, 1.0)
+        bone_bound = 0.5
+    else:
+        recs, tris = geometry()
+        names = [f'Strand{k:02}' for k in range(RINGS)]
+        homes = [(k * SPACING, 0.0, 0.0) for k in range(RINGS)]
+        root_name, shape_name = 'StrandRoot', 'StrandShape'
+        length = (RINGS - 1) * SPACING
+        shape_bound = (length / 2, 0.0, 0.0, length / 2 + RADIUS)
+        bone_bound = RADIUS + SPACING
+    strings = [root_name] + names + [shape_name, 'BSX', mat] + ([wet] if wet else [])
     S = {s: i for i, s in enumerate(strings)}
     blocks = []                                                       # [type, bytes]
 
@@ -171,7 +244,7 @@ def build(body_path, out_path, material=None, fluid=False):
     # bits (TopFadeNode 14, 32, FadedIn 37) and draws it; without BSX it kept 80000E and drew nothing (10-16, tests 20/23)
     root = add('NiNode')
     bsx = add('BSXFlags', struct.pack('<iI', S['BSX'], BSX_FLAGS))
-    bones = [add('NiNode', av(S[f'Strand{k:02}'], (k * SPACING, 0.0, 0.0)) + struct.pack('<I', 0)) for k in range(RINGS)]
+    bones = [add('NiNode', av(S[n], h) + struct.pack('<I', 0)) for n, h in zip(names, homes)]
     shape = add('BSTriShape')
     skin = add('BSSkin::Instance')
     bonedata = add('BSSkin::BoneData')
@@ -191,21 +264,20 @@ def build(body_path, out_path, material=None, fluid=False):
     struct.pack_into('<i', sb, 40, add('BSShaderTextureSet', tset_bytes))
     blocks[shd][1] = bytes(sb)
 
-    recs, tris = geometry()
     data = b''.join(recs) + b''.join(struct.pack('<3H', *tr) for tr in tris)
-    length = (RINGS - 1) * SPACING
-    blocks[shape][1] = (av(S['StrandShape']) + struct.pack('<4f', length / 2, 0, 0, length / 2 + RADIUS) +
+    blocks[shape][1] = (av(S[shape_name]) + struct.pack('<4f', *shape_bound) +
                         struct.pack('<iii', skin, shd, -1) + struct.pack('<Q', DESC) +
                         struct.pack('<IHI', len(tris), len(recs), len(data)) + data)
-    blocks[skin][1] = struct.pack('<iiI', 0, bonedata, RINGS) + struct.pack(f'<{RINGS}i', *bones) + struct.pack('<I', 0)
-    bd = struct.pack('<I', RINGS)
-    for k in range(RINGS):
-        # bound in the bone's space (around its ring), then the skin-to-bone transform: v_bone = v_skin - (kS, 0, 0)
-        bd += struct.pack('<4f', 0, 0, 0, RADIUS + SPACING) + struct.pack('<9f', 1, 0, 0, 0, 1, 0, 0, 0, 1)
-        bd += struct.pack('<3f', -k * SPACING, 0, 0) + struct.pack('<f', 1.0)
+    nb = len(names)
+    blocks[skin][1] = struct.pack('<iiI', 0, bonedata, nb) + struct.pack(f'<{nb}i', *bones) + struct.pack('<I', 0)
+    bd = struct.pack('<I', nb)
+    for h in homes:
+        # bound in the bone's space (around its ring / vertex), then the skin-to-bone transform: v_bone = v_skin - home
+        bd += struct.pack('<4f', 0, 0, 0, bone_bound) + struct.pack('<9f', 1, 0, 0, 0, 1, 0, 0, 0, 1)
+        bd += struct.pack('<3f', *(0.0 - c for c in h)) + struct.pack('<f', 1.0)   # 0.0 - x: never a -0.0
     blocks[bonedata][1] = bd
     kids = bones + [shape]
-    blocks[root][1] = av(S['StrandRoot'], extras=(bsx,)) + struct.pack('<I', len(kids)) + struct.pack(f'<{len(kids)}i', *kids)
+    blocks[root][1] = av(S[root_name], extras=(bsx,)) + struct.pack('<I', len(kids)) + struct.pack(f'<{len(kids)}i', *kids)
 
     types = []
     for t, _ in blocks:
@@ -223,18 +295,22 @@ def build(body_path, out_path, material=None, fluid=False):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(head + b''.join(b for _, b in blocks) + footer)
     back = nif.Nif(out)                                               # our own reader must take it back
-    sh = back.shape('StrandShape')
+    sh = back.shape(shape_name)
     bnames, _ = back.skin(sh)
-    assert bnames == [f'Strand{k:02}' for k in range(RINGS)], bnames
+    assert bnames == names, bnames
     assert sh.count == len(recs) and sh.triangle_count == len(tris)
-    print(f'{out}: {len(blocks)} blocks, {len(recs)} vertices, {len(tris)} triangles, {RINGS} bones, material {mat}')
+    print(f'{out}: {len(blocks)} blocks, {len(recs)} vertices, {len(tris)} triangles, {nb} bones, material {mat}')
 
 
 # the release's files, relative to Data (tools/release.py lists them). POOL copies of the one mesh: the engine Demands
 # each by its own name and gets its own prototype, so up to POOL strands are up at once (the game's clone is not bound)
 POOL = 16
 RELEASE_MESHES = tuple(f'Meshes/Anatomy/Strand/Strand{i:02}.nif' for i in range(POOL))
-RELEASE_FILES = RELEASE_MESHES + ('Materials/Anatomy/Strand.bgsm', 'Textures/Anatomy/Strand/Strand_d.dds',
+# the climax fluid's pools (fo4-ocbpc Fluid.cpp): blobs, and ropes (the strand tube under another name)
+BLOB_POOL, ROPE_POOL = 48, 32
+FLUID_BLOBS = tuple(f'Meshes/Anatomy/Fluid/Blob{i:02}.nif' for i in range(BLOB_POOL))
+FLUID_ROPES = tuple(f'Meshes/Anatomy/Fluid/Rope{i:02}.nif' for i in range(ROPE_POOL))
+RELEASE_FILES = RELEASE_MESHES + FLUID_BLOBS + FLUID_ROPES + ('Materials/Anatomy/Strand.bgsm', 'Textures/Anatomy/Strand/Strand_d.dds',
                                   'Textures/Anatomy/Strand/Strand_s.dds')
 VANILLA_BODY = 'Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.nif'
 VANILLA_MESHES = 'Fallout4 - Meshes.ba2'
@@ -252,11 +328,16 @@ def release_assets(out_root, game_data):
     src.write_bytes(ba2.read(VANILLA_BODY))
     try:
         build(src, out_root / RELEASE_MESHES[0], fluid=True)
+        build(src, out_root / FLUID_BLOBS[0], fluid=True, blob=True)
     finally:
         src.unlink()
     first = (out_root / RELEASE_MESHES[0]).read_bytes()
-    for m in RELEASE_MESHES[1:]:
+    for m in RELEASE_MESHES[1:] + FLUID_ROPES:
+        (out_root / m).parent.mkdir(parents=True, exist_ok=True)
         (out_root / m).write_bytes(first)
+    blob = (out_root / FLUID_BLOBS[0]).read_bytes()
+    for m in FLUID_BLOBS[1:]:
+        (out_root / m).write_bytes(blob)
     fluid_material(out_root, game_data)
     missing = [f for f in RELEASE_FILES if not (out_root / f).exists()]
     if missing:
