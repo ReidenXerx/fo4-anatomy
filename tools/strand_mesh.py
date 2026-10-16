@@ -35,7 +35,7 @@ import bgsm  # noqa: E402
 import gamedata  # noqa: E402
 import nif  # noqa: E402
 
-RINGS = 10
+RINGS = 16                                         # points along the strand (engine: up to 32, read from the mesh); 10 bent angularly, 10-16
 SIDES = 8
 SPACING = 1.0
 RADIUS = 1.0                                       # the bone scale sets the radius in game
