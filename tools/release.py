@@ -22,6 +22,8 @@ next-gen 1.10.984 and the Anniversary Edition 1.11.x. Its static libraries' noti
 Anatomy (the Nexus archive) ships:
     Anatomy.esp, Scripts/Anatomy/Arousal.pex, MCM/Config/Anatomy/*     arousal and its menu
     Sound/FX/Anatomy/*.wav                                             the engine's sex sounds (A-67, make_sounds.py)
+    Meshes|Materials|Textures/Anatomy/Strand*                          the fluid strand (strand_mesh.py, from the
+                                                                       game's own body and skin material)
     Scripts/AnatomyAim.pex                                             the aim's scene list (A-28)
     F4SE/Plugins/F4EE/Overlays/Anatomy.esp, Materials|Textures/Overlays/Anatomy   the glans colour (A-31)
     F4SE/Plugins/Anatomy/ocbp.ini, OCBPCollisionConfig.txt             our physics lines and [Bones]
@@ -114,6 +116,8 @@ WHAT IT DOES
     canal sits behind the anus.
   - Sex sounds from the engine: every animation pack's canned body sounds are muted in scenes and our
     own set plays from each stroke's real depth and speed. With Rapport, moans follow.
+  - Fluid strands: when a penis leaves her vagina, anus or mouth in a scene, a thin wet strand may stay
+    between them, sag, thin as they part and break (Anatomy Engine 1.2.26 or later).
   - Men: the builder opens BodyTalk 4's own anus (Nude and Uncut, "Anatomy Male Body" in BodySlide),
     with a canal, physics, aim and sounds, even under a women-only physics preset.
   - 3BBB: with 3BBB installed, the builder builds on it and keeps its breast bones.
@@ -126,6 +130,7 @@ CREDITS
   Ousnius and the CBBE team - CBBE, which this is built on (never included: read from your install).
   ericncream and the OpenCBP authors - OCBPC, which cbp.dll extends.
   maximusmaxy - Screen Archer Menu's source, which documented the face data the mouth uses.
+  LilRicefield - OStrands (GPL-3), whose design and physics the fluid strands follow.
   hinatashoyokun - testing that found four real bugs (MO2's virtual Data, BC7 skins twice, whitelist presets).
 
 LICENCES
@@ -444,6 +449,9 @@ def files(version):
         # Nexus archive would have shipped the 9 sounds with none of their 37 clips
         **{f'Sound/FX/Anatomy/{c}.wav': BUILD / f'sound/Sound/FX/Anatomy/{c}.wav'
            for _, _, clips in __import__('make_esp').SOUNDS for c in clips},
+        # the fluid strand (2026-10-16): the engine's Strands.cpp loads the mesh; built by main() from the game's own
+        # body and skin material (strand_mesh.release_assets), so nothing of CBBE's is in it
+        **{f: BUILD / 'strand' / f for f in __import__('strand_mesh').RELEASE_FILES},
     }
 
 
@@ -571,6 +579,11 @@ ANATOMY_FOMOD = dict(
          'replaced by our own set, played by the engine from the real depth and speed of each stroke -- wet strokes, '
          'slaps, closed-mouth blowjob sounds, licks, fingering. With Rapport, moans follow: pleasure, pain-pleasure for '
          'anal and BDSM, climax. On by default.', 'anatomy-numbers.jpg'),
+        ('Fluid strands', 'Fluid strands',
+         'When a penis leaves her vagina, anus or mouth in a scene, a thin wet strand may stay between them: it sags, '
+         'thins as they part and breaks, or is gone when he goes back in. The engine moves it every frame (Anatomy '
+         'Engine 1.2.26); the design follows OStrands by LilRicefield. On by default; ocbp.ini [Strands] tunes it.',
+         'anatomy-strands.jpg'),
         ('Arousal that rises and fades', 'Arousal',
          'Scenes, nudity, watching others and a companion\'s own arousal raise it; it fades with time. Her nipples '
          'follow it (LooksMenu). Its MCM page sets how much and what counts.', 'anatomy-arousal.jpg'),
@@ -784,8 +797,12 @@ def main():
         pack(ENGINE, args.version, engine_files(), f'{ENGINE} - README.txt',
              ENGINE_README.replace('@FORK_COMMIT@', commit), (ENGINE_TITLE, ENGINE_FOMOD))
     if args.what in ('all', 'anatomy'):
-        wanted = files(args.version)
         sys.path.insert(0, str(ROOT / 'tools'))
+        import gamedata
+        import strand_mesh
+        shutil.rmtree(BUILD / 'strand', ignore_errors=True)   # never a stale strand in the archive
+        strand_mesh.release_assets(BUILD / 'strand', gamedata.find_data(tool='release.py'))
+        wanted = files(args.version)
         import make_esp
         print(make_esp.verify(wanted['Anatomy.esp']))    # a keyword-less Anatomy.esp would move our layer into bodies
         print(face_section(wanted['F4SE/Plugins/Anatomy/ocbp.ini'].read_text(encoding='utf-8')))

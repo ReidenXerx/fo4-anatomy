@@ -229,16 +229,48 @@ def build(body_path, out_path, material=None, fluid=False):
     print(f'{out}: {len(blocks)} blocks, {len(recs)} vertices, {len(tris)} triangles, {RINGS} bones, material {mat}')
 
 
+# the release's files, relative to Data (tools/release.py lists them)
+RELEASE_FILES = ('Meshes/Anatomy/Strand/Strand.nif', 'Materials/Anatomy/Strand.bgsm',
+                 'Textures/Anatomy/Strand/Strand_d.dds', 'Textures/Anatomy/Strand/Strand_s.dds')
+VANILLA_BODY = 'Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.nif'
+VANILLA_MESHES = 'Fallout4 - Meshes.ba2'
+
+
+def release_assets(out_root, game_data):
+    """The fluid strand for the release under out_root, from the game's OWN women's body (Fallout4 - Meshes.ba2)
+    and skin material: nothing of CBBE's or any mod's, so the files are ours to ship."""
+    out_root = pathlib.Path(out_root)
+    ba2 = gamedata.Ba2(pathlib.Path(game_data) / VANILLA_MESHES)
+    if VANILLA_BODY not in ba2:
+        raise SystemExit(f'{VANILLA_BODY} was not found in {VANILLA_MESHES}')
+    src = out_root / '_vanilla_femalebody.nif'
+    src.parent.mkdir(parents=True, exist_ok=True)
+    src.write_bytes(ba2.read(VANILLA_BODY))
+    try:
+        build(src, out_root / RELEASE_FILES[0], fluid=True)
+    finally:
+        src.unlink()
+    fluid_material(out_root, game_data)
+    missing = [f for f in RELEASE_FILES if not (out_root / f).exists()]
+    if missing:
+        raise SystemExit(f'strand release files missing: {missing}')
+    return [out_root / f for f in RELEASE_FILES]
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('body')
-    ap.add_argument('out')
+    ap.add_argument('body', help="a skinned body nif to copy the shader from, or 'vanilla' for the release build")
+    ap.add_argument('out', help='<Data root>/Meshes/Anatomy/Strand/Strand.nif')
     ap.add_argument('--material')
     ap.add_argument('--fluid', action='store_true')
-    ap.add_argument('--data', help='Fallout 4 Data, to read EyeWet.BGSM from (--fluid)')
+    ap.add_argument('--data', help='Fallout 4 Data, for the game\'s own skin material (--fluid) and body (vanilla)')
     a = ap.parse_args()
+    data_root = pathlib.Path(a.out).resolve().parents[3]              # <root>/Meshes/Anatomy/Strand/Strand.nif
+    if a.body == 'vanilla':
+        for p in release_assets(data_root, gamedata.find_data(a.data, tool='strand_mesh.py')):
+            print(p)
+        sys.exit(0)
     build(a.body, a.out, a.material, a.fluid)
     if a.fluid:
-        data_root = pathlib.Path(a.out).resolve().parents[3]          # <root>/Meshes/Anatomy/Strand/Strand.nif
         for p in fluid_material(data_root, gamedata.find_data(a.data, tool='strand_mesh.py')):
             print(p)
