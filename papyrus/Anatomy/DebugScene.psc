@@ -7,7 +7,7 @@ ScriptName Anatomy:DebugScene
 ;      then click the other one and type it again. Nobody clicked = the player. Picking someone twice drops them.
 ;   2. Run:   cgf "Anatomy:DebugScene.Run" <kind>
 ;        1 vaginal   2 anal   3 oral   4 handjob   5 titjob   6 footjob   0 all of them, one after another
-;      Each run: an AAF scene of that kind, 20 s of it, the climax (AnatomyAim.Climax, as a CLIMAX stage gives it),
+; Each run: an AAF scene of that kind; once he is in her (vaginal, anal, oral) 15 s more, then the climax (AnatomyAim.Climax, as a CLIMAX stage gives it),
 ;      8 s more inside her, then the scene ends (he pulls out: the gush, the seep, the mouth running out). Notifications
 ;      say each step. A kind with no animation for the pair says so and is skipped.
 ;   cgf "Anatomy:DebugScene.RunTimed" <kind> <seconds>   the same with your own length before the climax
@@ -175,7 +175,7 @@ Function Clear() global
 EndFunction
 
 Function Run(Int aiKind) global
-	RunTimed(aiKind, 20)
+	RunTimed(aiKind, 15)
 EndFunction
 
 Function RunTimed(Int aiKind, Int aiSeconds) global
@@ -260,6 +260,19 @@ Bool Function Sequence(Anatomy:Arousal q, Int token, Actor[] pair, Int aiKind, F
 		Say(kind + ": AAF found no animation for " + PairText(pair) + ", skipped")
 		Return True
 	EndIf
+	; vaginal, anal, oral: the countdown starts once he is in (AnatomyAim.Inside). AAF flags them busy before the scene
+	; plays, and undressing and the aim take a while more: a fixed 20 s climaxed outside in every kind (2026-10-17)
+	If aiKind <= 3
+		Say(kind + ": waiting for him to go in")
+		Int opening = WaitInside(q, token, pair, 45.0)
+		If token != q.DebugToken()
+			Return False
+		ElseIf opening < 0
+			Say(kind + ": he never went in (the animation keeps him out); the climax comes outside")
+		Else
+			Say(kind + ": inside her " + OpeningName(opening))
+		EndIf
+	EndIf
 	Say(kind + ": climax in " + (afSeconds as Int) + " s")
 	If !Pause(q, token, afSeconds)
 		Return False
@@ -294,6 +307,32 @@ Bool Function WaitBusy(Anatomy:Arousal q, Int token, Actor[] pair, Keyword busy,
 		waited += 0.5
 	EndWhile
 	Return False
+EndFunction
+
+String Function OpeningName(Int aiOpening) global
+	If aiOpening == 0
+		Return "vagina"
+	ElseIf aiOpening == 1
+		Return "anus"
+	EndIf
+	Return "mouth"
+EndFunction
+
+; the opening either one's shaft is in (a pair of men: either may be the one in), or -1 after the timeout or a stop
+Int Function WaitInside(Anatomy:Arousal q, Int token, Actor[] pair, Float afTimeout) global
+	Float waited = 0.0
+	While waited < afTimeout && token == q.DebugToken()
+		Int a = AnatomyAim.Inside(pair[0])
+		If a < 0
+			a = AnatomyAim.Inside(pair[1])
+		EndIf
+		If a >= 0
+			Return a
+		EndIf
+		Utility.Wait(0.5)
+		waited += 0.5
+	EndWhile
+	Return -1
 EndFunction
 
 ; False when a stop or a new run took over

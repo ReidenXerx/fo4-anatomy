@@ -15,6 +15,10 @@ Function Climax(Actor[] akActors) Global Native
 ; (he is out), 3 swallowing (for 1.5 s after she swallows). Cheap: poll it from a face loop.
 Int Function MouthFluid(Actor akActor) Global Native
 
+; The opening a man's shaft is in right now, as a climax would count it: 0 vagina, 1 anus, 2 mouth, -1 none
+; (Anatomy:DebugScene waits for it before its climax).
+Int Function Inside(Actor akHim) Global Native
+
 ; For testing and support: a climax of the man aiHim with aiHer (form ids, decimal), as a CLIMAX stage gives it. Console:
 ;   cgf "AnatomyAim.ClimaxTest" <his form id> <her form id>
 Function ClimaxTest(Int aiHim, Int aiHer) Global

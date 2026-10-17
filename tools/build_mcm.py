@@ -65,7 +65,7 @@ def call(function, params):
 
 
 def debug_page():
-    run = ('An AAF scene of this kind for the picked pair, 20 s of it, the climax, 8 s more, then he pulls out. '
+    run = ('An AAF scene of this kind for the picked pair; 15 s after he is in her, the climax, 8 s more, then he pulls out. '
            'Close the menu to let it run; notifications say each step.')
     content = [
         {'type': 'text', 'text': 'Test scenes for the climax fluid: pick two people, then run a kind. Each pick shows '
