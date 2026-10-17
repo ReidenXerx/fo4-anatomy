@@ -158,6 +158,17 @@ Function PickLooked() global
 	Say(PairText(q.DebugPair()))
 EndFunction
 
+; for a sweep over animations (scratchpad pen_sweep.sh): which opening each of the pair's shafts is in right now
+; (AnatomyAim.Inside: 0 vagina, 1 anus, 2 mouth, -1 none), as a notification the F4MCP log keeps
+Function InsideReport() global
+	Anatomy:Arousal q = Quest()
+	If q == None || q.DebugPair().Length < 2
+		Return
+	EndIf
+	Actor[] pair = q.DebugPair()
+	Debug.Notification("Anatomy inside: " + AnatomyAim.Inside(pair[0]) + " " + AnatomyAim.Inside(pair[1]))
+EndFunction
+
 Function PickPlayer() global
 	Anatomy:Arousal q = Quest()
 	If q != None
