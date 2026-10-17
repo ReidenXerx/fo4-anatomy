@@ -14,6 +14,8 @@ ScriptName Anatomy:DebugScene
 ;   cgf "Anatomy:DebugScene.Climax"                      a climax now, for the pair (in any scene of theirs)
 ;   cgf "Anatomy:DebugScene.Stop"                        ends the pair's scene and any sequence waiting
 ;   cgf "Anatomy:DebugScene.Clear"                       forgets the pair
+; The same from MCM (Anatomy, page "Debug scenes", tools/build_mcm.py): buttons, and hotkeys for picking the person you
+; face (PickLooked), running every kind, a climax now and stopping.
 ;
 ; Every AAF call goes out on a stack of its own (CallGlobalFunctionNoWait): an AAF call can keep its stack from ever
 ; returning (fo4-rapport docs/aaf-under-the-hood.md), and the sequence must go on. Whether a scene started is read from
@@ -111,6 +113,57 @@ Function Pick() global
 	EndIf
 	q.DebugPick(a)
 	Say(PairText(q.DebugPair()))
+EndFunction
+
+; MCM's button and hotkey (no console there): the person nearest the middle of where you face, within ~30 m and 25
+; degrees; a Servitron counts (a robot)
+Function PickLooked() global
+	Anatomy:Arousal q = Quest()
+	If q == None
+		Say("Anatomy.esp is not loaded")
+		Return
+	EndIf
+	Actor player = Game.GetPlayer()
+	Actor best = None
+	Float bestScore = 1000.0
+	Int pass = 0
+	While pass < 2
+		Keyword kind = Game.GetFormFromFile(0x00013794, "Fallout4.esm") as Keyword         ; ActorTypeNPC
+		If pass == 1
+			kind = Game.GetFormFromFile(0x0002CB73, "Fallout4.esm") as Keyword             ; ActorTypeRobot
+		EndIf
+		ObjectReference[] near = player.FindAllReferencesWithKeyword(kind, 2000.0)
+		Int i = 0
+		While near != None && i < near.Length
+			Actor a = near[i] as Actor
+			If a != None && a != player && !a.IsDead() && a.Is3DLoaded()
+				Float angle = Math.Abs(player.GetHeadingAngle(a))
+				If angle <= 25.0
+					Float score = angle + player.GetDistance(a) / 100.0
+					If score < bestScore
+						best = a
+						bestScore = score
+					EndIf
+				EndIf
+			EndIf
+			i += 1
+		EndWhile
+		pass += 1
+	EndWhile
+	If best == None
+		Say("nobody in front of you (face them, within ~30 m)")
+		Return
+	EndIf
+	q.DebugPick(best)
+	Say(PairText(q.DebugPair()))
+EndFunction
+
+Function PickPlayer() global
+	Anatomy:Arousal q = Quest()
+	If q != None
+		q.DebugPick(Game.GetPlayer())
+		Say(PairText(q.DebugPair()))
+	EndIf
 EndFunction
 
 Function Clear() global
