@@ -778,3 +778,42 @@ Function Forget(Int k)
 	_level.Remove(k, 1)
 	_shown.Remove(k, 1)
 EndFunction
+
+; The console's debug scenes (Anatomy:DebugScene, global functions with no record of their own) keep their state here:
+; the two people picked, and a token that a new run or a stop changes, so a sequence still waiting gives up.
+Actor[] _debugPair
+Int _debugToken = 0
+
+Actor[] Function DebugPair()
+	If _debugPair == None
+		_debugPair = new Actor[0]
+	EndIf
+	Return _debugPair
+EndFunction
+
+; picking someone already picked drops them; a third pick drops the oldest
+Function DebugPick(Actor a)
+	Actor[] pair = DebugPair()
+	Int i = pair.Find(a)
+	If i >= 0
+		pair.Remove(i, 1)
+		Return
+	EndIf
+	If pair.Length >= 2
+		pair.Remove(0, 1)
+	EndIf
+	pair.Add(a, 1)
+EndFunction
+
+Function DebugClear()
+	_debugPair = new Actor[0]
+EndFunction
+
+Int Function DebugNewToken()
+	_debugToken += 1
+	Return _debugToken
+EndFunction
+
+Int Function DebugToken()
+	Return _debugToken
+EndFunction
