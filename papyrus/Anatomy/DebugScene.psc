@@ -326,6 +326,9 @@ Function StartAAF(Actor akA, Actor akB, String asTag) global
 	s.excludeTags = "Tease,Pose,Utility,Foreplay,NonSex"
 	s.skipWalk = True
 	s.preventFurniture = True
+	; the ground at the first one picked: with no location AAF refused every scene ("[044] ... no allowed 'FM'
+	; animations compatible with target location: null", Rapport.log 2026-10-17 20:30); Rapport names a spot too
+	s.locationObject = akA
 	s.duration = 600.0      ; AAF ignores it (a tree leaves by its own exit); the sequence ends the scene itself
 	Actor[] actors = new Actor[2]
 	actors[0] = akA
