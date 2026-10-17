@@ -164,6 +164,32 @@ def blob_geometry():
     return pts, recs, tris
 
 
+SHEET_N = 13   # 169 bones: under the 200 a skinned shape may have (more crashes the renderer, shared memory)
+
+
+def sheet_geometry(n=SHEET_N):
+    """The sheet (fo4-ocbpc Fluid.cpp draws a smear on a body with it, FluidSim::Drape): an n x n grid over [-1, 1]^2 at
+    z 0, row by row, facing +z; vertex k weighted 1 to bone k, which sits on it."""
+    pts, recs = [], []
+    for j in range(n):
+        for i in range(n):
+            x, y = -1.0 + 2.0 * i / (n - 1), -1.0 + 2.0 * j / (n - 1)
+            k = j * n + i
+            pts.append((x, y, 0.0))
+            r = struct.pack('<4e', x, y, 0.0, 0.0) + struct.pack('<2e', i / (n - 1), j / (n - 1))   # bitangent x 0
+            r += bytes((ubyte(0.0), ubyte(0.0), ubyte(1.0), ubyte(1.0)))     # normal +z, bitangent y 1
+            r += bytes((ubyte(1.0), ubyte(0.0), ubyte(0.0), ubyte(0.0)))     # tangent +x, bitangent z 0
+            r += struct.pack('<4e', 1.0, 0.0, 0.0, 0.0) + bytes((k, 0, 0, 0))
+            assert len(r) == (DESC & 0xF) * 4
+            recs.append(r)
+    tris = []
+    for j in range(n - 1):
+        for i in range(n - 1):
+            a, b, c, d = j * n + i, j * n + i + 1, (j + 1) * n + i, (j + 1) * n + i + 1
+            tris += [(a, b, d), (a, d, c)]                                   # counter-clockwise seen from +z
+    return pts, recs, tris
+
+
 def av(name, t=(0.0, 0.0, 0.0), extras=()):
     """NiObjectNET + NiAVObject: name, extra data refs, no controller, flags, transform, no collision."""
     return (struct.pack('<iI', name, len(extras)) + struct.pack(f'<{len(extras)}i', *extras) +
@@ -205,7 +231,7 @@ def fluid_material(data_root, game_data):
     return out, tex, spec
 
 
-def build(body_path, out_path, material=None, fluid=False, blob=False):
+def build(body_path, out_path, material=None, fluid=False, blob=False, sheet=False):
     body = nif.Nif(body_path)
     shader = next(i for i, t in enumerate(body.types) if t == 'BSLightingShaderProperty')
     so, ss = body.offsets[shader]
@@ -217,7 +243,14 @@ def build(body_path, out_path, material=None, fluid=False, blob=False):
     mat = FLUID_MATERIAL if fluid else material or body.string(struct.unpack_from('<i', shader_src, 4)[0])
     wet = body.string(struct.unpack_from('<i', shader_src, 60)[0])
 
-    if blob:
+    if sheet:
+        pts, recs, tris = sheet_geometry()
+        names = [f'Sheet{k:02}' for k in range(len(pts))]
+        homes = list(pts)                                             # each bone on its vertex
+        root_name, shape_name = 'SheetRoot', 'SheetShape'
+        shape_bound = (0.0, 0.0, 0.0, 1.5)
+        bone_bound = 0.25
+    elif blob:
         pts, recs, tris = blob_geometry()
         names = [f'Blob{k:02}' for k in range(len(pts))]
         homes = list(pts)                                             # each bone on its vertex
@@ -307,10 +340,11 @@ def build(body_path, out_path, material=None, fluid=False, blob=False):
 POOL = 16
 RELEASE_MESHES = tuple(f'Meshes/Anatomy/Strand/Strand{i:02}.nif' for i in range(POOL))
 # the climax fluid's pools (fo4-ocbpc Fluid.cpp): blobs, and ropes (the strand tube under another name)
-BLOB_POOL, ROPE_POOL = 48, 32
+BLOB_POOL, ROPE_POOL, SHEET_POOL = 48, 32, 16
 FLUID_BLOBS = tuple(f'Meshes/Anatomy/Fluid/Blob{i:02}.nif' for i in range(BLOB_POOL))
 FLUID_ROPES = tuple(f'Meshes/Anatomy/Fluid/Rope{i:02}.nif' for i in range(ROPE_POOL))
-RELEASE_FILES = RELEASE_MESHES + FLUID_BLOBS + FLUID_ROPES + ('Materials/Anatomy/Strand.bgsm', 'Textures/Anatomy/Strand/Strand_d.dds',
+FLUID_SHEETS = tuple(f'Meshes/Anatomy/Fluid/Sheet{i:02}.nif' for i in range(SHEET_POOL))
+RELEASE_FILES = RELEASE_MESHES + FLUID_BLOBS + FLUID_ROPES + FLUID_SHEETS + ('Materials/Anatomy/Strand.bgsm', 'Textures/Anatomy/Strand/Strand_d.dds',
                                   'Textures/Anatomy/Strand/Strand_s.dds')
 VANILLA_BODY = 'Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.nif'
 VANILLA_MESHES = 'Fallout4 - Meshes.ba2'
@@ -329,6 +363,7 @@ def release_assets(out_root, game_data):
     try:
         build(src, out_root / RELEASE_MESHES[0], fluid=True)
         build(src, out_root / FLUID_BLOBS[0], fluid=True, blob=True)
+        build(src, out_root / FLUID_SHEETS[0], fluid=True, sheet=True)
     finally:
         src.unlink()
     first = (out_root / RELEASE_MESHES[0]).read_bytes()
@@ -338,6 +373,9 @@ def release_assets(out_root, game_data):
     blob = (out_root / FLUID_BLOBS[0]).read_bytes()
     for m in FLUID_BLOBS[1:]:
         (out_root / m).write_bytes(blob)
+    sheet = (out_root / FLUID_SHEETS[0]).read_bytes()
+    for m in FLUID_SHEETS[1:]:
+        (out_root / m).write_bytes(sheet)
     fluid_material(out_root, game_data)
     missing = [f for f in RELEASE_FILES if not (out_root / f).exists()]
     if missing:
