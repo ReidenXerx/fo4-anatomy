@@ -221,7 +221,16 @@ def main():
         for rel in cbbe_files + [SKELETON, gt.SKIN_MATERIAL]:
             if game.find(rel) is None:
                 raise SystemExit(f'{rel}: the game does not have it (loose or in any active archive)')
-            print(f'   input {game.describe(rel)}  sha1 {sha(game.read(rel))}')
+            try:
+                blob = game.read(rel)
+            except OSError as e:
+                # its folder lists the name but opening it fails: a broken link a mod manager left behind after the
+                # mod's files moved or went (a player's CBBEBody.osd, 10-22, came out as a raw FileNotFoundError)
+                raise SystemExit(f'{rel}: its folder lists it but it cannot be opened ({e.strerror}), most often a '
+                                 'broken link left after the mod\'s files moved or were removed. Reinstall the mod '
+                                 'that ships it' + (' (CBBE, Nexus 15, with its BodySlide files)' if rel in cbbe_files
+                                                    else '') + ', deploy, then run the builder again.')
+            print(f'   input {game.describe(rel)}  sha1 {sha(blob)}')
         for name in ('nahka_patch.json.gz', 'tex/crops.json'):
             if not (SHIPPED / name).exists():
                 raise SystemExit(f'{SHIPPED / name} is missing: reinstall Anatomy')
