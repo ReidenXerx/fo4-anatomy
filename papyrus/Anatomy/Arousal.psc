@@ -75,6 +75,7 @@ Float[] _gains
 Keyword _layer
 Keyword _npc
 Race _human
+Keyword _humanType               ; ActorTypeHuman: race copies (Ace Male Race, sequel's) count as human too
 Keyword _busy
 ActorValue _desire
 GlobalVariable _ivyAroused
@@ -214,6 +215,7 @@ Function Setup()
 	_layer = Game.GetFormFromFile(0x00000801, "Anatomy.esp") as Keyword
 	_npc = Game.GetFormFromFile(0x00013794, "Fallout4.esm") as Keyword          ; ActorTypeNPC
 	_human = Game.GetFormFromFile(0x00013746, "Fallout4.esm") as Race           ; HumanRace
+	_humanType = Game.GetFormFromFile(0x0002CB72, "Fallout4.esm") as Keyword    ; ActorTypeHuman
 	_busy = None
 	If Game.IsPluginInstalled("AAF.esm")
 		AAF:AAF_API api = Game.GetFormFromFile(0x00000F99, "AAF.esm") as AAF:AAF_API
@@ -608,7 +610,7 @@ Overlays:Entry Function GlansEntry(String asTemplate)
 EndFunction
 
 Bool Function IsMan(Actor a)
-	If a == None || a.GetRace() != _human
+	If !IsAdultHuman(a)
 		Return False
 	EndIf
 	ActorBase b = a.GetLeveledActorBase()
@@ -616,11 +618,19 @@ Bool Function IsMan(Actor a)
 EndFunction
 
 Bool Function IsWoman(Actor a)
-	If a == None || a.GetRace() != _human
+	If !IsAdultHuman(a)
 		Return False
 	EndIf
 	ActorBase b = a.GetLeveledActorBase()
 	Return b != None && b.GetSex() == 1
+EndFunction
+
+; HumanRace, or a copy of it that keeps ActorTypeHuman (Ace Male Race's AceHumanRace, 2026-10-23); never a child
+Bool Function IsAdultHuman(Actor a)
+	If a == None || a.IsChild()
+		Return False
+	EndIf
+	Return a.GetRace() == _human || (_humanType != None && a.HasKeyword(_humanType))
 EndFunction
 
 ; Where her arousal is a step later: toward the strongest source, at that source's pace, or down.
