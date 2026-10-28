@@ -94,6 +94,9 @@ Keyword _aafBlocked              ; AAF_ActorBlocked
 ObjectMod[] _womanParts          ; Servitron_Abdomen_GITS_Rubber, _Wetsuit_Rubber
 ObjectMod[] _manParts            ; AnatSrv_Abdomen_GITS_Rubber_Male, _Wetsuit_Rubber_Male (None without our plugin)
 Actor[] _srvNear                 ; the Servitrons MarkServitrons saw this tick: robots, so People() never has them
+; callofthewild 10-28: a bot in the plain GITS abdomen never showed in AAF's wizard and nothing said why. Each blocked
+; Servitron near the player is named once per game session (Setup clears the list on load)
+Actor[] _srvTold
 
 Event OnInit()
 	Setup()
@@ -232,6 +235,7 @@ Function Setup()
 	_aafFemale = None
 	_aafMale = None
 	_aafBlocked = None
+	_srvTold = new Actor[0]
 	If _busy != None && Game.IsPluginInstalled("Servitron.esm")
 		_robot = Game.GetFormFromFile(0x0002CB73, "Fallout4.esm") as Keyword      ; ActorTypeRobot
 		_servitron = Game.GetFormFromFile(0x00000F99, "Servitron.esm") as Race   ; ServitronRace
@@ -445,6 +449,10 @@ Function MarkServitrons()
 				a.RemoveKeyword(_aafBlocked)
 				a.AddKeyword(want)
 				Debug.Trace("Anatomy: " + a + " is a Servitron, its abdomen makes it " + role + " (1 woman, 2 man, 0 out of AAF)", 0)
+			EndIf
+			If role == 0 && !a.IsDead() && a.Is3DLoaded() && _srvTold != None && _srvTold.Find(a) < 0 && _srvTold.Length < 100
+				_srvTold.Add(a, 1)
+				Debug.Notification(a.GetDisplayName() + " stays out of AAF scenes: give it a Rubber abdomen (GITS Rubber or Wetsuit Rubber)")
 			EndIf
 		EndIf
 		i += 1
