@@ -93,6 +93,9 @@ Keyword _aafMale                 ; AAF_GenderOverride_Male
 Keyword _aafBlocked              ; AAF_ActorBlocked
 ObjectMod[] _womanParts          ; Servitron_Abdomen_GITS_Rubber, _Wetsuit_Rubber
 ObjectMod[] _manParts            ; AnatSrv_Abdomen_GITS_Rubber_Male, _Wetsuit_Rubber_Male (None without our plugin)
+; callofthewild 10-28: the Mk.5 torsos (Torso 4 GITS Softbody) are a bodysuit down to the crotch - Servitron's own list
+; says "Abdomen - NONE (use for Torso Mk.5)" - so a Rubber abdomen under one is never drawn and nothing opens
+ObjectMod[] _coverParts          ; Servitron_Torso_Mk5, _Mk5B, _Mk5RB
 Actor[] _srvNear                 ; the Servitrons MarkServitrons saw this tick: robots, so People() never has them
 ; callofthewild 10-28: a bot in the plain GITS abdomen never showed in AAF's wizard and nothing said why. Each blocked
 ; Servitron near the player is named once per game session (Setup clears the list on load)
@@ -245,6 +248,10 @@ Function Setup()
 		_womanParts = new ObjectMod[0]
 		_womanParts.Add(Game.GetFormFromFile(0x00000B89, "Servitron.esm") as ObjectMod, 1)
 		_womanParts.Add(Game.GetFormFromFile(0x00000B8C, "Servitron.esm") as ObjectMod, 1)
+		_coverParts = new ObjectMod[0]
+		_coverParts.Add(Game.GetFormFromFile(0x00001092, "Servitron.esm") as ObjectMod, 1)
+		_coverParts.Add(Game.GetFormFromFile(0x00001093, "Servitron.esm") as ObjectMod, 1)
+		_coverParts.Add(Game.GetFormFromFile(0x00001094, "Servitron.esm") as ObjectMod, 1)
 		_manParts = new ObjectMod[0]
 		If Game.IsPluginInstalled("AnatomyServitron.esp")
 			_manParts.Add(Game.GetFormFromFile(0x00000800, "AnatomyServitron.esp") as ObjectMod, 1)
@@ -436,7 +443,7 @@ Function MarkServitrons()
 			If !a.IsDead() && a.Is3DLoaded()
 				_srvNear.Add(a, 1)
 			EndIf
-			Int role = ServitronRole(a)                ; 1 woman, 2 man, 0 neither
+			Int role = ServitronRole(a)                ; 1 woman, 2 man, 0 neither, 3 a Mk.5 torso covers the abdomen
 			Keyword want = _aafBlocked
 			If role == 1
 				want = _aafFemale
@@ -448,11 +455,15 @@ Function MarkServitrons()
 				a.RemoveKeyword(_aafMale)
 				a.RemoveKeyword(_aafBlocked)
 				a.AddKeyword(want)
-				Debug.Trace("Anatomy: " + a + " is a Servitron, its abdomen makes it " + role + " (1 woman, 2 man, 0 out of AAF)", 0)
+				Debug.Trace("Anatomy: " + a + " is a Servitron, its abdomen makes it " + role + " (1 woman, 2 man, 0 out of AAF, 3 out: Mk.5 torso)", 0)
 			EndIf
-			If role == 0 && !a.IsDead() && a.Is3DLoaded() && _srvTold != None && _srvTold.Find(a) < 0 && _srvTold.Length < 100
+			If (role == 0 || role == 3) && !a.IsDead() && a.Is3DLoaded() && _srvTold != None && _srvTold.Find(a) < 0 && _srvTold.Length < 100
 				_srvTold.Add(a, 1)
-				Debug.Notification(a.GetDisplayName() + " stays out of AAF scenes: give it a Rubber abdomen (GITS Rubber or Wetsuit Rubber)")
+				If role == 3
+					Debug.Notification(a.GetDisplayName() + " stays out of AAF scenes: the Mk.5 torso covers the abdomen, pick Mk.1 to Mk.4")
+				Else
+					Debug.Notification(a.GetDisplayName() + " stays out of AAF scenes: give it a Rubber abdomen (GITS Rubber or Wetsuit Rubber)")
+				EndIf
 			EndIf
 		EndIf
 		i += 1
@@ -462,6 +473,13 @@ EndFunction
 Int Function ServitronRole(Actor a)
 	ObjectMod[] parts = a.GetAllMods()
 	Int i = 0
+	While parts != None && _coverParts != None && i < parts.Length
+		If parts[i] != None && _coverParts.Find(parts[i]) >= 0
+			Return 3
+		EndIf
+		i += 1
+	EndWhile
+	i = 0
 	While parts != None && i < parts.Length
 		If parts[i] != None
 			If _womanParts.Find(parts[i]) >= 0
