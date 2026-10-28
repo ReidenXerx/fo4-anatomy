@@ -204,6 +204,36 @@ def build(nif_path, osd_path=None, osd_module=None, uv_map=None, spec=WOMEN):
         near = min(path, key=lambda p: math.dist(p, mid))
         return tri if (_dot(nrm, _sub(near, mid)) > 0) == rh_inward else (tri[0], tri[2], tri[1])
     faces = [oriented(t) for t in faces]
+    # The guess above reads the kept triangle's normal against a point half a unit inside the cup: right on the women's
+    # deep cup (the triangle is its wall), inverted on BodyTalk's shallow pucker (near-flat skin facing out), where the
+    # whole men's canal came out wound against the skin and was culled: the body's far side showed through the opening
+    # (cal.is.cursed via Watcher, 2026-10-28). The canal must continue the skin's winding across the rim, so the first
+    # ring walks a loop edge the other way round from the kept triangle that owns it.
+    at = {v: j for j, v in enumerate(loop)}
+
+    def copies(j):                                         # ring 0's copies of loop[j]: the seam column repeats loop[0]
+        return {rings[0][j]} | ({rings[0][N]} if j == 0 else set())
+
+    agree = None
+    for x, y in ((ref[0], ref[1]), (ref[1], ref[2]), (ref[2], ref[0])):
+        if agree is None and x in at and y in at:
+            cx, cy = copies(at[x]), copies(at[y])
+            for f in faces[:2 * N]:
+                for u, v in ((f[0], f[1]), (f[1], f[2]), (f[2], f[0])):
+                    if u in cy and v in cx:
+                        agree = True
+                    elif u in cx and v in cy:
+                        agree = False
+    if agree is False:
+        faces = [(a, c, b) for a, b, c in faces]
+        rh_inward = not rh_inward                          # keeps the vertex normals below pointing into the canal
+    # The tip's fan: the guess is a coin toss there (the nearest path point is the tip, a corner of the face itself; 3 of
+    # the men's 12 came out reversed). Each cap face walks its last-ring edge against the wall face that shares it.
+    walls = {(u, v) for f in faces[:-N] for u, v in ((f[0], f[1]), (f[1], f[2]), (f[2], f[0]))}
+    for k in range(len(faces) - N, len(faces)):
+        a, b, c = faces[k]
+        if any(e in walls for e in ((a, b), (b, c), (c, a))):
+            faces[k] = (a, c, b)
 
     vn = [(0.0, 0.0, 0.0)] * len(new_pos)                  # vertex normals pointing into the canal
     for a, b, c in faces:
