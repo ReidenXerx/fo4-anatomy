@@ -84,6 +84,24 @@ PRESET = ('<?xml version="1.0" encoding="UTF-8"?>\n<SliderPresets>\n'
           '    </Preset>\n</SliderPresets>\n')
 
 
+def zeroed_preset(men):
+    """PRESET, made zero for the men's sets too. A preset leaves every slider it does not list at the set's default,
+    which is 0 on CBBE but 100 on every BodyTalk slider (Erection and Balls included); the men's sets sit in our
+    "Anatomy" group, so "Anatomy Zeroed Sliders" was offered for them and built men erect at full size (Nexus 109435,
+    11-03: "as big as an arm", fixed by "BT - Zero"). Lists each slider of the men's sets whose default is not 0."""
+    import xml.etree.ElementTree as ET
+    osp = men.get('Tools/BodySlide/SliderSets/AnatomyMale.osp')
+    if not osp:
+        return PRESET
+    names = []
+    for sl in ET.parse(osp).getroot().iter('Slider'):
+        n = sl.get('name')
+        if n and n != 'Ankles' and n not in names and float(sl.get('default') or 0):
+            names.append(n)
+    lines = ''.join(f'        <SetSlider name="{n}" size="{size}" value="0"/>\n' for n in names for size in ('small', 'big'))
+    return PRESET.replace('    </Preset>', lines + '    </Preset>')
+
+
 class Tee(io.TextIOBase):
     def __init__(self, *streams):
         self.streams = streams
@@ -358,7 +376,7 @@ def main():
         groups.write_text(GROUPS, encoding='utf-8')
         produced['Tools/BodySlide/SliderGroups/Anatomy.xml'] = groups
         preset = work / 'AnatomyPreset.xml'
-        preset.write_text(PRESET, encoding='utf-8')
+        preset.write_text(zeroed_preset(men), encoding='utf-8')
         produced['Tools/BodySlide/SliderPresets/Anatomy.xml'] = preset
         # A-57: Anatomy's preset for THIS body; the engine reads it (before the shipped CBBE default) when the player has
         # no ocbp.ini of their own
