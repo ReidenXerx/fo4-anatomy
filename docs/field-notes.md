@@ -651,7 +651,7 @@ GPL-3.0; it never ships.
 
 ## 14. Papyrus and plugins, from scratch
 
-- **Compiler:** `D:/GOGGames/Fallout 4 GOTY/Papyrus Compiler/PapyrusCompiler.exe`, with the
+- **Compiler:** `D:/F4Tools/Papyrus Compiler/PapyrusCompiler.exe`, with the
   reconstructed base in `D:/F4CustomMods/PapyrusBase/Source/Base` (including AAF's sources and
   `Institute_Papyrus_Flags.flg`).
 - **Import F4SE's own sources FIRST:** `…/Fallout 4 Script Extender (F4SE)-42147-0-6-23-…/Data/Scripts/Source`,

@@ -14,7 +14,7 @@
 [CmdletBinding()]
 param(
     [string] $Base     = 'D:\F4CustomMods\PapyrusBase\Source\Base',
-    [string] $Compiler = 'D:\GOGGames\Fallout 4 GOTY\Papyrus Compiler\PapyrusCompiler.exe',
+    [string] $Compiler = 'D:\F4Tools\Papyrus Compiler\PapyrusCompiler.exe',
     # the AE install's F4SE (the OG profile and its 0.6.23 mod are gone since 2026-10-03)
     [string] $F4SE     = 'D:\Vortex\fallout4\mods\Fallout 4 Script Extender 42147 0.7.9 2026-08-18T14-42Z 2hTc9ppIs\Data\Scripts\Source'
 )

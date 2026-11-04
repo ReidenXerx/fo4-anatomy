@@ -313,7 +313,7 @@ def script():
     (out / 'AnatomyFluidTest.pex').unlink(missing_ok=True)   # a stale .pex must not pass for a fresh one
     base = r'D:\F4CustomMods\PapyrusBase\Source\Base'
     f4se = r'D:\Vortex\fallout4\mods\Fallout 4 Script Extender 42147 0.7.9 2026-08-18T14-42Z 2hTc9ppIs\Data\Scripts\Source'
-    r = subprocess.run([r'D:\GOGGames\Fallout 4 GOTY\Papyrus Compiler\PapyrusCompiler.exe', str(src),
+    r = subprocess.run([r'D:\F4Tools\Papyrus Compiler\PapyrusCompiler.exe', str(src),
                         '-f=Institute_Papyrus_Flags.flg', f'-i={f4se};{base};{src.parent}', f'-o={out}'],
                        capture_output=True, text=True)
     print(r.stdout[-800:], r.stderr[-400:])
