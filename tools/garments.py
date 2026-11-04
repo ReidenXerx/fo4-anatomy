@@ -527,9 +527,11 @@ def run_bodyslide(cmd, cwd, timeout):
                 user32.GetClassNameW(h, buf, 64)
                 if buf.value != '#32770':
                     continue
-                # a Windows task dialog (its text lives in a DirectUIHWND: no child to read or click), so the
-                # dialog itself gets IDOK; the build's own log still decides whether the build succeeded
-                user32.PostMessageW(h, 0x0111, 1, 0)                   # WM_COMMAND IDOK, no focus taken
+                # "Warning" is a Windows task dialog (its text lives in a DirectUIHWND: no child to read or click):
+                # it takes IDOK. "Failed" is a wx dialog (OK button id 5100) that ignores IDOK and IDCANCEL, so a
+                # group build with one bad set waited out the whole timeout (5.8.2 and 6.0.0, 2026-11-05): WM_CLOSE.
+                # The build's own log still decides whether the build succeeded. No focus taken either way.
+                user32.PostMessageW(h, 0x0111, 1, 0) if title == 'Warning' else user32.PostMessageW(h, 0x0010, 0, 0)
                 answered.append(f'closed a BodySlide "{title}" dialog' + (' (the game data path check)' if
                                 title == 'Warning' else ' (its failed sets are in Log_BS.txt)'))
             stop.wait(0.3)
