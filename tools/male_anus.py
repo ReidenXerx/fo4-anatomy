@@ -169,6 +169,16 @@ def rig(nif_path, centre, axis, front, first_new):
         struct.pack_into('<4e', b, at, *(w for _, w in top))
         struct.pack_into('<4B', b, at + 8, *(sl for sl, _ in top))
         touched += 1
+    # the canal's top ring sits ON the pucker's rim: each such vertex takes its skin twin's weights byte for byte, or
+    # the two part when our bones stretch (2 of 13 rim pairs differed by L1 0.43 and 0.16 through their own top-4 cut,
+    # cal.is.cursed 2026-11-05)
+    twin = {tuple(round(c, 4) for c in pos[j]): j for j in range(first_new)}
+    for i in range(first_new, len(pos)):
+        j = twin.get(tuple(round(c, 4) for c in pos[i]))
+        if j is not None:
+            src = s.data_at + j * s.stride + s.skin_at
+            dst = s.data_at + i * s.stride + s.skin_at
+            b[dst:dst + 12] = b[src:src + 12]
     pathlib.Path(nif_path).write_bytes(bytes(b))
     return local, touched
 
