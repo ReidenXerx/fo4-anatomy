@@ -275,7 +275,8 @@ def build_dll():
 
 BUILDER_MODULES = ('gamedata', 'genital_texture', 'apply_patch', 'make_patch', 'mask', 'split_genitals',
                    'opening', 'verify_zex', 'zex_bones', 'physics_config', 'physics_design', 'bgsm', 'atlas', 'anal_canal', 'mucosa', 'vaginal_canal', 'tbbb',
-                   'male_anus', 'osd', 'nif', 'ghoul_set')
+                   'male_anus', 'osd', 'nif', 'ghoul_stage', 'ghoul_skin', 'ghoul_redirect',
+                   'plugin_merge')
 REBUILD_MODULES = ('gamedata', 'garments', 'hip_fold', 'neck_seam', 'align_body', 'nif', 'osd')
 
 
@@ -346,6 +347,9 @@ def nuitka_python():
         subprocess.run([sys.executable, '-m', 'venv', str(NUITKA_VENV)], check=True)
         subprocess.run([str(py), '-m', 'pip', 'install', '-q', f'nuitka=={NUITKA_VERSION}', 'pillow', 'ordered-set',
                         'zstandard'], check=True)
+    # numpy: the builder's ghoul stage (2026-11-09); an existing venv gets it once
+    if subprocess.run([str(py), '-c', 'import numpy'], capture_output=True).returncode:
+        subprocess.run([str(py), '-m', 'pip', 'install', '-q', 'numpy'], check=True)
     return py
 
 

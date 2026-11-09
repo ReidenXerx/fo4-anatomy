@@ -20,6 +20,10 @@ writes are paths no other mod ships, so nothing needs resolving in a mod manager
 and, when BodyTalk 4 is installed, the men's body with the anus opened (A-69):
     Tools/BodySlide/SliderSets/AnatomyMale.osp, Tools/BodySlide/ShapeData/AnatomyMale/*,
     Tools/BodySlide/SliderGroups/AnatomyMale.xml
+and, when the Ghouls mod's plugin (Anatomy Feral Ghouls.esp) is active (2026-11-09):
+    Textures/Anatomy/Ghoul/*, Materials/Anatomy/Ghoul/*, Materials/Anatomy/AnatomyGenitalsGhoul.bgsm and
+    Anatomy Ghoul Skin.esp: the rotten ghoul skin made from the player's own ghoul textures, and the ghoul women's
+    genitals as a material swap on their own built body (ghoul_stage.py)
 Then: open BodySlide, choose "Anatomy Body" and your preset, and Build.
 """
 import argparse
@@ -185,6 +189,8 @@ def main():
     ap.add_argument('--body', choices=('auto', 'cbbe', '3bbb'), default='auto',
                     help='the body to build on (default: 3BBB when it is installed and your physics preset drives its '
                          'breast bones, else CBBE)')
+    ap.add_argument('--ghoul-size', type=int, choices=(1024, 2048, 4096), default=2048,
+                    help='size of the rotten ghoul skin maps (Ghouls mod; default 2048; 4096 needs about 5 GB of memory)')
     ap.add_argument('--no-player-preset', action='store_true',
                     help='build as for a player without an ocbp.ini of their own (the prebuilt bodies, A-72)')
     import gamedata
@@ -390,15 +396,23 @@ def main():
         if set(produced) != set(OUTPUTS):
             raise SystemExit('internal: the output list changed')
         produced.update(men)                            # A-69: the men's files (male_anus.OUTPUTS), when built
-        # the ghoul women's body (2026-11-09): only when the Ghouls plugin is active; BodySlide builds it beside ours
-        import ghoul_set
-        if game.active(ghoul_set.GHOUL_PLUGIN):
-            run_stage('10. the ghoul women\'s body (Ghouls)', lambda: produced.update(ghoul_set.stage(
-                produced['Tools/BodySlide/SliderSets/Anatomy.osp'],
-                produced['Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif'],
-                groups.read_text(encoding='utf-8'), work / 'ghoul')))
+        # the Ghouls mod (2026-11-09): the rotten ghoul skin from the ghoul textures the player has installed, and the
+        # ghoul women's genital texture, only when its plugin is active. Optional like the men's body: a failure says
+        # so and the women's body is still written
+        import ghoul_stage
+        if game.active(ghoul_stage.GHOULS_PLUGIN):
+            size = int(getattr(args, 'ghoul_size', 2048))
+            print(f'\n   ghoul maps at {size} px' + (' (about 5 GB of memory at 4K)' if size > 2048 else ''))
+            try:
+                run_stage('10. the rotten ghoul skin (Ghouls)', lambda: produced.update(ghoul_stage.stage(
+                    game, produced['Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif'], gt.ANATOMY_OUT,
+                    (gt.ANATOMY_OUT / 'AnatomyGenitals.bgsm').read_bytes(), work / 'ghoul_skin', size)))
+            except Exception as e:                   # SystemExit included
+                produced.pop('Anatomy Ghoul Skin.esp', None)
+                print(f'   the ghoul skin was NOT made: {e}')
+                traceback.print_exc()
         else:
-            print(f'\n   {ghoul_set.GHOUL_PLUGIN} is not active: no ghoul body set')
+            print(f'\n   {ghoul_stage.GHOULS_PLUGIN} is not active: no ghoul skin')
         dest =pathlib.Path(args.out) if args.out else data
         print(f'\n=== writing to {dest}')
         for rel, src in produced.items():
@@ -419,9 +433,9 @@ def main():
         ok = True
         print('\nDone. Now open BodySlide, choose the set "Anatomy Body", your preset, and Build (or Batch '
               'Build with "Anatomy Body" ticked). Re-run this builder after changing your CBBE, skin or physics preset (ocbp.ini).')
-        if any(rel.endswith('AnatomyGhoul.nif') for rel in produced):
-            print('Ghouls: build "Anatomy Body (Ghoul)" with the same preset (Batch Build with the "Anatomy" group '
-                  'builds both).')
+        if 'Anatomy Ghoul Skin.esp' in produced:
+            print('Ghouls: enable "Anatomy Ghoul Skin.esp" in your mod manager (it points the ghouls at the rotten '
+                  'skin just made). Run the builder again after changing your CBBE, BodyTalk or ghoul textures.')
         if men:
             print('Men: build "Anatomy Male Body" (or "Anatomy Male Body Uncut") with your BodyTalk preset, in place of '
                   'BodyTalk4: the same body, with the anus opened.')
