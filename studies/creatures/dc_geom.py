@@ -19,13 +19,13 @@ import tri_sync  # noqa: E402
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 UAP = r'D:\SteamFreeGames\Fallout 4 AE\Data\meshes\actors\Deathclaw\DeathclawPenis'
-BODY = r'D:\F4Output\creatures\dc\vanilla\deathclaw.nif'
+BODY = __import__('os').environ.get('DC_BODY', r'D:\F4Output\creatures\dc\vanilla\deathclaw.nif')  # Ivy: per body
 LINING_V = (0.01, 0.09)          # texture rows of the flesh lining in our penis texture
 SHAFT_V = (0.12, 0.995)
 
 # ---------------------------------------------------------------- body surface
 bm = nif.Nif(BODY)
-bs = bm.shape('DeathclawFX:0')
+bs = max(bm.shapes(), key=lambda x: x.count)               # the body: the largest shape (DeathclawFX:0 on vanilla)
 BV = np.array(bs.positions())
 BUV = np.array([bs.uv(i) for i in range(bs.count)])
 BT = np.array(bs.triangles())
