@@ -39,6 +39,10 @@ JOBS = {   # creature: (Data for textures, [(tag, nif, views, keys)])
     'Synths': (C / 'nick/out6/Data', [
         ('rest', C / 'nick/out6/Data/meshes/actors/synths/SynthGen2Body.nif', 'gfront,gside2', ''),
         ('erect', C / 'nick/out6/Data/meshes/actors/synths/SynthGen2Body.nif', 'gside2', E)]),
+    'Ferals': (C / 'feral/out6/Data', [
+        ('male', C / 'feral/out6/Data/meshes/actors/feralghoul/characterassets/FeralGhoulBase.nif', 'qfront,qbelow', ''),
+        ('female', C / 'feral/out6/Data/meshes/actors/feralghoul/characterassets/FeralGhoulBase_F.nif',
+         'qbelow,qback', '')]),
     'Deathclaws': (C / 'dc/out3/Data', [
         ('rest', DCR / 'review_male.nif', 'pt=0/-4/104/0/-20/30/front', 'RAW=1'),
         ('erect', DCR / 'review_male.nif', 'pt=0/6/104/20/-25/55/side,pt=0/-4/104/0/-20/34/front', 'RAW=1;' + E),
@@ -53,6 +57,38 @@ def run(cmd):
     return r.stdout
 
 
+CA = {'Dogs': C / 'canine/out9/Data/meshes/Actors/Dogmeat/CharacterAssets/Dogmeat.nif',
+      'Super Mutants': C / 'sm/out/Data/meshes/actors/supermutant/characterassets/SupermutantBody.nif',
+      'Behemoths': C / 'bh/out6/Data/meshes/actors/supermutantbehemoth/characterassets/SuperMutantBehemoth.nif',
+      'Yao Guai': C / 'yg/out2/Data/meshes/actors/yaoguai/characterassets/YaoGuai.nif',
+      'Radstags': C / 'rs/out4/Data/meshes/actors/radstag/characterassets/RadStag.nif',
+      'Mole Rats': C / 'mr/out2/Data/meshes/actors/molerat/characterassets/Molerat.nif',
+      'Synths': C / 'nick/out6/Data/meshes/actors/synths/SynthGen2Body.nif'}
+# the erect set (Dudu 11-10 via Watcher: "people want also see rigid states" on the pages): erect only, 3 angles
+ERECT = {k: (JOBS[k][0], [('erect', CA[k], 'qside,qfront,qunder', E + (';EXP=3.4' if k == 'Super Mutants' else
+                                                                       ';EXP=3.0' if k == 'Behemoths' else ''))])
+         for k in CA}
+ERECT['Dogs'][1].append(('vicious', C / 'canine/out9/Data/meshes/Actors/ViciousDog/ViciousDog.nif', 'qside', E))
+ERECT['Deathclaws'] = (JOBS['Deathclaws'][0], [
+    ('erect', DCR / 'review_male.nif', 'pt=0/6/104/20/-25/55/side,pt=0/-4/104/0/-20/34/front,'
+     'pt=0/8/102/45/-40/60/below', 'RAW=1;' + E)])
+# soft + erect pairs (Dudu 11-10: "also soft, erect and soft"): the same views, the SAME camera (framed on the erect
+# state for both), so a pair differs only in the state
+EXPK = {'Super Mutants': ';EXP=3.4', 'Behemoths': ';EXP=3.0'}
+PAIRS = {k: (JOBS[k][0], [('soft', CA[k], 'qside,qfront,qunder', 'FRAME=Erection' + EXPK.get(k, '')),
+                          ('erect', CA[k], 'qside,qfront,qunder', 'FRAME=Erection;' + E + EXPK.get(k, ''))])
+         for k in CA}
+PAIRS['Yao Guai'] = (JOBS['Yao Guai'][0], [  # its side views hide the penis behind a hind leg
+    ('soft', CA['Yao Guai'], 'qfront,qbelow,qback', 'FRAME=Erection'),
+    ('erect', CA['Yao Guai'], 'qfront,qbelow,qback', 'FRAME=Erection;' + E)])
+DCV = 'pt=0/6/104/20/-25/55/side,pt=0/-4/104/0/-20/34/front,pt=0/8/102/45/-40/60/below'
+PAIRS['Deathclaws'] = (JOBS['Deathclaws'][0], [('soft', DCR / 'review_male.nif', DCV, 'RAW=1'),
+                                               ('erect', DCR / 'review_male.nif', DCV, 'RAW=1;' + E)])
+_set = __import__('os').environ.get('RENDER_SET')
+if _set == 'erect':
+    JOBS = ERECT
+elif _set == 'pairs':
+    JOBS = PAIRS
 out_root = pathlib.Path(sys.argv[1])
 for creature in (sys.argv[2:] or list(JOBS)):
     data, items = JOBS[creature]

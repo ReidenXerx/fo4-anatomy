@@ -121,10 +121,14 @@ for item in args[3:]:
     tag, path, views, *keys = item.split('|')                  # optional 4th: shape keys to set, "Name=1.0;..."
     meshes = load(path)
     exposure = 2.0
+    frame_key = None
     for kv in (keys[0].split(';') if keys and keys[0] else []):
         kname, val = kv.split('=')
         if kname == 'EXP':                                    # per-render exposure (dark skins: super mutants)
             exposure = float(val)
+            continue
+        if kname == 'FRAME':                                  # frame the genital views as if this key were at 1
+            frame_key = '>' + val if not val.startswith('>') else val   # (soft/erect pairs share one camera)
             continue
         if kname == 'RAW':                                    # skin space: drop shape node offsets (the game
             for o in meshes:                                  # ignores them on skinned shapes; deathclaw body +11.68 y)
@@ -167,12 +171,25 @@ for item in args[3:]:
     light('rim', (0, -250, 140), 30000, tgt)
     light('under', (0, 120, -60), 8000, tgt)
     gz = Vector((mid.x, mid.y + 3, lo.z + h * 0.47))
-    pen = [o for o in meshes if ('penis' in o.name.lower() or 'vulva' in o.name.lower()) and not o.hide_render]
+    pen = [o for o in meshes if any(k in o.name.lower() for k in ('penis', 'vulva', 'stump')) and not o.hide_render]
     for o in pen:
         print('KEYS', o.name, [k.name for k in o.data.shape_keys.key_blocks] if o.data.shape_keys else None)
     pc, psize = None, None
     if pen:                                                     # centre the genital views on the penis itself
+        saved = {}
+        if frame_key:
+            for o in pen:
+                sk = o.data.shape_keys
+                if sk and frame_key in sk.key_blocks:
+                    saved[o.name] = sk.key_blocks[frame_key].value
+                    sk.key_blocks[frame_key].value = 1.0
+            bpy.context.view_layer.update()
         pp = [o.matrix_world @ Vector(c) for o in pen for c in o.bound_box]
+        for o in pen:
+            if o.name in saved:
+                o.data.shape_keys.key_blocks[frame_key].value = saved[o.name]
+        if saved:
+            bpy.context.view_layer.update()
         gz = sum(pp, Vector()) / len(pp) + Vector((0, 0, 3))
         pc = sum(pp, Vector()) / len(pp)
         psize = max(max(p[i] for p in pp) - min(p[i] for p in pp) for i in range(3))
