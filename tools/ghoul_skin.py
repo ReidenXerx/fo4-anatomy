@@ -477,8 +477,11 @@ def genital_prep(body, genitals, human_d, ghoul_d, tone=512):
         rgb = val[:, 3:] * detail * 0.88
         mucosa = np.clip((g[:, 0] - g[:, 1] - 0.07) / 0.14, 0, 1)[:, None]
         rgb = rgb + (np.array([0.36, 0.13, 0.15], np.float32) * detail ** 0.7 - rgb) * (0.8 * mucosa)
-        srcs['d'] = np.concatenate([(np.clip(rgb, 0, 1).reshape(size, size, 3) * 255 + 0.5).astype(np.uint8),
-                                    g8[..., 3:]], -1)
+        new = (np.clip(rgb, 0, 1).reshape(size, size, 3) * 255 + 0.5).astype(np.uint8)
+        # only the genital islands and a ring round them: the rest of the sheet is not this shape's, and its
+        # far-gutter tones (a coarse fill) would show as blocks in the mips
+        near = dilate(have, max(8, size // 128))[..., None]
+        srcs['d'] = np.concatenate([np.where(near, new, g8[..., :3]), g8[..., 3:]], -1)
     return prep
 
 
