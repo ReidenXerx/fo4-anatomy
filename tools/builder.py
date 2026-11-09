@@ -390,6 +390,15 @@ def main():
         if set(produced) != set(OUTPUTS):
             raise SystemExit('internal: the output list changed')
         produced.update(men)                            # A-69: the men's files (male_anus.OUTPUTS), when built
+        # the ghoul women's body (2026-11-09): only when the Ghouls plugin is active; BodySlide builds it beside ours
+        import ghoul_set
+        if game.active(ghoul_set.GHOUL_PLUGIN):
+            run_stage('10. the ghoul women\'s body (Ghouls)', lambda: produced.update(ghoul_set.stage(
+                produced['Tools/BodySlide/SliderSets/Anatomy.osp'],
+                produced['Tools/BodySlide/ShapeData/Anatomy/Anatomy.nif'],
+                groups.read_text(encoding='utf-8'), work / 'ghoul')))
+        else:
+            print(f'\n   {ghoul_set.GHOUL_PLUGIN} is not active: no ghoul body set')
         dest =pathlib.Path(args.out) if args.out else data
         print(f'\n=== writing to {dest}')
         for rel, src in produced.items():
@@ -410,6 +419,9 @@ def main():
         ok = True
         print('\nDone. Now open BodySlide, choose the set "Anatomy Body", your preset, and Build (or Batch '
               'Build with "Anatomy Body" ticked). Re-run this builder after changing your CBBE, skin or physics preset (ocbp.ini).')
+        if any(rel.endswith('AnatomyGhoul.nif') for rel in produced):
+            print('Ghouls: build "Anatomy Body (Ghoul)" with the same preset (Batch Build with the "Anatomy" group '
+                  'builds both).')
         if men:
             print('Men: build "Anatomy Male Body" (or "Anatomy Male Body Uncut") with your BodyTalk preset, in place of '
                   'BodyTalk4: the same body, with the anus opened.')
