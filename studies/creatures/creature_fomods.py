@@ -70,14 +70,14 @@ MODS = {
                    'bones in scenes. ' + CREDIT, R / 'Synths')]),
     'deathclaws': dict(
         name='Immersive Deathclaws - Anatomical Genitals', src=C / 'dc/sa/Data',
-        plugin='Anatomy Deathclaws.esp', uap_plugin=C / 'dc/sa/plugins/Anatomy Deathclaws - UAP.esp',
-        plain_plugin=C / 'dc/sa/plugins/Anatomy Deathclaws.esp', uap_master='Deathclaw_nude.esp',
+        version='1.0.1', plugin='Anatomy Deathclaws.esp', uap_plugin=C / 'dc/sa/plugins101/Anatomy Deathclaws - UAP.esp',
+        plain_plugin=C / 'dc/sa/plugins101/Anatomy Deathclaws.esp', uap_master='Deathclaw_nude.esp',
         checks=['Anatomy Deathclaws.esp: this mod\'s own plugin (light)',
                 'UAP\'s Deathclaw_nude.esp: optional - when it is active, this installer picks the build that loads '
                 'after it and replaces its deathclaw penis', AAF_LINE],
         features=[('Deathclaw genitals', 'Males: a reptilian vent in seamless deathclaw skin; erect, a ribbed, scaly '
                    'penis everts from it, scales at the root turning to dark flesh at the head. Females: vent lips with '
-                   'a red interior. Albino, alpha, savage, glowing and matriarch deathclaws keep their own colours. '
+                   'a red interior. Albino, alpha, savage, glowing, matriarch and chameleon deathclaws keep their own colours. '
                    + CREDIT, R / 'Deathclaws')]),
 }
 
@@ -142,7 +142,7 @@ def build(key, m, out):
            f'  <installSteps order="Explicit">\n{"".join(steps)}  </installSteps>\n{cond}</config>\n')
     (stage / 'fomod/ModuleConfig.xml').write_bytes(b'\xef\xbb\xbf' + xml.encode('utf-8'))
     out.mkdir(parents=True, exist_ok=True)
-    arc = out / f'{m["name"]} 1.0.0.7z'
+    arc = out / f'{m["name"]} {m.get("version", "1.0.0")}.7z'
     if arc.exists():
         raise SystemExit(f'{arc} exists: use a fresh folder')
     r = subprocess.run([SEVENZIP, 'a', '-t7z', '-mx=7', str(arc), '*'], cwd=stage, capture_output=True, text=True)

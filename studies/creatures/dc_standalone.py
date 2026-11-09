@@ -116,6 +116,8 @@ VARIANTS = [  # name, vanilla skin ARMO, body swap target (None = regular), peni
     ('Savage', 0x1955B1, 'actors\\deathclaw\\DeathclawSavage.BGSM', None),
     ('Glowing', 0x1955B4, 'actors\\deathclaw\\DeathclawGlowing.BGSM', 'Anatomy\\Creatures\\DeathclawPenisGlowing.bgsm'),
     ('Matriarch', 0x1955AE, 'actors\\deathclaw\\DeathclawMatriarch.BGSM', None),
+    # 1.0.1 (Ivy run, 11-10: chameleons loaded no genitals): its body's own material is DeathclawChameleonBase
+    ('Chameleon', 0x1C88AE, 'actors\\deathclaw\\DeathclawChameleonBase.BGSM', None),
 ]
 VANILLA_WHOLE = 0x01DB4B
 SLOT34 = 0x10
