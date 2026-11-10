@@ -122,10 +122,20 @@ for item in args[3:]:
     meshes = load(path)
     exposure = 2.0
     frame_key = None
+    focus = ['penis', 'vulva', 'stump']
     for kv in (keys[0].split(';') if keys and keys[0] else []):
         kname, val = kv.split('=')
         if kname == 'EXP':                                    # per-render exposure (dark skins: super mutants)
             exposure = float(val)
+            continue
+        if kname == 'HIDE':                                   # skip shapes whose name holds any of these (fur
+            hide = [s.lower() for s in val.split('+')]        # shells: Blender ignores their vertex alpha)
+            for o in meshes:
+                if any(h in o.name.lower() for h in hide):
+                    o.hide_render = True
+            continue
+        if kname == 'FOCUS':                                  # frame on shapes whose name holds any of these
+            focus = [s.lower() for s in val.split('+')]
             continue
         if kname == 'FRAME':                                  # frame the genital views as if this key were at 1
             frame_key = '>' + val if not val.startswith('>') else val   # (soft/erect pairs share one camera)
@@ -171,7 +181,7 @@ for item in args[3:]:
     light('rim', (0, -250, 140), 30000, tgt)
     light('under', (0, 120, -60), 8000, tgt)
     gz = Vector((mid.x, mid.y + 3, lo.z + h * 0.47))
-    pen = [o for o in meshes if any(k in o.name.lower() for k in ('penis', 'vulva', 'stump')) and not o.hide_render]
+    pen = [o for o in meshes if any(k in o.name.lower() for k in focus) and not o.hide_render]
     for o in pen:
         print('KEYS', o.name, [k.name for k in o.data.shape_keys.key_blocks] if o.data.shape_keys else None)
     pc, psize = None, None

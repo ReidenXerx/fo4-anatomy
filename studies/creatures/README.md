@@ -13,6 +13,13 @@ Drivers: `canine_all.py`, `sm_all.py`, `bh_vanilla.py` (behemoth on the vanilla 
 `feral_transplant.py` (ferals). Renders: `feral_tex_prep.py` + `feral_tex_render.py`, `storefront_renders.py`.
 Packages: `creature_fomods.py` (FOMOD standard), `pack_any.py`.
 
+Female mammals (Dudu 11-10): `fem_survey.py` (which skin ARMAs carry a female model), `fem_auto.py` (landmarks:
+pelvis, rear face, belly line), `fem_geom.py` (vulva lips + flesh slit + teats raycast onto the vanilla body, UVs and
+weights from the skin under each vertex), `fem_all.py` (SPECIES + OVERRIDE table -> `<Name>_F.nif`; overlay shells:
+dirt gets a lifted copy of our skin pieces with the shell's material + alpha, fur gets a hole collapsed over the
+vulva), `fem_renders.py` (review sheet, RAW=1 skin space; `HIDE=fur` because Blender ignores vertex alpha),
+`fem_hits.py` / `fem_probe.py` (ray diagnostics).
+
 Ghoul skin: `ghoul_*.py` here are the first (Ivy) job. The player-side version lives in the builder:
 `tools/ghoul_skin.py`, `tools/ghoul_redirect.py`, `tools/ghoul_stage.py`.
 

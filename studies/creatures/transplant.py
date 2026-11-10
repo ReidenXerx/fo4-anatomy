@@ -171,7 +171,7 @@ def transplant(van_path, src_path, out_path, new, replace=(), bodytri=None, repl
             replace_blocks[vs.index] = bytes(blk)
 
     # ---- new shapes
-    for name, (mat_from, bgsm, tex) in new.items():
+    for name, (mat_from, bgsm, tex, *share_alpha) in new.items():   # 4th True: share the donor's NiAlphaProperty
         ps = pshape[name]
         base = P.offsets[ps.index][0]
         _, pextras, _, pafter = _net(P, base)
@@ -180,10 +180,11 @@ def transplant(van_path, src_path, out_path, new, replace=(), bodytri=None, repl
         p_skin = struct.unpack_from('<i', P.b, _shape_refs_at(P, ps.index))[0]
         p_data = struct.unpack_from('<i', P.b, P.offsets[p_skin][0] + 4)[0]
         ms = vshape[mat_from]
-        _, m_shader, _ = struct.unpack_from('<3i', V.b, _shape_refs_at(V, ms.index))
+        _, m_shader, m_alpha = struct.unpack_from('<3i', V.b, _shape_refs_at(V, ms.index))
         if V.types[m_shader] != 'BSLightingShaderProperty':
             raise SystemExit(f'{mat_from}: material source is {V.types[m_shader]}')
         m_tex = struct.unpack_from('<i', V.b, V.offsets[m_shader][0] + 40)[0]
+        new_alpha = m_alpha if share_alpha and share_alpha[0] else -1
         i_shape = new_index()
         append.append((P.types[ps.index], b''))                    # placeholder, filled below
         i_skin = new_index()
@@ -215,7 +216,7 @@ def transplant(van_path, src_path, out_path, new, replace=(), bodytri=None, repl
         body = bytes(P.b[pafter:P.offsets[ps.index][0] + P.offsets[ps.index][1]])
         blk = bytearray(struct.pack('<iIi', sidx(name), 0, -1) + body)
         ro = 12 + 4 + 52 + 4 + 16
-        struct.pack_into('<3i', blk, ro, i_skin, i_shader, -1)
+        struct.pack_into('<3i', blk, ro, i_skin, i_shader, new_alpha)
         append[i_shape - nblocks] = (P.types[ps.index], bytes(blk))
         append[i_skin - nblocks] = ('BSSkin::Instance', skin_blocks(p_skin, i_data))
         root_kids.append(i_shape)

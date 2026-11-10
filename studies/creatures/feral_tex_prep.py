@@ -22,7 +22,7 @@ for f in json.loads(TEX.read_text()).values():
         for k in 'dns':
             if o.get(k):
                 names.add(o[k])
-arcs = [gamedata.Ba2(p) for p in sorted(DATA.glob('Fallout4 - Textures*.ba2'))]
+arcs = [gamedata.Ba2(p) for p in sorted(DATA.glob('Fallout4 - Textures*.ba2')) + sorted(DATA.glob('DLC*Textures*.ba2'))]
 for n in sorted(names):
     rel = n.lower().replace('\\', '/').removeprefix('textures/')
     key = rel.replace('/', '__').removesuffix('.dds')
