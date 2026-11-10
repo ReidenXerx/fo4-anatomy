@@ -18,6 +18,7 @@ import pathlib
 import re
 import struct
 
+import gamedata
 import plugin_merge as pm
 
 PLUGIN = 'Anatomy Ghoul Skin.esp'
@@ -44,8 +45,8 @@ def winning(game, types=('TXST',)):
     out = {}
     for name in game.plugins:
         path = game.data / name
-        if not path.exists():
-            continue
+        if not gamedata.present(path):     # NOT path.exists(): under MO2 (usvfs) stat misses mod-folder plugins, so
+            continue                       # CBBEHolyFix.esp was skipped and vanilla's ghoul texture set "won" (11-10)
         try:
             p = pm.Plugin(path, set(types))
         except (OSError, ValueError, struct.error):
