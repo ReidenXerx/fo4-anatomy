@@ -106,8 +106,13 @@ def plan(game):
         if key == 'female body' and '/custombody/' not in sources.get('d', '').lower():
             # without CBBE HeadRear Absolute Fix (CBBEHolyFix.esp) this set names the VANILLA-layout ghoul texture, but
             # the women's body is CBBE (its own UVs): painting it through CBBE's UVs would scramble it
-            skipped.append(f'{key}: its texture set names {sources.get("d")}, not a CBBE (custombody) texture: '
-                           'install "CBBE HeadRear Absolute Fix" for the women\'s rotten skin')
+            if game.active('CBBEHolyFix.esp') and plugin.lower() != 'cbbeholyfix.esp':
+                # (11-10 report: Ghouls Revamped.esp loaded after it; HolyPort, its optional tool, is not the answer)
+                why = (f'{plugin} overrides it after CBBEHolyFix.esp with a vanilla-layout texture: load '
+                       f'CBBEHolyFix.esp after {plugin} for the women\'s rotten skin (no HolyPort needed)')
+            else:
+                why = 'install "CBBE HeadRear Absolute Fix" (its main file) for the women\'s rotten skin'
+            skipped.append(f'{key}: its texture set names {sources.get("d")}, not a CBBE (custombody) texture: {why}')
             continue
         missing = [r for r in sources.values() if game.find(r) is None]
         if len(sources) < 3 or missing:
