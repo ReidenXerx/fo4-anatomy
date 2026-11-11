@@ -16,9 +16,11 @@ MODE = args[0]
 
 
 def load(path):
+    """one nif, or several joined with '+' (e.g. a body and the armour on it, all in one skin space with RAW=1)"""
     bpy.ops.wm.read_factory_settings(use_empty=True)
     addon_utils.enable('io_scene_nifly', default_set=True)
-    bpy.ops.import_scene.pynifly(filepath=path)
+    for one in path.split('+'):
+        bpy.ops.import_scene.pynifly(filepath=one)
     return [o for o in bpy.data.objects if o.type == 'MESH']
 
 

@@ -42,6 +42,13 @@ MODS = {  # plugin stem: (masters, races (master-relative ids in the LAST master
                        F + 'Molerat\\CharacterAssets\\Broodmother_F.nif'},
                   [0x1832F8, 0x1846D9, 0x2499FB]),      # Broodmother: always female
 }
+SMCA = 'actors\\supermutant\\characterassets\\'
+MODS['Super Mutants'] = (['Fallout4.esm'], [0x01A009],      # 11-11: body + every refitted armour piece (smf_refit)
+                         {SMCA + n.lower() + '.nif': F + 'Supermutant\\CharacterAssets\\' + n + '_F.nif'
+                          for n in ['SupermutantBody', 'SMArmor0_Arms', 'SMArmor0_Torso', 'SMArmor1', 'SMArmor1_Arms',
+                                    'SMArmor1_Lower', 'SMArmor1_Torso', 'SMArmor2_Arms', 'SMArmor2_Lower',
+                                    'SMArmor2_Torso', 'SMArmor3_Torso', 'SMRags1_Lower', 'SMRags1_Torso',
+                                    'SMRags2_Arms', 'SMRags2_Torso', 'SuicideChains']}, [])
 MO_T = bytes([4] + [0] * 19)                            # model info header, no texture hashes
 
 
