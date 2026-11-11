@@ -1,12 +1,16 @@
-"""Female super mutant (Dudu 11-11, option A): the female parts laid ON the vanilla SM body, and the body warp.
-  FemBreastL/R     domes on the pecs: every vertex = the chest surface (raycast from inside, +y) + a smooth bulge
-                   along +y; the rim (bulge 0) lies exactly on the skin; UVs + weights from the skin under it
-  FemNippleL/R     small tips at the dome apex, dark flesh (MutantGlans material)
+"""Female super mutant (Dudu 11-11; shape from ilhamitaa24's reference, #management 1570130682473095240): the female
+parts laid ON the vanilla SM body, and the body's silhouette warp.
+  FemBreastL/R     heavy hanging breasts: a footprint on the chest (rim exactly on the skin), a height profile off it
+                   (long gentle upper slope, full lower pole), then SAG: every point drops in proportion to how far it
+                   stands off the chest, so the lower pole hangs below its own rim and folds onto the belly; a little
+                   outward spread. UVs + weights from the skin at each point's ROOT (its footprint position).
+  FemNippleL/R     tips just below the hanging apex, along the surface normal, dark flesh (MutantGlans material)
   FemVulvaLips     raised lips round a slit on the crotch (rays from inside the pelvis, forward-down)
   FemVulvaInner    the slit floor, flesh
-The body itself (topology untouched: the dismember segments stay vanilla) gets a position-only warp: pecs pushed
-under the domes (60 % of the bulge, only well inside the rim), waist pinched, hips widened. warp() is shared with
-the armour refit, so every piece follows the same shape. Front = +y, up = +z (skin space, RAW).
+The body (topology untouched: the dismember segments stay vanilla) and every shape above get the same position-only
+warp(): soft belly forward, hips wider, thick thighs and calves (radial about each leg's axis), big glutes. The armour
+refit uses warp() too, plus the breast SHIELD (bulge(): how far the breasts stand off the skin, cleavage and the
+fall under the breasts filled the way a plate would drape). Front = +y, up = +z (skin space, RAW).
     python -I smf_geom.py <body nif> <out geom json> [params json]"""
 import json
 import sys
@@ -17,10 +21,14 @@ sys.path.insert(0, r'C:\Users\DuduPhudu\Documents\Projects\fo4-anatomy\tools')
 import nif  # noqa: E402
 
 P0 = {
-    'breast': {'cx': 9.8, 'cz': -24.0, 'R': 8.6, 'h': 6.2, 'droop': 1.2, 'nipple_r': 0.75, 'nipple_h': 0.8},
-    'waist': {'z': -42.0, 'sz': 6.0, 'k': 0.92},           # x scale at the waist (gaussian in z)
-    'hips': {'z': -56.0, 'sz': 5.0, 'k': 1.06},
-    'body_push': 0.6, 'body_push_r': 0.6,
+    'breast': {'cx': 8.1, 'cz': -24.5, 'Rx': 8.2, 'Rz': 10.5, 'h': 10.5, 'sag': 7.5, 'sag_p': 0.8, 'spread': 2.2,
+               'nipple_r': 1.0, 'nipple_h': 1.1, 'nipple_at': 0.22},
+    'hips': {'z': -58.0, 'sz': 7.0, 'k': 1.18},             # x scale (gaussian in z)
+    # thigh/calf thickness: radial scale about each leg's axis, k by z (piecewise linear); axis measured in main
+    'legs': {'zk': [-55.0, -63.0, -72.0, -86.0, -93.0, -100.0, -108.0, -116.0],
+             'kk': [1.0, 1.16, 1.26, 1.24, 1.10, 1.16, 1.10, 1.0]},
+    'belly': {'z': -47.0, 'sz': 8.0, 'sx': 12.0, 'd': 3.2},  # forward push, front skin only
+    'glutes': {'z': -61.0, 'sz': 7.0, 'x': 9.0, 'sx': 7.5, 'd': 4.6},   # backward push, each cheek
     'vulva': {'origin': [0.0, 2.0, -50.0], 'dir': [0.0, 0.45, -0.89], 'prefer': [0.0, 1.0, 0.0], 'depth': 6.0,
               'a0': 2.0, 'b0': 0.42, 'L': 4.0, 'W': 3.0, 'H': 1.2},
 }
@@ -30,38 +38,46 @@ FLESH = ['Materials\\Anatomy\\Creatures\\MutantGlans.bgsm', 'textures\\Anatomy\\
 
 
 def bulge(x, z, p):
-    """the breast displacement along +y at (x, z) (both sides); 0 at and beyond the rim"""
-    b = p['breast']
-    out = np.zeros(np.shape(x))
-    for s in (1, -1):
-        # the footprint is EXACTLY the dome's circle (its rim must lie on the skin); fullness lives in the profile:
-        # a gentle upper slope (1-r^2)^2, a full lower curve (1-r^4)^1.3 (both tangent to the skin at the rim)
-        r2 = np.clip(((x - s * b['cx']) ** 2 + (z - b['cz']) ** 2) / b['R'] ** 2, 0, 1)
-        up = (1 - r2) ** 2
-        low = (1 - r2 ** 2) ** 1.3
-        wl = np.clip(0.5 - (z - b['cz']) / b['R'] * (0.6 + 0.2 * b['droop']), 0, 1)
-        out = out + b['h'] * np.where(r2 < 1, (1 - wl) * up + wl * low, 0)
-    return out
+    """the breast shield along +y at (x, z): bilinear in the grid main() measured (0 outside it)"""
+    g = p['shield']
+    xs, zs, H = np.array(g['xs']), np.array(g['zs']), np.array(g['H'])
+    x, z = np.atleast_1d(np.asarray(x, float)), np.atleast_1d(np.asarray(z, float))
+    fx = (x - xs[0]) / (xs[1] - xs[0])
+    fz = (z - zs[0]) / (zs[1] - zs[0])
+    ok = (fx >= 0) & (fx <= len(xs) - 1) & (fz >= 0) & (fz <= len(zs) - 1)
+    i = np.clip(np.floor(fx).astype(int), 0, len(xs) - 2)
+    j = np.clip(np.floor(fz).astype(int), 0, len(zs) - 2)
+    a, b = np.clip(fx - i, 0, 1), np.clip(fz - j, 0, 1)
+    v = (H[j, i] * (1 - a) * (1 - b) + H[j, i + 1] * a * (1 - b) + H[j + 1, i] * (1 - a) * b
+         + H[j + 1, i + 1] * a * b)
+    return np.where(ok, v, 0.0)
 
 
-def warp(P, p, push=None):
-    """the female shape as a field over skin space (body: push=body_push; armour: push=1.0 + its clearance)"""
+def smooth01(t):
+    t = np.clip(t, 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def warp(P, p):
+    """the female silhouette as a displacement field over skin space (body, our shapes and the armour alike)"""
     P = np.array(P, dtype=float)
+    x, y, z = P[:, 0], P[:, 1], P[:, 2]
     out = P.copy()
-    w, h = p['waist'], p['hips']
-    k = 1 + (w['k'] - 1) * np.exp(-((P[:, 2] - w['z']) / w['sz']) ** 2) \
-        + (h['k'] - 1) * np.exp(-((P[:, 2] - h['z']) / h['sz']) ** 2)
-    out[:, 0] = P[:, 0] * k
-    front = P[:, 1] > 0
-    bl = bulge(P[:, 0], P[:, 2], p)
-    if push is None:                                          # the body: under the domes, only well inside the rim
-        b = p['breast']
-        inner = np.zeros(len(P), bool)
-        for s in (1, -1):
-            inner |= ((P[:, 0] - s * b['cx']) ** 2 + (P[:, 2] - b['cz']) ** 2) < (p['body_push_r'] * b['R']) ** 2
-        out[:, 1] += np.where(front & inner, p['body_push'] * bl, 0)
-    else:
-        out[:, 1] += np.where(front, push * bl, 0)
+    L = p['legs']
+    kl = np.interp(z, L['zk'], L['kk'], left=1.0, right=1.0)
+    f = 1 + (kl - 1) * smooth01((np.abs(x) - 2.5) / 4.0)         # the inner thigh grows less, the crotch not at all
+    ax = np.sign(x) * np.interp(z, L['az'], L['ax'])
+    ay = np.interp(z, L['az'], L['ay'])
+    out[:, 0] = ax + (x - ax) * f
+    out[:, 1] = ay + (y - ay) * f
+    h = p['hips']
+    out[:, 0] *= 1 + (h['k'] - 1) * np.exp(-((z - h['z']) / h['sz']) ** 2)
+    b = p['belly']
+    out[:, 1] += b['d'] * np.exp(-((z - b['z']) / b['sz']) ** 2 - (x / b['sx']) ** 2) * smooth01(y / 8.0)
+    g = p['glutes']
+    for s in (1, -1):
+        out[:, 1] -= g['d'] * np.exp(-((z - g['z']) / g['sz']) ** 2 - ((x - s * g['x']) / g['sx']) ** 2) \
+            * smooth01((-y - 2.0) / 8.0)
     return out
 
 
@@ -169,59 +185,6 @@ def split_by_island(B, V, tris, probe):
     return V[[vi for vi, _ in order]], nt, uv, w
 
 
-def breasts(B, p, out):
-    b = p['breast']
-    NR, NA = 16, 40
-    for side, s in (('R', 1), ('L', -1)):
-        pts, tris, idx = [], [], {}
-        rs = np.linspace(0, 1, NR) ** 0.85
-        for i, r in enumerate(rs):
-            for j in range(NA):
-                th = 2 * np.pi * j / NA
-                x = s * b['cx'] + r * b['R'] * np.cos(th)
-                z = b['cz'] + r * b['R'] * np.sin(th) * 1.02
-                h = B.ray(np.array([x, -6.0, z]), np.array([0, 1.0, 0]))
-                if h is None:
-                    raise SystemExit(f'no chest surface at x {x:.1f} z {z:.1f}')
-                idx[(i, j)] = len(pts)
-                pts.append(h[0] + np.array([0, float(bulge(np.array([x]), np.array([z]), p)[0]), 0]))
-        for i in range(NR - 1):
-            for j in range(NA):
-                a, c = idx[(i, j)], idx[(i, (j + 1) % NA)]
-                d, e = idx[(i + 1, j)], idx[(i + 1, (j + 1) % NA)]
-                if i == 0:
-                    tris.append((a, d, e))                 # the centre ring collapses to the apex row
-                else:
-                    tris += [(a, d, c), (c, d, e)]
-        V = np.array(pts)
-
-        def probe(q, B=B):
-            return B.ray(np.array([q[0], -6.0, q[2]]), np.array([0, 1.0, 0]))
-        Vs, ts, uv, w = split_by_island(B, V, tris, probe)
-        out[f'FemBreast{side}'] = shape(Vs, ts, uv, w, outward=[0, 1, 0])
-        # the nipple: a small rounded cone at the apex, a little below centre
-        apex = V[idx[(0, 0)]]
-        cz = apex[2] - b['droop'] * 0.4
-        h0 = B.ray(np.array([s * b['cx'], -6.0, cz]), np.array([0, 1.0, 0]))[0]
-        base = h0 + np.array([0, float(bulge(np.array([s * b['cx']]), np.array([cz]), p)[0]), 0])
-        NS, NL = 14, 6
-        nv, nt, nuv = [], [], []
-        for i in range(NL):
-            t = i / (NL - 1)
-            rad = b['nipple_r'] * (1.5 - 0.5 * t) * (1 - t ** 3) ** 0.5
-            for j in range(NS):
-                a = 2 * np.pi * j / NS
-                nv.append(base + np.array([rad * np.cos(a), -0.15 + (b['nipple_h'] + 0.15) * t, rad * np.sin(a)]))
-                nuv.append([j / NS, LINING_V[0] + (LINING_V[1] - LINING_V[0]) * t])
-        for i in range(NL - 1):
-            for j in range(NS):
-                a, c = i * NS + j, i * NS + (j + 1) % NS
-                nt += [(a, a + NS, c), (c, a + NS, c + NS)]
-        nv = np.array(nv)
-        nw = [B.sample(*probe(q)[1:])[1] for q in nv]
-        out[f'FemNipple{side}'] = shape(nv, nt, nuv, nw, mat=FLESH, outward=[0, 1, 0])
-
-
 def vulva(B, p, out):
     vp = p['vulva']
     d = np.array(vp['dir'], float)
@@ -312,40 +275,166 @@ def vulva(B, p, out):
     return C, n0
 
 
-def clearance(B, p, out):
-    """the warped body must stay under the domes: sample the dome footprint, compare the body's surface (warped
-    vertices, same triangles) with the dome's along +y"""
-    Vw = warp(B.V, p)
-    V0, V1, V2 = Vw[B.T[:, 0]], Vw[B.T[:, 1]], Vw[B.T[:, 2]]
-    E1, E2 = V1 - V0, V2 - V0
-    worst = 1e9
+class Tris(Body):
+    """any triangle soup with Body's ray()"""
+    def __init__(self, V, T):
+        self.V, self.T = np.asarray(V, float), np.asarray(T, int)
+        self.V0 = self.V[self.T[:, 0]]
+        self.E1, self.E2 = self.V[self.T[:, 1]] - self.V0, self.V[self.T[:, 2]] - self.V0
+
+
+def breast_point(B, p, s, r, th):
+    """(root on the chest, final point, normalised height) for footprint polar coords (r, th) on side s"""
     b = p['breast']
-    for s in (1, -1):
-        for x in np.linspace(s * b['cx'] - b['R'], s * b['cx'] + b['R'], 25):
-            for z in np.linspace(b['cz'] - b['R'], b['cz'] + b['R'], 25):
-                bl = float(bulge(np.array([x]), np.array([z]), p)[0])
-                if bl <= 0.05:
-                    continue
-                h = B.ray(np.array([x, -6.0, z]), np.array([0, 1.0, 0]))
-                if h is None:
-                    continue
-                dome = h[0][1] + bl
-                o, d = np.array([x, -6.0, z]), np.array([0, 1.0, 0])
-                pp = np.cross(d, E2)
-                det = (E1 * pp).sum(1)
-                ok = np.abs(det) > 1e-9
-                inv = np.where(ok, 1.0 / np.where(ok, det, 1), 0)
-                ss = o - V0
-                u = (ss * pp).sum(1) * inv
-                q = np.cross(ss, E1)
-                v = (q * d).sum(1) * inv
-                t = (E2 * q).sum(1) * inv
-                hit = ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 0)
-                if hit.any():
-                    body = o[1] + t[hit].min()
-                    # the dome meets the skin at its rim by design: ask for clearance in proportion to the bulge
-                    worst = min(worst, (dome - body) - min(0.15, 0.5 * bl))
-    return worst
+    xr = s * b['cx'] + r * b['Rx'] * np.cos(th)
+    zr = b['cz'] + r * b['Rz'] * np.sin(th)
+    hit = B.ray(np.array([xr, -6.0, zr]), np.array([0, 1.0, 0]))
+    if hit is None:
+        raise SystemExit(f'no chest surface at x {xr:.1f} z {zr:.1f}')
+    r2 = r * r
+    up = (1 - r2) ** 2                                   # long gentle upper slope, tangent to the chest at the rim
+    low = (1 - r2 * r2) ** 1.3                           # full lower pole
+    wl = np.clip(0.5 - 0.9 * r * np.sin(th), 0, 1)
+    hn = (1 - wl) * up + wl * low
+    q = hit[0] + np.array([s * b['spread'] * hn, b['h'] * hn, -b['sag'] * hn ** b['sag_p']])
+    return hit[0], q, hn
+
+
+def breasts(B, p, out):
+    b = p['breast']
+    NR, NA = 24, 56
+    meshes = []
+    for side, s in (('R', 1), ('L', -1)):
+        roots, pts, tris, idx = [], [], [], {}
+        rs = np.linspace(0, 1, NR) ** 0.8
+        for i, r in enumerate(rs):
+            for j in range(NA):
+                th = 2 * np.pi * j / NA
+                root, q, _ = breast_point(B, p, s, r, th)
+                idx[(i, j)] = len(pts)
+                roots.append(root)
+                pts.append(q)
+        for i in range(NR - 1):
+            for j in range(NA):
+                a, c = idx[(i, j)], idx[(i, (j + 1) % NA)]
+                d, e = idx[(i + 1, j)], idx[(i + 1, (j + 1) % NA)]
+                if i == 0:
+                    tris.append((a, d, e))                 # the centre ring collapses to the apex row
+                else:
+                    tris += [(a, d, c), (c, d, e)]
+        RV = np.hstack([np.array(roots), np.array(pts)])  # cols 0-2: root (probed for UV/weights), 3-5: the point
+
+        def probe(q, B=B):
+            return B.ray(np.array([q[0], -6.0, q[2]]), np.array([0, 1.0, 0]))
+        Vs, ts, uv, w = split_by_island(B, RV, tris, probe)
+        out[f'FemBreast{side}'] = shape(Vs[:, 3:], ts, uv, w, outward=[0, 1, 0])
+        meshes.append((np.array(pts), np.array(tris)))
+        # the nipple: below the hanging apex, along the surface normal there
+        th0 = -np.pi / 2
+        r0 = b['nipple_at']
+        root0, base, _ = breast_point(B, p, s, r0, th0)
+        e = 0.05
+        du = breast_point(B, p, s, r0 + e, th0)[1] - breast_point(B, p, s, r0 - e, th0)[1]
+        dv = breast_point(B, p, s, r0, th0 + e / max(r0, 0.1))[1] - breast_point(B, p, s, r0, th0 - e / max(r0, 0.1))[1]
+        n = np.cross(du, dv)
+        n /= np.linalg.norm(n)
+        if n[1] < 0:
+            n = -n
+        t1 = np.cross(n, [1.0, 0, 0])
+        t1 /= np.linalg.norm(t1)
+        t2 = np.cross(n, t1)
+        NS, NL = 16, 7
+        nv, nt, nuv = [], [], []
+        for i in range(NL):
+            t = i / (NL - 1)
+            rad = b['nipple_r'] * (1.8 - 0.8 * t) * (1 - t ** 3) ** 0.5
+            for j in range(NS):
+                a = 2 * np.pi * j / NS
+                nv.append(base + n * (-0.25 + (b['nipple_h'] + 0.25) * t) + rad * (np.cos(a) * t1 + np.sin(a) * t2))
+                nuv.append([j / NS, LINING_V[0] + (LINING_V[1] - LINING_V[0]) * t])
+        for i in range(NL - 1):
+            for j in range(NS):
+                a, c = i * NS + j, i * NS + (j + 1) % NS
+                nt += [(a, a + NS, c), (c, a + NS, c + NS)]
+        nv = np.array(nv)
+        h0 = probe(root0)
+        nw = [B.sample(*h0[1:])[1]] * len(nv)              # the nipple rides with its root
+        out[f'FemNipple{side}'] = shape(nv, nt, nuv, nw, mat=FLESH, outward=n)
+        meshes.append((nv, np.array(nt)))
+    return meshes
+
+
+def shield(B, meshes, step=0.5):
+    """how far the breasts stand off the chest along +y on an (x, z) grid, draped the way a plate lies over them:
+    the cleavage filled, and a slope off the bottom and the sides instead of a tuck under"""
+    V = np.vstack([m[0] for m in meshes])
+    off = np.cumsum([0] + [len(m[0]) for m in meshes])[:-1]
+    T = np.vstack([m[1] + o for m, o in zip(meshes, off)])
+    M = Tris(V, T)
+    xs = np.arange(-27.0, 27.0 + 1e-6, step)
+    zs = np.arange(-56.0, -6.0 + 1e-6, step)
+    H = np.zeros((len(zs), len(xs)))
+    lo, hi = V.min(0), V.max(0)
+    for j, z in enumerate(zs):
+        if not lo[2] - 1 <= z <= hi[2] + 1:
+            continue
+        for i, x in enumerate(xs):
+            if not lo[0] - 1 <= x <= hi[0] + 1:
+                continue
+            f = M.ray(np.array([x, 80.0, z]), np.array([0, -1.0, 0]))
+            if f is None:
+                continue
+            sk = B.ray(np.array([x, -6.0, z]), np.array([0, 1.0, 0]))
+            if sk is None:
+                continue
+            H[j, i] = max(0.0, f[0][1] - sk[0][1])
+    left = np.maximum.accumulate(H, axis=1)
+    right = np.maximum.accumulate(H[:, ::-1], axis=1)[:, ::-1]
+    H = np.minimum(left, right)                          # cleavage bridged
+    for j in range(len(zs) - 2, -1, -1):                 # downward: 0.6 per unit off the bottom of the breasts
+        H[j] = np.maximum(H[j], H[j + 1] - 0.6 * step)
+    for j in range(1, len(zs)):                          # upward: 1.2 per unit (the top is tangent anyway)
+        H[j] = np.maximum(H[j], H[j - 1] - 1.2 * step)
+    mid = len(xs) // 2
+    for i in range(mid + 1, len(xs)):                    # sideways: 1.0 per unit outward
+        H[:, i] = np.maximum(H[:, i], H[:, i - 1] - step)
+    for i in range(mid - 1, -1, -1):
+        H[:, i] = np.maximum(H[:, i], H[:, i + 1] - step)
+    return {'xs': xs.round(3).tolist(), 'zs': zs.round(3).tolist(), 'H': H.round(3).tolist()}
+
+
+def leg_axis(B):
+    """each leg's centre (x > 0 side; mirrored) by z: the middle of the leg's slice (arms excluded)"""
+    arm = np.array([any(k in max(w, key=lambda t: t[1])[0] for k in ('Arm', 'Hand', 'Finger', 'Clav'))
+                    for w in B.W])
+    az, ax, ay = [], [], []
+    for z in np.arange(-116.0, -66.0 + 1e-6, 2.0):
+        sel = (np.abs(B.V[:, 2] - z) < 2.5) & (B.V[:, 0] > 1.0) & ~arm
+        if sel.sum() < 4:
+            continue
+        S = B.V[sel]
+        az.append(float(z))
+        ax.append(float((S[:, 0].min() + S[:, 0].max()) / 2))
+        ay.append(float((S[:, 1].min() + S[:, 1].max()) / 2))
+    az.append(-54.0)                                     # up to the hip joint (RLeg_Thigh origin)
+    ax.append(11.2)
+    ay.append(-1.0)
+
+    def calm(a):                                         # slices catch the buttock crease: 5-median, 3-mean
+        a = np.array(a)
+        m = np.array([np.median(a[max(0, i - 2):i + 3]) for i in range(len(a))])
+        return [float(np.mean(m[max(0, i - 1):i + 2])) for i in range(len(m))]
+    return az, calm(ax), calm(ay)
+
+
+def inside_count(B, V, tol=0.3):
+    """points of a shape more than tol behind the skin along +y (hidden inside the body)"""
+    n = 0
+    for q in V:
+        h = B.ray(np.array([q[0], -6.0, q[2]]), np.array([0, 1.0, 0]))
+        if h is not None and q[1] < h[0][1] - tol:
+            n += 1
+    return n
 
 
 if __name__ == '__main__':
@@ -354,17 +443,15 @@ if __name__ == '__main__':
         p.update(json.load(open(sys.argv[3])))
     B = Body(sys.argv[1])
     out = {}
-    breasts(B, p, out)
+    meshes = breasts(B, p, out)
     C, n0 = vulva(B, p, out)
-    for push, rr in ((0.6, 0.6), (0.5, 0.55), (0.45, 0.5), (0.4, 0.45), (0.3, 0.4), (0.2, 0.35), (0.0, 0.0)):
-        p['body_push'], p['body_push_r'] = push, rr        # the most the coarse pecs can rise without poking out
-        gap = clearance(B, p, out)
-        if gap >= 0.0:
-            break
+    az, ax, ay = leg_axis(B)
+    p['legs'] = dict(p['legs'], az=az, ax=ax, ay=ay)
+    p['shield'] = shield(B, meshes)
     json.dump(out, open(sys.argv[2], 'w'))
-    json.dump(p, open(sys.argv[2].removesuffix('.json') + '.params.json', 'w'), indent=1)   # warp() reads these
-    print('body push', p['body_push'], 'inside', p['body_push_r'], 'R')
-    print('vulva at', C.round(2), 'normal', n0.round(2), '| shapes', {k: len(v['verts']) for k, v in out.items()},
-          '| min dome-over-body gap', round(gap, 3))
-    if gap < 0.0:
-        raise SystemExit(f'the warped body pokes through the breasts (gap {gap:.3f})')
+    json.dump(p, open(sys.argv[2].removesuffix('.json') + '.params.json', 'w'))   # warp()/bulge() read these
+    H = np.array(p['shield']['H'])
+    print('leg axis', [(z, round(x, 1), round(y, 1)) for z, x, y in zip(az, ax, ay)][::5])
+    print('vulva at', C.round(2), 'normal', n0.round(2), '| shapes', {k: len(v['verts']) for k, v in out.items()})
+    print('shield max', H.max().round(2), '| breast points hidden in the body',
+          {k: inside_count(B, np.array(v['verts'])) for k, v in out.items() if k.startswith('FemBreast')})

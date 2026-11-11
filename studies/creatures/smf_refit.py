@@ -1,7 +1,8 @@
 """Female super mutant armour (Dudu 11-11, option A): every vanilla SM armour/rags/chains piece refitted to the female
-body with the SAME field smf_geom.warp() shapes the body with: waist + hips (x scale) and the breast bulge (+ nipple)
-along +y. The bulge reaches each armour vertex by its distance from the chest: full within 3 units of the skin, fading
-to nothing at 8 (a plate's inner and outer faces move together; plates standing far off the chest stay put).
+body with the SAME field smf_geom.warp() shapes the body with (belly, hips, thighs, glutes) plus the breast shield
+(smf_geom.bulge(): the breasts' stand-off with the cleavage bridged and a drape off their bottom) along +y. The
+shield reaches each armour vertex by its distance from the chest: full within 6 units of the skin, fading to
+nothing at 16 (a plate's inner and outer faces move together; pieces standing far off the chest stay put).
 Positions only, written in place into a copy of the VANILLA nif (from Fallout4 - Meshes.ba2) -> <name>_F.nif.
 Check: every armour vertex that sat outside the male chest stays outside the female breasts.
     python -I smf_refit.py <geom json> <out Data>"""
@@ -16,7 +17,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, r'C:\Users\DuduPhudu\Documents\Projects\fo4-anatomy\tools')
 import gamedata  # noqa: E402
 import nif  # noqa: E402
-from smf_geom import Body, bulge  # noqa: E402
+from smf_geom import Body, bulge, warp  # noqa: E402
 
 DATA = pathlib.Path(r'D:\SteamFreeGames\Fallout 4 AE\Data')
 VAN = r'D:\F4Output\creatures\sm\vanilla\supermutantbody.nif'
@@ -24,16 +25,7 @@ CA = 'meshes/actors/supermutant/characterassets/'
 PIECES = ['SMArmor0_Arms', 'SMArmor0_Torso', 'SMArmor1', 'SMArmor1_Arms', 'SMArmor1_Lower', 'SMArmor1_Torso',
           'SMArmor2_Arms', 'SMArmor2_Lower', 'SMArmor2_Torso', 'SMArmor3_Torso', 'SMRags1_Lower', 'SMRags1_Torso',
           'SMRags2_Arms', 'SMRags2_Torso', 'SuicideChains']
-NEAR, FAR = 3.0, 8.0
-
-
-def nipple_bump(x, z, p):
-    b = p['breast']
-    out = np.zeros(np.shape(x))
-    for s in (1, -1):
-        out += (b['nipple_h'] + 0.3) * np.exp(-(((x - s * b['cx']) ** 2 + (z - (b['cz'] - b['droop'] * 0.4)) ** 2)
-                                               / (2 * b['nipple_r']) ** 2))
-    return out
+NEAR, FAR = 6.0, 16.0          # g + H*fall >= H over the whole fade for H up to 16 (the shield peaks ~14.7)
 
 
 def chest_y(B, x, z):
@@ -43,12 +35,8 @@ def chest_y(B, x, z):
 
 def refit(P, p, B):
     P = np.array(P, dtype=float)
-    out = P.copy()
-    w, h = p['waist'], p['hips']
-    k = 1 + (w['k'] - 1) * np.exp(-((P[:, 2] - w['z']) / w['sz']) ** 2) \
-        + (h['k'] - 1) * np.exp(-((P[:, 2] - h['z']) / h['sz']) ** 2)
-    out[:, 0] = P[:, 0] * k
-    bl = bulge(P[:, 0], P[:, 2], p) + nipple_bump(P[:, 0], P[:, 2], p) * (bulge(P[:, 0], P[:, 2], p) > 0)
+    out = warp(P, p)                                      # belly, hips, thighs, glutes: the body's own field
+    bl = bulge(P[:, 0], P[:, 2], p)                       # the breast shield (nipples included)
     gap0 = np.full(len(P), np.inf)
     for i in np.where((bl > 1e-3) & (P[:, 1] > 0))[0]:
         cy = chest_y(B, P[i, 0], P[i, 2])

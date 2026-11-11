@@ -41,11 +41,13 @@ dst.parent.mkdir(parents=True, exist_ok=True)
 new = {k: (body, v['mat'][0], v['mat'][1:]) if 'mat' in v else (body, None, None) for k, v in G.items()}
 info = transplant(VAN, exp, dst, new)
 m = nif.Nif(dst)
-s = next(q for q in m.shapes() if q.name == body)
-P = np.array(s.positions())
-W = warp(P, params)
-for i, p in enumerate(W):
-    s.set_position(i, p)
+moved = {}
+for s in m.shapes():                                     # body, caps and our shapes: one field, so nothing parts
+    P = np.array(s.positions())
+    W = warp(P, params)
+    for i, p in enumerate(W):
+        s.set_position(i, p)
+    d = np.linalg.norm(W - P, axis=1)
+    moved[s.name] = (int((d > 1e-4).sum()), round(float(d.max()), 2))
 m.save(dst)
-moved = np.linalg.norm(W - P, axis=1)
-print('->', dst, info['shapes'][-6:], '| body verts moved', int((moved > 1e-4).sum()), 'max', round(float(moved.max()), 2))
+print('->', dst, info['shapes'][-6:], '| moved (verts, max)', moved)
