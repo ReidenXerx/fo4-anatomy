@@ -226,6 +226,30 @@ class Ba2:
     def __contains__(self, rel):
         return norm(rel) in self.names
 
+    def _unpack(self, blob, size, rel):
+        """an entry's bytes. zlib is the game's own; third-party packers also write raw deflate, LZ4 (Starfield-style
+        archives) or a "packed" size over bytes stored as they are (an MO2 player's 1.2.12, 11-11: 'Error -3 while
+        decompressing data: incorrect header check' on a material, archive unknown)"""
+        try:
+            return zlib.decompress(blob)
+        except zlib.error:
+            pass
+        try:
+            out = zlib.decompress(blob, -15)
+            if len(out) == size:
+                return out
+        except zlib.error:
+            pass
+        if len(blob) == size:
+            return blob
+        try:
+            out = lz4_block(blob, size)
+            if len(out) == size:
+                return out
+        except (IndexError, ValueError):
+            pass
+        raise ValueError(f'{self.path.name}: its copy of {rel} is compressed in a way this tool cannot read')
+
     def read(self, rel):
         i = self.names[norm(rel)]
         with open(self.path, 'rb') as f:
@@ -233,15 +257,55 @@ class Ba2:
                 _h, _e, _d, _fl, offset, packed, size, _a = self.records[i]
                 f.seek(offset)
                 blob = f.read(packed or size)
-                return zlib.decompress(blob) if packed else blob
+                return self._unpack(blob, size, rel) if packed else blob
             head, chunks = self.records[i]
             _h, _e, _d, _u, _n, _chs, height, width, mips, fmt, cube, _tile = head
             body = bytearray()
             for offset, packed, size, _s, _t, _a in chunks:
                 f.seek(offset)
                 blob = f.read(packed or size)
-                body += zlib.decompress(blob) if packed else blob
+                body += self._unpack(blob, size, rel) if packed else blob
             return dds_header(width, height, mips, fmt, bool(cube), len(body)) + bytes(body)
+
+
+def lz4_block(src, size):
+    """LZ4 block format (no frame), as Starfield-style BA2 entries store it"""
+    out = bytearray()
+    i = 0
+    while i < len(src):
+        token = src[i]
+        i += 1
+        lit = token >> 4
+        if lit == 15:
+            while True:
+                b = src[i]
+                i += 1
+                lit += b
+                if b != 255:
+                    break
+        out += src[i:i + lit]
+        i += lit
+        if i >= len(src):
+            break
+        off = src[i] | (src[i + 1] << 8)
+        i += 2
+        if off == 0 or off > len(out):
+            raise ValueError('bad lz4 offset')
+        ml = token & 15
+        if ml == 15:
+            while True:
+                b = src[i]
+                i += 1
+                ml += b
+                if b != 255:
+                    break
+        ml += 4
+        start = len(out) - off
+        for k in range(ml):
+            out.append(out[start + k])
+        if len(out) > size:
+            raise ValueError('lz4 overrun')
+    return bytes(out)
 
 
 # DXGI formats seen in Fallout 4's texture archives -> (FourCC or None, bytes per 4x4 block or per pixel)
@@ -374,7 +438,28 @@ class Game:
         if where is None:
             raise FileNotFoundError(f'{rel}: not loose in {self.data} and in none of {len(self.archives)} archives')
         kind, path = where
-        return path.read_bytes() if kind == 'loose' else self._ba2(path).read(rel)
+        if kind == 'loose':
+            return path.read_bytes()
+        try:
+            return self._ba2(path).read(rel)
+        except (ValueError, zlib.error, struct.error) as e:
+            # an archive whose copy cannot be read: say which one, and take the next archive's copy (the game's
+            # earlier one) rather than stopping the whole build
+            print(f'   warning: {e}; using the copy in the next archive instead')
+            later = False
+            for other in reversed(self.archives):
+                if other == path:
+                    later = True
+                    continue
+                if not later:
+                    continue
+                try:
+                    if rel in self._ba2(other):
+                        return self._ba2(other).read(rel)
+                except (OSError, ValueError, zlib.error, struct.error):
+                    continue
+            raise SystemExit(f'{rel}: {path.name} holds it in a form this tool cannot read, and no other archive '
+                             f'has a readable copy. Extract it loose (BAE or Archive2) or report it with this log.')
 
     def describe(self, rel):
         where = self.find(rel)
