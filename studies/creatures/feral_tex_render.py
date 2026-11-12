@@ -81,7 +81,17 @@ def material(o):
     if d:
         n = nt.nodes.new('ShaderNodeTexImage')
         n.image = bpy.data.images.load(str(d))
-        nt.links.new(n.outputs['Color'], bsdf.inputs['Base Color'])
+        out_col = n.outputs['Color']
+        if 'VERTEX_COLOR' in o.data.color_attributes:            # the game multiplies vertex colours in
+            vc = nt.nodes.new('ShaderNodeVertexColor')
+            vc.layer_name = 'VERTEX_COLOR'
+            mul = nt.nodes.new('ShaderNodeMix')
+            mul.data_type, mul.blend_type = 'RGBA', 'MULTIPLY'
+            mul.inputs['Factor'].default_value = 1.0
+            nt.links.new(out_col, mul.inputs[6])
+            nt.links.new(vc.outputs['Color'], mul.inputs[7])
+            out_col = mul.outputs[2]
+        nt.links.new(out_col, bsdf.inputs['Base Color'])
     else:
         bsdf.inputs['Base Color'].default_value = (0.5, 0.42, 0.36, 1)
     nm = png_for(t.get('n')) or nm_bg

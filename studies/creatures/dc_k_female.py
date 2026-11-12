@@ -35,7 +35,9 @@ T_CEN = (V0 + V1 + V2) / 3
 print('body tris for the female patch', len(T))
 
 npz, out_geom, out_push = sys.argv[1], sys.argv[2], sys.argv[3]
-K = float(sys.argv[4]) if len(sys.argv) > 4 else 78.0
+K = float(sys.argv[4]) if len(sys.argv) > 4 else 78.0 * 1.15     # v2 (kassarawi 11-12): 1.15x
+PUFF = 1.6         # v2: her labia (the heights over the base) stand out this much more
+DARK = 0.20        # v2: skin toward the genitals one tone darker (vertex colours), the rim matches the body
 d = np.load(npz)
 HV0, HV1, HF, HN = d['V_rest'], d['V_open'], d['F'], d['N_rest']
 
@@ -141,9 +143,12 @@ D_RIM = np.min(np.linalg.norm(P0h[:, None, :] - RIM[None, :, :], axis=2), axis=1
 
 
 MOUND = 2.0        # dc units: the island stands this far off the body (the vanilla body stays untouched: sinking its
-CANAL = 3.0        # few big crotch triangles dragged creases out past the patch), canals squashed to ~this depth
+CANAL = 1.6        # few big crotch triangles dragged creases out past the patch), canals squashed to ~this depth:
+                   # under MOUND, so the canal floor stays over the body skin (deeper = the body shows when open)
+VULVA_C, VULVA_R = (0.0, 0.16), 0.075    # her labia: PUFF acts here only (the island's outer edge has stray heights)
 Y_ANUS = 0.38      # her anal entrance on the midline (section.png)
 FUNNEL = 3.0       # dc units of (her) canal depth at which a wall point sits halfway to its entrance's centre
+Z_CANAL = 1.575    # her z above which a point is inside a canal (section.png); only those funnel
 
 
 def local(P):
@@ -153,10 +158,15 @@ def local(P):
     # funnel: a canal squashed flat shows its walls as rings once open; deeper wall points move toward their
     # entrance's centre instead, so the squashed canal reads as a tunnel narrowing inward
     yc = np.where(np.abs(P[:, 1] - Y_OPEN) < np.abs(P[:, 1] - Y_ANUS), Y_OPEN, Y_ANUS)
-    f = np.where(h < 0, 1.0 / (1.0 + np.maximum(-h, 0) / FUNNEL), 1.0)
+    # only real canal depth funnels: her skin island sits up to ~2 units under the fitted base (fit residue), and
+    # funnelling that squeezed the whole vulva into a strip (v1 sheet, found in v2's clay check)
+    # canal = above her underside skin (z 1.50-1.56 in her section; both canals rise past ~1.575)
+    f = 1.0 / (1.0 + np.maximum(P[:, 2] - Z_CANAL, 0) * K / FUNNEL)
     x = P[:, 0] * f
     y = yc + (P[:, 1] - yc) * f
-    h = np.where(h < 0, -CANAL * (1 - np.exp(h / CANAL)), h)
+    rv = np.hypot(P[:, 0] - VULVA_C[0], P[:, 1] - VULVA_C[1]) / VULVA_R
+    puff = 1 + (PUFF - 1) * np.exp(-rv ** 2 * 1.5)
+    h = np.where(h < 0, -CANAL * (1 - np.exp(h / CANAL)), h * puff)
     t = np.clip(D_RIM / 0.055, 0, 1)
     fade = t * t * (3 - 2 * t)
     return -x * K, S0 - (y - Y_OPEN) * K, (h + MOUND) * fade
@@ -253,6 +263,17 @@ def shape(order, tris):
     nn = bn + t * (np.array(g['normals']) - N_rest[idx])
     nn /= np.linalg.norm(nn, axis=1, keepdims=True)
     g['normals'] = nn.round(5).tolist()
+    # vertex colours: the body's own (the engine multiplies them in: ~0.8 at the crotch), darkened toward the
+    # genitals; her flesh texture takes a flat 0.9
+    if order is sk_order:
+        bc_ = []
+        for vi in idx:
+            _, k, bc = ray(B_rest[vi] + 2.0 * N_rest[vi], -N_rest[vi])
+            bc_.append(float((BCOL[T[k]] * bc).sum()))
+        f = np.clip(D_RIM[idx] / 0.06, 0, 1)
+        g['colors'] = (np.array(bc_) * (1 - DARK * f * f * (3 - 2 * f))).round(4).tolist()
+    else:
+        g['colors'] = [0.9] * len(idx)
     return g
 
 
@@ -265,6 +286,16 @@ def _nif_normals(shape):
 
 
 BNRM = _nif_normals(bs)
+
+
+def _nif_grey(shape):
+    import struct
+    off = ((shape.desc >> 24) & 0xF) * 4
+    return np.array([struct.unpack_from('<B', shape.nif.b, shape.data_at + i * shape.stride + off)[0]
+                     for i in range(shape.count)], float) / 255.0
+
+
+BCOL = _nif_grey(bs)
 
 
 OPEN = 0.7         # her 'Vag Open' at full strength gapes wider than the deathclaw crotch reads well

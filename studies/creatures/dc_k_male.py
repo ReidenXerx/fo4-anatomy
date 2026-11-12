@@ -74,4 +74,25 @@ for old, new in (
 # R_SHEATH is used by MALE, which comes first in the section: define it up front
 male_src = 'R_SHEATH = float(radius_profile(0.12)) + 0.75\n' + male_src
 exec(compile(male_src, str(HERE / 'dc_geom.py') + ' (male, equine)', 'exec'))
-print('equine male written ->', out)
+
+# v2 (kassarawi 11-12): the skin around the genitals one tone darker. The sheath skin takes the body's own vertex
+# colours (the engine multiplies them in) darkened toward the opening; the rim matches the body
+import json  # noqa: E402
+import struct  # noqa: E402
+DARK = 0.20
+_off = ((bs.desc >> 24) & 0xF) * 4
+GREY = np.array([struct.unpack_from('<B', bs.nif.b, bs.data_at + i * bs.stride + _off)[0]
+                 for i in range(bs.count)], float) / 255.0
+G = json.load(open(out))
+Vb = np.array(G['Base']['verts'])
+cols = []
+for p in Vb:
+    _, k, bc = ray(p + 6.0 * FRAME['n0'], -FRAME['n0'])
+    cols.append(float((GREY[T[k]] * bc).sum()))
+rim_d = float(np.max(np.linalg.norm(Vb - FRAME['P0'], axis=1)))
+t = np.clip((rim_d - np.linalg.norm(Vb - FRAME['P0'], axis=1)) / (0.6 * rim_d), 0, 1)
+G['Base']['colors'] = (np.array(cols) * (1 - DARK * t * t * (3 - 2 * t))).round(4).tolist()
+G['Penis']['colors'] = [1.0] * len(G['Penis']['verts'])
+json.dump(G, open(out, 'w'))
+print('equine male written ->', out, '| sheath colours', round(min(G['Base']['colors']), 3), '..',
+      round(max(G['Base']['colors']), 3))

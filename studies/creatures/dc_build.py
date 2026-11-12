@@ -36,6 +36,11 @@ for name, g in G.items():
         for li in poly.loop_indices:
             u_, v_ = g['uv'][me.loops[li].vertex_index]
             uvl.data[li].uv = (u_, 1.0 - v_)                  # json = nif convention; PyNifly flips v on export
+    if g.get('colors'):                                       # per-vertex grey, 0..1 (the body's own colours
+        ca = me.color_attributes.new(name='VERTEX_COLOR', type='FLOAT_COLOR', domain='POINT')   # are its shading)
+        for i, c in enumerate(g['colors']):
+            ca.data[i].color = (c, c, c, 1.0)
+        me.color_attributes.active_color = ca
     o = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(o)
     o.parent = ref.parent
