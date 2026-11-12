@@ -23,7 +23,12 @@ PEN = ('Materials\\Anatomy\\Creatures\\DeathclawVulva.bgsm',
        ['textures\\Anatomy\\Creatures\\DeathclawVulva_d.dds', 'textures\\Anatomy\\Creatures\\DeathclawVulva_n.dds'])
 PNG = pathlib.Path(r'D:\F4Output\creatures\dc_kassarawi\png')     # vanilla deathclaw PNGs + her cropped tile
 GEOM = sys.argv[3] if len(sys.argv) > 3 else 'geom_female.json'
-SHAPES = {'VulvaLips': ('DeathclawFX:0', None, None), 'VulvaInner': ('DeathclawFX:0', PEN[0], PEN[1])}
+PENIS = ('Materials\\Anatomy\\Creatures\\DeathclawPenisEquine.bgsm',       # dc_k_penis_tex.py
+         ['textures\\Anatomy\\Creatures\\DeathclawPenisEquine_d.dds',
+          'textures\\Anatomy\\Creatures\\DeathclawPenisEquine_n.dds'])
+SHAPES = {'VulvaLips': ('DeathclawFX:0', None, None), 'VulvaInner': ('DeathclawFX:0', PEN[0], PEN[1]),
+          'Base': ('DeathclawFX:0', None, None), 'Penis': ('DeathclawFX:0', PENIS[0], PENIS[1])}
+MALE = 'Penis' in open(B / GEOM).read(200000)
 
 
 def run(cmd):
@@ -33,8 +38,8 @@ def run(cmd):
     return r.stdout
 
 
-G = json.load(open(B / GEOM))
-morph = next(iter(next(iter(G.values()))['morphs']))
+G = {k: v for k, v in json.load(open(B / GEOM)).items() if not k.startswith('_')}
+morph = 'Erection'
 for g in G.values():
     g['verts'] = [[a + b for a, b in zip(v, d)] for v, d in zip(g['verts'], g['morphs'][morph])]
 json.dump(G, open(B / ('open_' + GEOM), 'w'))
@@ -51,6 +56,9 @@ for state, gj in (('', GEOM), ('o', 'open_' + GEOM)):
     print('review nif', rev, info['shapes'])
 V = ('pt=0/-8/103/0/-30/34/fbelow,pt=0/-8/103/0.1/-80/34/below,pt=0/-12/98/180/-45/34/bbelow,'
      'pt=0/-8/103/35/-55/34/oblique,pt=0/-5/100/20/-20/110/context')
+if MALE:
+    V = ('pt=0/20/110/90/-5/75/side,pt=0/8/100/40/-25/62/threeq,pt=0/0/104/0/-20/40/front,'
+         'pt=0/0/104/90/-10/30/sheath,pt=0/-5/100/20/-20/110/context')
 o = run([BL, '-b', '-P', HERE / 'feral_tex_render.py', '--', 'render', PNG, B / 'shots',
          f'{TAG}|{revs[""]}|{V}|RAW=1;HIDE=tongue', f'{TAG}o|{revs["o"]}|{V}|RAW=1;HIDE=tongue'])
 print(sum('Saved' in line for line in o.splitlines()), 'renders ->', B / 'shots')
