@@ -78,6 +78,26 @@ def warp(P, p):
     for s in (1, -1):
         out[:, 1] -= g['d'] * np.exp(-((z - g['z']) / g['sz']) ** 2 - ((x - s * g['x']) / g['sx']) ** 2) \
             * smooth01((-y - 2.0) / 8.0)
+    if p.get('transfer'):                                  # v3 (11-12): her sculpt, smf_transfer.py
+        out += transfer_disp(P, p['transfer'])
+    return out
+
+
+def transfer_disp(P, tr, k=16, sigma=5.0):
+    """the body's per-vertex displacement (smf_transfer: vanilla vertex -> her shape) as a field over skin space:
+    a gaussian blend (sigma in game units) of the k nearest vanilla body vertices - smooth over the body, the shapes
+    laid on it and the armour around it (an inverse-distance blend of 6 left lumps on the dense breast shapes: the
+    game body is only 2338 vertices)"""
+    BV, BD = np.asarray(tr['V'], float), np.asarray(tr['D'], float)
+    out = np.zeros_like(P)
+    for a in range(0, len(P), 4000):
+        Q = P[a:a + 4000]
+        d2 = ((Q[:, None, :] - BV[None, :, :]) ** 2).sum(2)
+        idx = np.argpartition(d2, k, axis=1)[:, :k]
+        dd = np.take_along_axis(d2, idx, 1)
+        w = np.exp(-(dd - dd.min(1, keepdims=True)) / (2 * sigma * sigma))
+        w /= w.sum(1, keepdims=True)
+        out[a:a + 4000] = (BD[idx] * w[:, :, None]).sum(1)
     return out
 
 
