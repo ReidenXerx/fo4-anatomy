@@ -12,6 +12,8 @@ Drivers: `canine_all.py`, `sm_all.py`, `bh_vanilla.py` (behemoth on the vanilla 
 `yg_all.py`, `rs_all.py`, `mr_all.py`, `nick_*.py`, `dc_standalone.py` (deathclaw, own plugin), `feral_all.py` +
 `feral_transplant.py` (ferals). Renders: `feral_tex_prep.py` + `feral_tex_render.py`, `storefront_renders.py`.
 Packages: `creature_fomods.py` (FOMOD standard), `pack_any.py`.
+ANIMALS (2026-11-16, `docs/creature-morphs.md`): run `morph_rename.py` last on every animal build - our own morph
+names, never UAP's, so creature animation packs do not drive our meshes; animal installers carry no AAF lines.
 
 Female mammals (Dudu 11-10): `fem_survey.py` (which skin ARMAs carry a female model), `fem_auto.py` (landmarks:
 pelvis, rear face, belly line), `fem_geom.py` (vulva lips + flesh slit + teats raycast onto the vanilla body, UVs and

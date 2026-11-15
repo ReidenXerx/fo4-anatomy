@@ -24,16 +24,19 @@ MM_LINE = 'Install with Vortex or MO2; manual installs are not supported.'
 CREDIT = 'Penis positions and motion matched to UAP\'s, so AAF creature animations line up.'
 CREDIT_DR = ('Penis positions and motion matched to darthroman\'s AAF creature pack, so its creature animations '
              'line up.')
+# ANIMALS (Dudu 2026-11-16, docs/creature-morphs.md): no AAF / scene lines and our own morph names (morph_rename.py)
+CREDIT_A = 'Penis positions measured from UAP\'s meshes (credit: UAP).'
+CREDIT_DR_A = 'Penis positions measured from darthroman\'s creature meshes (credit: darthroman).'
 ORDER = ('Install after any other mod that replaces the same creature body (UAP included): ours replaces its mesh at '
          'the same path.')
 
 MODS = {
     'dogs': dict(
         name='Immersive Dogs - Anatomical Genitals', src=C / 'canine/out9/Data',
-        checks=[AAF_LINE, ORDER],
+        checks=[ORDER],
         features=[('Sheath, penis and knot', 'A furred sheath on the belly, a red canine penis with a knot. At rest it '
                    'stays in the sheath; erect it slides out, the knot swells at the base. Dogmeat, raider dogs, vicious '
-                   'dogs and pack leaders, Far Harbor wolves, FEV hounds - each in its own fur. ' + CREDIT,
+                   'dogs and pack leaders, Far Harbor wolves, FEV hounds - each in its own fur. ' + CREDIT_A,
                    R / 'Dogs')]),
     'supermutant': dict(
         name='Immersive Super Mutants - Anatomical Genitals', src=C / 'sm/out/Data',
@@ -49,19 +52,19 @@ MODS = {
                    R / 'Behemoths')]),
     'yaoguai': dict(
         name='Immersive Yao Guai - Anatomical Genitals', src=C / 'yg/out2/Data',
-        checks=[AAF_LINE, ORDER],
+        checks=[ORDER],
         features=[('Yao guai genitals', 'A furred sheath and scrotum in the bear\'s own fur, a red penis that slides out '
-                   'when erect. Both yao guai bodies. ' + CREDIT_DR, R / 'Yao Guai')]),
+                   'when erect. Both yao guai bodies. ' + CREDIT_DR_A, R / 'Yao Guai')]),
     'radstag': dict(
         name='Immersive Radstags - Anatomical Genitals', src=C / 'rs/out4/Data',
-        checks=[AAF_LINE, ORDER],
+        checks=[ORDER],
         features=[('Radstag genitals', 'A thin, pointed deer penis and a furred scrotum in the radstag\'s belly fur. '
-                   'The nude radstag carries it erect. ' + CREDIT_DR, R / 'Radstags')]),
+                   'The nude radstag carries it erect. ' + CREDIT_DR_A, R / 'Radstags')]),
     'molerat': dict(
         name='Immersive Mole Rats - Anatomical Genitals', src=C / 'mr/out2/Data',
-        checks=[AAF_LINE, ORDER],
+        checks=[ORDER],
         features=[('Mole rat genitals', 'A rodent prepuce sheath, a red penis and a scrotum in the mole rat\'s own skin, '
-                   'on plain and armored mole rats. ' + CREDIT_DR, R / 'Mole Rats')]),
+                   'on plain and armored mole rats. ' + CREDIT_DR_A, R / 'Mole Rats')]),
     'synths': dict(
         name='Immersive Synths - Anatomical Genitals for Nick and Gen 2 Synths', src=C / 'nick/out6/Data',
         checks=[UAP_LINE, AAF_LINE, ORDER],
@@ -74,11 +77,11 @@ MODS = {
         plain_plugin=C / 'dc/sa/plugins101/Anatomy Deathclaws.esp', uap_master='Deathclaw_nude.esp',
         checks=['Anatomy Deathclaws.esp: this mod\'s own plugin (light)',
                 'UAP\'s Deathclaw_nude.esp: optional - when it is active, this installer picks the build that loads '
-                'after it and replaces its deathclaw penis', AAF_LINE],
+                'after it and replaces its deathclaw penis'],
         features=[('Deathclaw genitals', 'Males: a reptilian vent in seamless deathclaw skin; erect, a ribbed, scaly '
                    'penis everts from it, scales at the root turning to dark flesh at the head. Females: vent lips with '
                    'a red interior. Albino, alpha, savage, glowing, matriarch and chameleon deathclaws keep their own colours. '
-                   + CREDIT, R / 'Deathclaws')]),
+                   + CREDIT_A, R / 'Deathclaws')]),
 }
 
 
