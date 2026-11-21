@@ -136,24 +136,8 @@ def main():
         b = work / f'builder_{body}'
         shutil.rmtree(b, ignore_errors=True)
         run_builder(data, b, body)
-        built = work / f'built_{body}'
-        bodyslide(b, ['Anatomy Body'], 'CBBE Zeroed Sliders', built)
-        nifp, tri = next(built.rglob('FemaleBody.nif')), next(built.rglob('FemaleBody.tri'))
-        neck_seam.apply(nifp, pieces)
-        part = stage / f'women-{body}'
-        (part / ASSETS).mkdir(parents=True)
-        shutil.copy2(nifp, part / ASSETS / 'FemaleBody.nif')
-        shutil.copy2(tri, part / ASSETS / 'FemaleBody.tri')
-        for rel in WOMEN_FILES[1:]:
-            (part / rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(b / rel, part / rel)
-        for m in ('FemaleBody_d.dds', 'FemaleBody_n.dds', 'FemaleBody_s.dds'):
-            (part / 'Textures/Anatomy').mkdir(parents=True, exist_ok=True)
-            shutil.copy2(skin / m, part / 'Textures/Anatomy' / m)
-        (part / 'Materials/Anatomy').mkdir(parents=True, exist_ok=True)
-        shutil.copy2(skin / 'AnatomyGenitals.bgsm', part / 'Materials/Anatomy/AnatomyGenitals.bgsm')
-        n = nif.Nif(part / ASSETS / 'FemaleBody.nif')
-        print(f'women-{body}:', [(s.name, s.count) for s in n.shapes()])
+        if f'women-{body}' in parts:     # --parts men runs the CBBE builder for its men's sets only (11-21)
+            stage_women(b, body, work, stage, pieces, skin)
         if body == 'cbbe' and 'men' in parts:
             for sets, name in ((['Anatomy Male Body'], 'men'), (['Anatomy Male Body Uncut'], 'men-uncut')):
                 mb = work / f'built_{name}'
@@ -165,6 +149,28 @@ def main():
                 n = nif.Nif(part / ASSETS / 'MaleBody.nif')
                 print(f'{name}:', [(s.name, s.count) for s in n.shapes()])
     print('staged:', ', '.join(sorted(p.name for p in stage.iterdir())))
+
+
+def stage_women(b, body, work, stage, pieces, skin):
+    """BodySlide the builder's women's body at zeroed sliders, seam its neck, stage it with its physics and skin"""
+    built = work / f'built_{body}'
+    bodyslide(b, ['Anatomy Body'], 'CBBE Zeroed Sliders', built)
+    nifp, tri = next(built.rglob('FemaleBody.nif')), next(built.rglob('FemaleBody.tri'))
+    neck_seam.apply(nifp, pieces)
+    part = stage / f'women-{body}'
+    (part / ASSETS).mkdir(parents=True)
+    shutil.copy2(nifp, part / ASSETS / 'FemaleBody.nif')
+    shutil.copy2(tri, part / ASSETS / 'FemaleBody.tri')
+    for rel in WOMEN_FILES[1:]:
+        (part / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(b / rel, part / rel)
+    for m in ('FemaleBody_d.dds', 'FemaleBody_n.dds', 'FemaleBody_s.dds'):
+        (part / 'Textures/Anatomy').mkdir(parents=True, exist_ok=True)
+        shutil.copy2(skin / m, part / 'Textures/Anatomy' / m)
+    (part / 'Materials/Anatomy').mkdir(parents=True, exist_ok=True)
+    shutil.copy2(skin / 'AnatomyGenitals.bgsm', part / 'Materials/Anatomy/AnatomyGenitals.bgsm')
+    n = nif.Nif(part / ASSETS / 'FemaleBody.nif')
+    print(f'women-{body}:', [(s.name, s.count) for s in n.shapes()])
 
 
 if __name__ == '__main__':
