@@ -130,6 +130,61 @@ def plan(nif_path, spec=WOMEN):
     return drop, loop, centre, [centre] + [_add(centre, o) for o in spec.path_offsets]
 
 
+def segment_ranges(tail):
+    """A BSSubIndexTriShape's segments and subsegments: [(byte offset of the start field in tail, first triangle,
+    triangle count, depth)]. Starts are stored in indices (3 per triangle), counts in triangles."""
+    c = nif.Cursor(tail, 0)
+    _, nseg, _ = c.take('I'), c.take('I'), c.take('I')
+    out = []
+    for _ in range(nseg):
+        at = c.o
+        start, count, _, nsub = c.take('I'), c.take('I'), c.take('I'), c.take('I')
+        out.append((at, start // 3, count, 0))
+        for _ in range(nsub):
+            at2 = c.o
+            ss, sc, _, _ = c.take('I'), c.take('I'), c.take('I'), c.take('I')
+            out.append((at2, ss // 3, sc, 1))
+    return out
+
+
+def resegment(tail, tris, dropset, new_tris):
+    """Segment data and triangle order after dropping triangles and adding new ones, for a body the game dismembers by
+    triangle ranges (BodyTalk's men). Kept triangles keep their segment; the new ones go at the end of the range that
+    held most of the dropped ones (the pucker's). Fix 2026-11-21: the men's canal was appended at the end with
+    BodyTalk's ranges kept, so every range after the pucker slid and a lower-leg cut hid thigh triangles.
+    Returns (tail, triangles in their new order)."""
+    ranges = segment_ranges(tail)
+    old_n = len(tris)
+
+    def dropped_in(r):
+        return sum(1 for k in dropset if r[1] <= k < r[1] + r[2])
+    host = max(ranges, key=lambda r: (dropped_in(r), r[3]))
+    if not dropped_in(host):
+        raise ValueError('the dropped triangles are in no segment')
+    insert_old = host[1] + host[2]
+    kept_before, run = [0] * (old_n + 1), 0
+    for k in range(old_n):
+        kept_before[k] = run
+        run += k not in dropset
+    kept_before[old_n] = run
+    nnew = len(new_tris)
+
+    def at(x):
+        return kept_before[x] + (nnew if x >= insert_old else 0)
+    order = [t for k, t in enumerate(tris[:insert_old]) if k not in dropset] + list(new_tris) + \
+            [t for k, t in enumerate(tris) if k >= insert_old and k not in dropset]
+    out = bytearray(tail)
+    struct.pack_into('<I', out, 0, len(order))
+    for r in ranges:
+        off, start, count, depth = r
+        s2, e2 = at(start), at(start + count)
+        owner = r == host or (depth < host[3] and start <= host[1] and start + count >= insert_old)
+        if count and start + count == insert_old and not owner:
+            e2 = kept_before[insert_old]               # a range that only ENDS where the canal goes does not get it
+        struct.pack_into('<II', out, off, s2 * 3, e2 - s2)
+    return bytes(out), order
+
+
 def build(nif_path, osd_path=None, osd_module=None, uv_map=None, spec=WOMEN):
     """Open the cup's floor and stitch the canal onto it, in place; returns a report line. uv_map: for a body whose
     genitals already sample their tile (A-48), the full-skin UV -> tile UV mapping."""
@@ -263,10 +318,9 @@ def build(nif_path, osd_path=None, osd_module=None, uv_map=None, spec=WOMEN):
         records.append(bytes(rec))
 
     base = s.count
-    all_tris = [t for k, t in enumerate(tris) if k not in dropset] + [tuple(base + x for x in t) for t in faces]
+    new_tris = [tuple(base + x for x in t) for t in faces]
     stride = s.stride
     vdata = bytes(n.b[s.data_at:s.data_at + s.count * stride]) + b''.join(records)
-    tri_bytes = b''.join(struct.pack('<3H', *t) for t in all_tris)
     o, size = n.offsets[s.index]
     c = nif.Cursor(n.b, o)
     n._av(c)
@@ -275,6 +329,11 @@ def build(nif_path, osd_path=None, osd_module=None, uv_map=None, spec=WOMEN):
     c.take('Q')
     counts_at = c.o
     tail = bytes(n.b[s.data_at + s.count * stride + 6 * s.triangle_count:o + size])
+    if n.types[s.index] == 'BSSubIndexTriShape':
+        tail, all_tris = resegment(tail, tris, dropset, new_tris)
+    else:
+        all_tris = [t for k, t in enumerate(tris) if k not in dropset] + new_tris
+    tri_bytes = b''.join(struct.pack('<3H', *t) for t in all_tris)
     nverts = s.count + len(records)
     if nverts > 0xFFFF:
         raise ValueError('more than 65,535 vertices')
