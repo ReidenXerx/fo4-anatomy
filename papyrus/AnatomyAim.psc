@@ -23,10 +23,17 @@ Int Function Inside(Actor akHim) Global Native
 ; closes; 0 closes it now. It also opens on its own while the robot talks. No effect on a robot without such a head.
 Function ServitronMouth(Actor akActor, Float afSeconds) Global Native
 
-; The same from the console (an Actor argument does not come through cgf; form id in decimal):
-;   cgf "AnatomyAim.ServitronMouthTest" <form id> <seconds>
-Function ServitronMouthTest(Int aiActor, Float afSeconds) Global
-	ServitronMouth(Game.GetForm(aiActor) as Actor, afSeconds)
+; The same from the console, on the robot clicked in the console (an Actor argument does not come through cgf, and a
+; runtime form id like FF009150 does not fit Papyrus' signed Int):
+;   click him, then   cgf "AnatomyAim.ServitronMouthTest" <seconds>
+Function ServitronMouthTest(Float afSeconds) Global
+	Actor a = Game.GetCurrentConsoleRef() as Actor
+	Debug.Trace("Anatomy: ServitronMouthTest on " + a + " for " + afSeconds + " s", 0)
+	If a == None
+		Debug.Notification("ServitronMouthTest: click the robot in the console first")
+		Return
+	EndIf
+	ServitronMouth(a, afSeconds)
 EndFunction
 
 ; For testing and support: a climax of the man aiHim with aiHer (form ids, decimal), as a CLIMAX stage gives it. Console:
