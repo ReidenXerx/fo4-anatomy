@@ -155,6 +155,100 @@ def penis_mesh(pts, balls):
     return verts, tris, length
 
 
+def fbx_mesh(path, pts, balls):
+    """An artist's rigged penis (tools/fbx_penis_export.py's JSON; 2026-11-22: Ilham's, Dudu's approval via Watcher) laid
+    along our chain instead of penis_mesh's tube. Her shaft runs from her first shaft bone's head along her shaft bones;
+    each vertex keeps its distance along that axis and its offset across it, scaled so her shaft's length is our chain's
+    (Penis_00 -> Penis_05) and bent along the chain like penis_mesh's rings. Her own weights only say which vertices are
+    the balls (her Balls bones): those hang off the root, held by the pelvis with our balls bones' sway; the rest take
+    penis_mesh's rule (rigid between chain bones; behind Penis_00 the pelvis). Her UVs and normals are kept.
+    Returns [(pos, normal, (u, v), weights)], triangles, our shaft length, the balls' vertex indices, tangents."""
+    import json
+    d = json.load(open(path))
+    hb = {k: np.array(v[0]) for k, v in d['bones'].items()}
+    tb = {k: np.array(v[1]) for k, v in d['bones'].items()}
+    shaft = sorted(k for k in hb if k.startswith('Shaft') and not k.endswith('_end'))
+    origin = hb[shaft[0]]
+    raw = np.array([v[:3] for v in d['verts']])
+    is_ball = [sum(w for g, w in v[8].items() if g.startswith('Balls')) > 0.5 for v in d['verts']]
+    dh = unit(tb[shaft[-1]] - origin)
+    side_h = unit(np.cross(dh, [0.0, 0.0, 1.0]))
+    up_h = unit(np.cross(side_h, dh))
+    along = (raw - origin) @ dh
+    tip = float(max(a for a, b in zip(along, is_ball) if not b))
+    seg = [float(np.linalg.norm(pts[k + 1] - pts[k])) for k in range(len(pts) - 1)]
+    cum = np.concatenate([[0.0], np.cumsum(seg)])
+    length = float(cum[-1])
+    k_scale = length / tip
+    d0, d1 = unit(pts[1] - pts[0]), unit(pts[-1] - pts[-2])
+
+    def frame(s):
+        if s <= 0:
+            c, dd = pts[0] + d0 * s, d0
+        elif s >= length:
+            c, dd = pts[-1] + d1 * (s - length), d1
+        else:
+            j = int(np.searchsorted(cum, s) - 1)
+            t = (s - cum[j]) / seg[j]
+            c, dd = pts[j] + (pts[j + 1] - pts[j]) * t, unit(pts[j + 1] - pts[j])
+        sd = unit(np.cross(dd, [0.0, 0.0, 1.0]))
+        return c, dd, sd, unit(np.cross(sd, dd))
+
+    def chain_weights(s):
+        if s <= 0:
+            t = min(1.0, -s / INSIDE)
+            return [('Pelvis_skin', 0.3 + 0.7 * t), (CHAIN[0], 0.7 - 0.7 * t)]
+        if s >= length:
+            return [(CHAIN[-1], 1.0)]
+        j = int(np.searchsorted(cum, s) - 1)
+        t = (s - cum[j]) / seg[j]
+        return [(CHAIN[j], 1.0 - t), (CHAIN[j + 1], t)]
+
+    top, bottom = balls
+    root_frame = frame(0.0)
+    verts = []
+    for v, p, a, ball in zip(d['verts'], raw, along, is_ball):
+        rel = p - origin
+        x, z = float(rel @ side_h) * k_scale, float(rel @ up_h) * k_scale
+        nv = np.array(v[3:6])
+        na, nx, nz = float(nv @ dh), float(nv @ side_h), float(nv @ up_h)
+        s = float(a) * k_scale
+        c, dd, sd, ud = root_frame if ball else frame(s)
+        if ball:                                   # the balls hang off the root, unbent
+            c = c + dd * s
+        pos = c + sd * x + ud * z
+        nrm = unit(dd * na + sd * nx + ud * nz)
+        if ball:
+            t = min(1.0, max(0.0, (top[2] - pos[2]) / max(1e-6, top[2] - bottom[2])))
+            w = [('Pelvis_skin', 0.65), (BALLS[0], 0.35 * (1.0 - t)), (BALLS[1], 0.35 * t)]
+        else:
+            w = chain_weights(s)
+        verts.append((pos, nrm, (float(v[6]), 1.0 - float(v[7])), w))   # Blender's v runs up, the game's down
+    tris = [tuple(t) for t in d['tris']]
+    P = np.array([v[0] for v in verts])
+    N = np.array([v[1] for v in verts])
+    facing = sum(float(np.dot(np.cross(P[b] - P[a], P[c] - P[a]), N[a] + N[b] + N[c])) > 0 for a, b, c in tris)
+    if facing < len(tris) / 2:                     # winding against the normals: turn every triangle
+        tris = [(a, c, b) for a, b, c in tris]
+    # tangents: dP/du per vertex (accumulated over its triangles), the direction nifly stores as the bitangent
+    acc = np.zeros_like(P)
+    UV = np.array([v[2] for v in verts])
+    for a, b, c in tris:
+        e1, e2 = P[b] - P[a], P[c] - P[a]
+        du1, dv1 = UV[b] - UV[a]
+        du2, dv2 = UV[c] - UV[a]
+        r = du1 * dv2 - du2 * dv1
+        if abs(r) < 1e-12:
+            continue
+        sdir = (e1 * dv2 - e2 * dv1) / r
+        acc[[a, b, c]] += sdir
+    tangents = []
+    for nrm, sdir in zip(N, acc):
+        sdir = unit(sdir - nrm * float(np.dot(sdir, nrm))) if np.linalg.norm(sdir) > 1e-9 else unit(np.cross(nrm, [0, 0, 1.0]) + [1e-3, 0, 0])
+        tangents.append(np.cross(sdir, nrm))       # set_record's bitangent = nrm x this = sdir
+    return verts, tris, length, {i for i, b in enumerate(is_ball) if b}, tangents, k_scale
+
+
 def rebuild(n, s, records, tris, sphere=None):
     """the shape's vertex and triangle data replaced (its segment data kept); new file bytes"""
     o, size = n.offsets[s.index]
@@ -227,7 +321,7 @@ def rim_loop(s, centre):
     return min(loops, key=lambda L: float(np.linalg.norm(np.mean([pos[i] for i in L], axis=0) - centre)))
 
 
-def build(src, dst, src_osd, dst_osd):
+def build(src, dst, src_osd, dst_osd, mesh=None, material=None):
     shutil.copyfile(src, dst)
     n = nif.Nif(dst)
     names = {s.name for s in n.shapes()}
@@ -308,35 +402,60 @@ def build(src, dst, src_osd, dst_osd):
     rs = n.shape(ring)
     bones = n.skin(rs)[0]
     slots = {b: k for k, b in enumerate(bones)}
-    verts, tris, length = penis_mesh(pts, balls)
-    # the penis's UVs: a small plain square of the shell's own rubber (its front belly), so it is the same rubber
     sh = n.shape(shell)
+    if mesh:
+        verts, tris, length, ball_idx, tangents, k_scale = fbx_mesh(mesh, pts, balls)
+    else:
+        verts, tris, length = penis_mesh(pts, balls)
+        ball_idx = set(range(len(verts) - 2 * 11 * (SIDES + 1), len(verts)))
+        tangents = [np.cross(v[1], [0.0, 0.0, 1.0]) + np.array([1e-3, 0, 0]) for v in verts]
+    # our own tube's UVs: a small plain square of the shell's own rubber (its front belly), so it is the same rubber;
+    # an artist's mesh keeps its own UVs (its own material, below)
     belly = [sh.uv(i) for i, p in enumerate(sh.positions()) if p[1] > 3.0 and -48.5 < p[2] < -44.5 and abs(p[0]) < 3]
     bu = np.array(belly) if belly else np.array([[0.5, 0.5]])
-    lo, hi = bu.min(axis=0), bu.max(axis=0)
+    lo, hi = (np.zeros(2), np.ones(2)) if mesh else (bu.min(axis=0), bu.max(axis=0))
     template = bytearray(rs.record(0))
     pos_all = np.array([v[0] for v in verts])
     sph_c = pos_all.mean(axis=0)
     sph = (*sph_c, float(np.max(np.linalg.norm(pos_all - sph_c, axis=1))))
     records = []
     shell_pos = np.array(sh.positions())
-    for p, nrm, (u, v), w in verts:
+    for (p, nrm, (u, v), w), tan in zip(verts, tangents):
         rec = bytearray(template)
         uv = (lo[0] + (hi[0] - lo[0]) * u, lo[1] + (hi[1] - lo[1]) * v)
-        set_record(rec, rs, p, nrm, uv, w, slots, np.cross(nrm, [0.0, 0.0, 1.0]) + np.array([1e-3, 0, 0]))
+        set_record(rec, rs, p, nrm, uv, w, slots, tan)
         records.append(rec)
+    if len(records) > 65535:
+        raise SystemExit(f'penis: {len(records)} vertices, more than a shape holds')
     pathlib.Path(dst).write_bytes(rebuild(n, rs, records, tris, sphere=sph))
     n = nif.Nif(dst)
     rs = n.shape(ring)
     srv.refit_spheres(n, rs, set(CHAIN + BALLS + ['Pelvis_skin']))
     n.save(dst)
-    lines.append(f'penis: {len(verts)} vertices, {len(tris)} triangles, shaft {length:.1f} + glans {TIP}, '
-                 f'{len(CHAIN)} chain bones + {len(BALLS)} balls bones')
+    if material:
+        # the penis's shader names its own material: a NEW string (the ring's material string is shared with the anal
+        # ring, so renaming it would retexture that too). BSLightingShaderProperty: uint shader type, then its name index
+        n = nif.Nif(dst)
+        rs = n.shape(ring)
+        o, _ = n.offsets[rs.index]
+        c = nif.Cursor(n.b, o)
+        n._av(c)
+        c.take('4f'), c.take('i')
+        shader = c.take('i')
+        shader = shader[0] if isinstance(shader, tuple) else shader
+        so, ss = n.offsets[shader]
+        blk = bytearray(n.b[so:so + ss])
+        struct.pack_into('<i', blk, 4, len(n.strings))
+        pathlib.Path(dst).write_bytes(n.with_edits(replace={shader: bytes(blk)}, add_strings=[material]))
+        lines.append(f'penis material: {material}')
+    lines.append(f'penis: {len(verts)} vertices, {len(tris)} triangles, shaft {length:.1f}'
+                 + (f' (artist mesh x{k_scale:.2f})' if mesh else f' + glans {TIP}')
+                 + f', {len(CHAIN)} chain bones + {len(BALLS)} balls bones')
     # its slider data: the base takes the shell's (nearest vertex), fading out by SEAT units along the shaft
     near = {}
     for k, (p, *_rest) in enumerate(verts[:len(verts)]):
         s_along = float(np.dot(p - pts[0], unit(pts[1] - pts[0])))
-        if s_along < SEAT and k < (len(verts) - 2 * 11 * (SIDES + 1)):
+        if s_along < SEAT and k not in ball_idx:
             near[k] = (int(np.argmin(np.linalg.norm(shell_pos[:s.count] - p, axis=1))),
                        1.0 if s_along <= 0 else max(0.0, 1.0 - s_along / SEAT))
     for key in [k for k in list(data) if k.startswith(ring)]:
@@ -350,14 +469,14 @@ def build(src, dst, src_osd, dst_osd):
     return lines
 
 
-def osp_set(src_osp, set_name, male_file):
+def osp_set(src_osp, set_name, male_file, suffix='Male'):
     """the original set's text with a new name, source, output, the ring renamed and the data in the male .osd"""
     t = pathlib.Path(src_osp).read_text(encoding='utf-8', errors='replace')
     m = re.search(rf'<SliderSet name="{re.escape(set_name)}".*?</SliderSet>', t, re.S)
     s = m.group(0)
     stem = set_name.replace('Servitron ', '')
     shell = 'Abdomen_' + stem.split(' ')[1] + '_Rubber'
-    s = s.replace(f'<SliderSet name="{set_name}"', f'<SliderSet name="{set_name} Male"')
+    s = s.replace(f'<SliderSet name="{set_name}"', f'<SliderSet name="{set_name} {suffix}"')
     s = s.replace(f'<SourceFile>{stem}.nif</SourceFile>', f'<SourceFile>{male_file}.nif</SourceFile>')
     s = s.replace(f'>{stem}</OutputFile>', f'>{male_file}</OutputFile>')
     s = s.replace(f'{stem}.osd\\', f'{male_file}.osd\\')
@@ -366,15 +485,31 @@ def osp_set(src_osp, set_name, male_file):
 
 
 def main():
-    src, out = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+    """    python tools/servitron_male.py <rig ShapeData> <out ShapeData>                          -> our own penis
+           python tools/servitron_male.py <rig ShapeData> <out ShapeData> --mesh <penis.json> --tag Ilham
+                  --material Materials\\Anatomy\\Servitron\\IlhamPenis.bgsm   -> an artist's penis (fbx_penis_export.py)
+    The tagged build writes "<abdomen> Male <tag>" files and sets, in AnatomyServitronMale<tag>.osp."""
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument('src')
+    ap.add_argument('out')
+    ap.add_argument('--mesh')
+    ap.add_argument('--tag', default='')
+    ap.add_argument('--material')
+    a = ap.parse_args()
+    if a.mesh and not (a.tag and a.material):
+        raise SystemExit('--mesh needs --tag and --material')
+    src, out = pathlib.Path(a.src), pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     sets = []
+    suffix = ('Male ' + a.tag).strip()
     for stem in ('Abdomen GITS Rubber', 'Abdomen Wetsuit Rubber'):
-        male = stem + ' Male'
-        for line in build(src / f'{stem}.nif', out / f'{male}.nif', src / f'{stem}.osd', out / f'{male}.osd'):
+        male = f'{stem} {suffix}'
+        for line in build(src / f'{stem}.nif', out / f'{male}.nif', src / f'{stem}.osd', out / f'{male}.osd',
+                          mesh=a.mesh, material=a.material):
             print(f'{male}: {line}')
-        sets.append(osp_set(srv.BS_SRC / 'SliderSets' / 'Servitron.osp', f'Servitron {stem}', male))
-    osp = out.parent.parent / 'SliderSets' / 'AnatomyServitronMale.osp'
+        sets.append(osp_set(srv.BS_SRC / 'SliderSets' / 'Servitron.osp', f'Servitron {stem}', male, suffix))
+    osp = out.parent.parent / 'SliderSets' / f'AnatomyServitronMale{a.tag}.osp'
     osp.parent.mkdir(parents=True, exist_ok=True)
     osp.write_text('<?xml version="1.0" encoding="UTF-8"?>\n<SliderSetInfo version="1">\n    ' + '\n    '.join(sets)
                    + '\n</SliderSetInfo>\n', encoding='utf-8')

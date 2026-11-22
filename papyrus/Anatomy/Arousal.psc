@@ -256,6 +256,15 @@ Function Setup()
 		If Game.IsPluginInstalled("AnatomyServitron.esp")
 			_manParts.Add(Game.GetFormFromFile(0x00000800, "AnatomyServitron.esp") as ObjectMod, 1)
 			_manParts.Add(Game.GetFormFromFile(0x00000802, "AnatomyServitron.esp") as ObjectMod, 1)
+			; 2026-11-22: the male Rubber abdomens with Ilham's penis (0x804 GITS, 0x806 Wetsuit), when this esp has them
+			ObjectMod ilham = Game.GetFormFromFile(0x00000804, "AnatomyServitron.esp") as ObjectMod
+			If ilham
+				_manParts.Add(ilham, 1)
+			EndIf
+			ilham = Game.GetFormFromFile(0x00000806, "AnatomyServitron.esp") as ObjectMod
+			If ilham
+				_manParts.Add(ilham, 1)
+			EndIf
 		EndIf
 	EndIf
 	_desire = None
