@@ -19,6 +19,10 @@ Int Function MouthFluid(Actor akActor) Global Native
 ; (Anatomy:DebugScene waits for it before its climax).
 Int Function Inside(Actor akHim) Global Native
 
+; A Servitron head with a sliding mouth panel (Ilham's, 2026-11-22): hold it open for afSeconds (a laser shot), then it
+; closes; 0 closes it now. It also opens on its own while the robot talks. No effect on a robot without such a head.
+Function ServitronMouth(Actor akActor, Float afSeconds) Global Native
+
 ; For testing and support: a climax of the man aiHim with aiHer (form ids, decimal), as a CLIMAX stage gives it. Console:
 ;   cgf "AnatomyAim.ClimaxTest" <his form id> <her form id>
 Function ClimaxTest(Int aiHim, Int aiHer) Global

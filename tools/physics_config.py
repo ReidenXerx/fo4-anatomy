@@ -301,6 +301,11 @@ def anatomy_ini(pelvis_world, head_f=None, head_m=None, neck_f=None, neck_m=None
     lines += ['', '; our nodes, created at run time under the skeleton the actor loaded: name=parent,x,y,z',
               '[Bones]'] + [f'{n}={p},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, p, l in bone_table(pelvis_world)]
     lines += [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in skirt_rest.SKIRT_BONES.items()]
+    lines += [f'{n}=HEAD,{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in pd.SRV_MOUTH_BONES.items()]
+    lines += ['', '; a Servitron head\'s mouth panel (Ilham\'s head, 2026-11-22): each half\'s full open travel in HEAD\'s axes, '
+              'and how fast it opens (travels per second); open while talking or held by AnatomyAim.ServitronMouth',
+              '[ServitronMouth]'] + [f'{k}={",".join(f"{x:g}" for x in v)}' for k, v in pd.SRV_MOUTH_TRAVEL.items()]
+    lines += [f'speed={pd.SRV_MOUTH_SPEED:g}']
     lines += ['', '; the same nodes on a man where his body differs (A-69: BodyTalk\'s anus; his skirt ring): '
               'name=parent,x,y,z',
               '[BonesMale]'] + [f'{n}={PARENT},{l[0]:.6f},{l[1]:.6f},{l[2]:.6f}' for n, l in pd.MEN_ANUS_BONES.items()]

@@ -138,6 +138,12 @@ def _ring_bones(prefix, centre, axis):
 SRV_REST = {**_ring_bones('AnatSrvVag', SRV_VAGINA_CENTRE, SRV_VAGINA_AXIS),
             **_ring_bones('AnatSrvAnus', SRV_ANUS_CENTRE, SRV_ANUS_AXIS)}
 SRV_STRETCH_BONES = {b: b + '_Stretch' for b in SRV_REST}
+# 2026-11-22 (Ilham's Servitron head, General-mods): the mouth panel halves' nodes under the skeleton's HEAD (HEAD's local
+# axes: x up, y forward, z = the body's -x), from tools/srv_mouth_bind.py on Head Ilham.nif; and each half's full open
+# travel in the same axes (placeholder until her recording: 2.5 out sideways, 1 back; Bones.cpp [ServitronMouth])
+SRV_MOUTH_BONES = {'AnatSrvMouth_L': (3.4905, 3.4476, 0.9750), 'AnatSrvMouth_R': (3.4906, 3.4476, -0.9748)}
+SRV_MOUTH_TRAVEL = {'L': (-0.065, -0.998, 2.5), 'R': (-0.065, -0.998, -2.5)}
+SRV_MOUTH_SPEED = 4.0
 # its canal's wrap rings (Canal.cpp picks them by race, [Canal] prefixServitron): measured on the moved canal by
 # tools/servitron.py (measure_rings), the same 6 rings x CANAL_SPOKES as ours
 SRV_CANAL_PREFIX = 'AnatSrvCanal_'
