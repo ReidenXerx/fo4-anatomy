@@ -436,8 +436,9 @@ def files(version):
         'Anatomy.esp': BUILD / 'plugin/Anatomy.esp',
         'Scripts/Anatomy/Arousal.pex': BUILD / 'papyrus/Anatomy/Arousal.pex',
         'Scripts/AnatomyAim.pex': BUILD / 'papyrus/AnatomyAim.pex',
-        'MCM/Config/Anatomy/config.json': BUILD / 'mcm/MCM/Config/Anatomy/config.json',
-        'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm/MCM/Config/Anatomy/settings.ini',
+        # the menu without the debug-scenes page (build_mcm debug=False: Anatomy:DebugScene is a dev script)
+        'MCM/Config/Anatomy/config.json': BUILD / 'mcm-release/config.json',
+        'MCM/Config/Anatomy/settings.ini': BUILD / 'mcm-release/settings.ini',
         'F4SE/Plugins/Anatomy/ocbp.ini': BUILD / 'config/Anatomy/ocbp.ini',
         'F4SE/Plugins/Anatomy/OCBPCollisionConfig.txt': BUILD / 'config/Anatomy/OCBPCollisionConfig.txt',
         # A-46: our own default physics preset and collision, read by the engine only when the player has none
@@ -457,7 +458,9 @@ def files(version):
            for _, _, clips in __import__('make_esp').SOUNDS for c in clips},
         # the fluid strand (2026-10-16): the engine's Strands.cpp loads the mesh; built by main() from the game's own
         # body and skin material (strand_mesh.release_assets), so nothing of CBBE's is in it
-        **{f: BUILD / 'strand' / f for f in __import__('strand_mesh').RELEASE_FILES},
+        # The climax fluid is PARKED (owner 2026-10-17: never on Nexus until its look is fixed): no Fluid meshes ship,
+        # and the engine turns each missing slot off (Fluid.cpp "could not load meshes").
+        **{f: BUILD / 'strand' / f for f in __import__('strand_mesh').RELEASE_FILES if '/Fluid/' not in f},
     }
 
 
@@ -809,7 +812,11 @@ def main():
         import gamedata
         import strand_mesh
         shutil.rmtree(BUILD / 'strand', ignore_errors=True)   # never a stale strand in the archive
-        strand_mesh.release_assets(BUILD / 'strand', gamedata.find_data(tool='release.py'))
+        import build_mcm
+        shutil.rmtree(BUILD / 'mcm-release', ignore_errors=True)
+        build_mcm.main(BUILD / 'mcm-release', debug=False)
+        import align_body   # the dev machine's game (ANATOMY_DATA overrides): the registry still names the gone GOG
+        strand_mesh.release_assets(BUILD / 'strand', gamedata.find_data(str(align_body.DEFAULT_DATA), tool='release.py'))
         wanted = files(args.version)
         import make_esp
         print(make_esp.verify(wanted['Anatomy.esp']))    # a keyword-less Anatomy.esp would move our layer into bodies
