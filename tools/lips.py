@@ -15,7 +15,7 @@ import math
 import pathlib
 import struct
 
-DATA = pathlib.Path(r'D:\GOGGames\Fallout 4 GOTY\Data')
+DATA = pathlib.Path(r'D:\SteamFreeGames\Fallout 4 AE\Data')   # read only; GOG gone since 2026-10-03
 HEAD_TRI = 'Meshes/Actors/Character/CharacterAssets/BaseFemaleHead.tri'
 XS = (-1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2)
 # (id in the engine's 54, name in the head's .tri): what can move a lip's inner edge (Rapport's make_mfg order)

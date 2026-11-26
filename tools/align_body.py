@@ -23,6 +23,7 @@ Output (build/project, never committed):
 import argparse
 import collections
 import math
+import os
 import pathlib
 import re
 import struct
@@ -35,7 +36,9 @@ import nif
 import osd
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFAULT_DATA = pathlib.Path(r'D:\GOGGames\Fallout 4 GOTY\Data')
+# the game is read only, never written. The GOG install is gone (AE only since 2026-10-03); AE's
+# skeleton.nif is byte-identical to the LAB's ZeX skeleton (res/skeleton_zex.nif, sha 6fb622f4...)
+DEFAULT_DATA = pathlib.Path(os.environ.get('ANATOMY_DATA', r'D:\SteamFreeGames\Fallout 4 AE\Data'))
 NAHKA_RAR = ROOT / 'inputs/CBBEVagMorphs.rar'
 NAHKA_DIR = ROOT / 'build/nahka'
 OUT = ROOT / 'build/project'

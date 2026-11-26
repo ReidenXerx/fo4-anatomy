@@ -470,7 +470,7 @@ class Game:
 
 
 def main(argv):
-    data = pathlib.Path(os.environ.get('ANATOMY_DATA', r'D:\GOGGames\Fallout 4 GOTY\Data'))
+    data = pathlib.Path(os.environ.get('ANATOMY_DATA', r'D:\SteamFreeGames\Fallout 4 AE\Data'))
     game = Game(data)
     if argv[:1] == ['plugins']:
         for i, p in enumerate(game.plugins):
